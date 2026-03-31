@@ -17,8 +17,9 @@ export default function Header() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
-        setDropdownOpen(false)
+      const inDesktop = dropdownRef.current?.contains(e.target as Node)
+      const inDrawer = drawerDropdownRef.current?.contains(e.target as Node)
+      if (!inDesktop && !inDrawer) setDropdownOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -143,18 +144,6 @@ export default function Header() {
       <div className={`nav-backdrop ${menuOpen ? 'open' : ''}`} onClick={close} />
 
       <div className={`nav-drawer ${menuOpen ? 'open' : ''}`}>
-        {/* Drawer header */}
-        <div className="nav-drawer-header">
-          <Link to="/" className="navbar-brand" onClick={close}>
-            <img src="/DFY.png" alt="DoForYou" className="navbar-logo" />
-            <span className="brand-text">DoForYou</span>
-            <span className="dot"><b>.</b></span>
-          </Link>
-          <button className="nav-drawer-close" onClick={close} aria-label="Close">
-            <i className="fas fa-times" />
-          </button>
-        </div>
-
         <ul className="nav-links">
           <li><NavLink to="/" end onClick={close}>Home</NavLink></li>
           <li><NavLink to="/about" onClick={close}>About</NavLink></li>
