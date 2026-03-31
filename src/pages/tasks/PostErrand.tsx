@@ -13,11 +13,16 @@ function calcCommission(budget: number) {
 }
 
 export default function PostErrand() {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, canPostErrands } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('edit')
   const isEdit = !!editId
+
+  // Redirect runners away from this page
+  useEffect(() => {
+    if (isAuthenticated() && !canPostErrands()) navigate('/dashboard')
+  }, [isAuthenticated, canPostErrands, navigate])
 
   const [step, setStep] = useState(1)
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)

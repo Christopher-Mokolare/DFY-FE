@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export function usePostErrand() {
-  const { isAuthenticated, isProfileIncomplete } = useAuth()
+  const { isAuthenticated, isProfileIncomplete, canPostErrands } = useAuth()
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [showRunnerModal, setShowRunnerModal] = useState(false)
 
   const handlePostErrand = (e?: React.MouseEvent) => {
     e?.preventDefault()
     if (!isAuthenticated()) { navigate('/login'); return }
+    if (!canPostErrands()) { setShowRunnerModal(true); return }
     if (isProfileIncomplete()) { setShowModal(true); return }
     navigate('/tasks/post')
   }
@@ -37,5 +39,25 @@ export function usePostErrand() {
     </div>
   ) : null
 
-  return { handlePostErrand, ProfileIncompleteModal }
+  const RunnerModal = showRunnerModal ? (
+    <div className="modal-overlay" onClick={() => setShowRunnerModal(false)}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3><i className="fas fa-lock" /> Cannot Post Tasks</h3>
+          <button className="btn-close" onClick={() => setShowRunnerModal(false)}><i className="fas fa-times" /></button>
+        </div>
+        <div className="modal-body">
+          <p>Runners cannot post tasks. Change your user type to <strong>Creator</strong> or <strong>Both</strong> to post tasks.</p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={() => setShowRunnerModal(false)}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { setShowRunnerModal(false); navigate('/user/profile') }}>
+            <i className="fas fa-user-edit" /> Change User Type
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null
+
+  return { handlePostErrand, ProfileIncompleteModal: <>{ProfileIncompleteModal}{RunnerModal}</> }
 }
