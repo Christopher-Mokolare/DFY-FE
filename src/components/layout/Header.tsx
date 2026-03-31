@@ -47,13 +47,37 @@ export default function Header() {
           <span className="dot"><b>.</b></span>
         </Link>
 
-        <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-          <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
-          <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
-          <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
-        </button>
+        {/* Mobile: bell + hamburger on the right */}
+        <div className="navbar-actions">
+          {isAuthenticated() && (
+            <NavLink to="/notifications" className="nav-bell-link" onClick={() => setMenuOpen(false)} aria-label="Notifications">
+              <i className="fas fa-bell" />
+              {unreadCount > 0 && <span className="bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+            </NavLink>
+          )}
+          <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
+            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
+            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
+          </button>
+        </div>
+
+        {/* Backdrop */}
+        <div className={`nav-backdrop ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(false)} />
 
         <div className={`nav-menu ${menuOpen ? 'open' : ''}`}>
+          {/* Drawer header */}
+          <div className="nav-drawer-header">
+            <Link to="/" className="navbar-brand" onClick={() => setMenuOpen(false)}>
+              <img src="/DFY.png" alt="DoForYou" className="navbar-logo" />
+              <span className="brand-text">DoForYou</span>
+              <span className="dot"><b>.</b></span>
+            </Link>
+            <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+              <i className="fas fa-times" />
+            </button>
+          </div>
+
           <ul className="nav-links">
             <li><NavLink to="/" end onClick={() => setMenuOpen(false)}>Home</NavLink></li>
             <li><NavLink to="/about" onClick={() => setMenuOpen(false)}>About</NavLink></li>
@@ -67,8 +91,8 @@ export default function Header() {
               </>
             ) : (
               <>
-                {/* Bell icon */}
-                <li>
+                {/* Bell — desktop only, mobile bell is in navbar-actions */}
+                <li className="desktop-only">
                   <NavLink to="/notifications" className="nav-bell-link" onClick={() => setMenuOpen(false)} aria-label="Notifications">
                     <i className="fas fa-bell" />
                     {unreadCount > 0 && (
