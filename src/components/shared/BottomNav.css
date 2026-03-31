@@ -1,0 +1,125 @@
+/* Only visible on mobile */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1020;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    height: 64px;
+    padding: 0 0.25rem;
+    padding-bottom: env(safe-area-inset-bottom);
+    align-items: stretch;
+  }
+
+  .bnav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    font-family: var(--font-primary);
+    transition: color var(--transition);
+    min-height: 44px;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bnav-item i {
+    font-size: 1.125rem;
+    transition: transform var(--transition), color var(--transition);
+  }
+
+  .bnav-item.active {
+    color: var(--primary);
+  }
+
+  .bnav-item.active i {
+    transform: translateY(-1px);
+  }
+
+  .bnav-item.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: var(--primary-gradient);
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* Post FAB button */
+  .bnav-post {
+    color: var(--text-muted);
+  }
+
+  /* Suppress the flat bar indicator on the FAB item */
+  .bnav-post.active::after {
+    display: none;
+  }
+
+  /* Half-circle arc on top of the FAB when active */
+  .bnav-post.active .bnav-post-btn::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 28px;
+    border: 2.5px solid var(--primary);
+    border-bottom: none;
+    border-radius: 56px 56px 0 0;
+    pointer-events: none;
+  }
+
+  .bnav-post-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    box-shadow: 0 4px 14px rgba(255, 138, 0, 0.45);
+    margin-top: -18px;
+    transition: transform var(--transition), box-shadow var(--transition);
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .bnav-post-btn--runner {
+    background: linear-gradient(135deg, #1F2937, #374151);
+    box-shadow: 0 4px 14px rgba(31, 41, 55, 0.45);
+  }
+
+  .bnav-post.active .bnav-post-btn--runner::before {
+    border-color: #374151;
+  }
+
+  .bnav-post.active .bnav-post-btn,
+  .bnav-post:hover .bnav-post-btn {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(255, 138, 0, 0.55);
+  }
+
+  .bnav-post span {
+    margin-top: 2px;
+  }
+}

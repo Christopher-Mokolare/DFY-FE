@@ -1,0 +1,83 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import { NotificationProvider } from './context/NotificationContext'
+import { RequireAuth, RequireAdmin } from './context/Guards'
+import Layout from './components/layout/Layout'
+
+// Pages
+import Home from './pages/Home'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Terms from './pages/Terms'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
+import Dashboard from './pages/Dashboard'
+import BrowseErrands from './pages/tasks/BrowseErrands'
+import PostErrand from './pages/tasks/PostErrand'
+import MyPostedTasks from './pages/tasks/MyPostedTasks'
+import MyActiveTasks from './pages/tasks/MyActiveTasks'
+import TaskChat from './pages/tasks/TaskChat'
+import Notifications from './pages/Notifications'
+import Wallet from './pages/user/Wallet'
+import Profile from './pages/user/Profile'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminUsers from './pages/admin/AdminUsers'
+import AdminTasks from './pages/admin/AdminTasks'
+import AdminPayments from './pages/admin/AdminPayments'
+import AdminDisputes from './pages/admin/AdminDisputes'
+import AdminAuditLog from './pages/admin/AdminAuditLog'
+import { PaymentSuccess, PaymentCancelled } from './pages/PaymentPages'
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <NotificationProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              {/* Public */}
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/tasks/browse" element={<BrowseErrands />} />
+              <Route path="/payments/success" element={<PaymentSuccess />} />
+              <Route path="/payments/cancelled" element={<PaymentCancelled />} />
+
+              {/* Auth required */}
+              <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/tasks/post" element={<RequireAuth><PostErrand /></RequireAuth>} />
+              <Route path="/tasks/my-posted" element={<RequireAuth><MyPostedTasks /></RequireAuth>} />
+              <Route path="/tasks/my-active" element={<RequireAuth><MyActiveTasks /></RequireAuth>} />
+              <Route path="/tasks/:taskId/chat" element={<RequireAuth><TaskChat /></RequireAuth>} />
+              <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
+              <Route path="/wallet" element={<RequireAuth><Wallet /></RequireAuth>} />
+              <Route path="/user/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+
+              {/* Admin */}
+              <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+              <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
+              <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
+              <Route path="/admin/payments" element={<RequireAdmin><AdminPayments /></RequireAdmin>} />
+              <Route path="/admin/disputes" element={<RequireAdmin><AdminDisputes /></RequireAdmin>} />
+              <Route path="/admin/audit-log" element={<RequireAdmin><AdminAuditLog /></RequireAdmin>} />
+
+              {/* Legacy redirects */}
+              <Route path="/browse-errands" element={<Navigate to="/tasks/browse" replace />} />
+              <Route path="/post-errand" element={<Navigate to="/tasks/post" replace />} />
+              <Route path="/profile" element={<Navigate to="/user/profile" replace />} />
+              <Route path="/user-dashboard" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/payment-success" element={<Navigate to="/payments/success" replace />} />
+              <Route path="/payment-cancelled" element={<Navigate to="/payments/cancelled" replace />} />
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Routes>
+        </NotificationProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}
