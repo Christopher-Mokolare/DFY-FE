@@ -65,5 +65,6 @@
   .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
   .footer-links { grid-template-columns: repeat(2, 1fr); }
   .footer-bottom-inner { flex-direction: column; gap: 0.5rem; text-align: center; }
+  .footer-bottom { padding-bottom: calc(64px + 1.25rem); }
 }
 @media (max-width: 480px) { .footer-links { grid-template-columns: 1fr; } }
