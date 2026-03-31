@@ -30,6 +30,7 @@ export default function BrowseErrands() {
   const [claimModal, setClaimModal] = useState<Task | null>(null)
   const [claimLoading, setClaimLoading] = useState(false)
   const [claimError, setClaimError] = useState('')
+  const [detailModal, setDetailModal] = useState<Task | null>(null)
   const pageSize = 10
 
   const load = useCallback(async (p = 1, s = search, cat = category, silent = false) => {
@@ -170,7 +171,11 @@ export default function BrowseErrands() {
                 </div>
                 <div className="task-card-body">
                   <h3 className="task-title">{task.taskName || task.task_description || task.taskDescription || 'No description'}</h3>
-                  <p className="task-subtitle" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{(task.task_description || task.taskDescription || '').substring(0, 120)}</p>
+                  {task.taskName && (
+                    <p className="task-subtitle" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {task.task_description || task.taskDescription}
+                    </p>
+                  )}
                   <div className="task-meta">
                     <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{task.area_suburb || task.area || 'Location not specified'}</span></div>
                     <div className="task-meta-item"><i className="fas fa-clock" /><span>{task.date_time_needed || task.dateNeeded ? new Date(task.date_time_needed || task.dateNeeded!).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date flexible'}</span></div>
@@ -182,13 +187,23 @@ export default function BrowseErrands() {
                   </div>
                 </div>
                 <div className="task-card-footer">
-                  <button
-                    className="btn btn-primary btn-block"
-                    disabled={isButtonDisabled(task)}
-                    onClick={() => handleAccept(task)}
-                  >
-                    <i className="fas fa-handshake" /> {getButtonText(task)}
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ flex: 1, justifyContent: 'center', minWidth: 0 }}
+                      onClick={() => setDetailModal(task)}
+                    >
+                      <i className="fas fa-eye" /><span className="btn-label"> Details</span>
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ flex: 1, justifyContent: 'center', minWidth: 0 }}
+                      disabled={isButtonDisabled(task)}
+                      onClick={() => handleAccept(task)}
+                    >
+                      <i className="fas fa-handshake" /><span className="btn-label"> {getButtonText(task)}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -205,6 +220,38 @@ export default function BrowseErrands() {
           </div>
         )}
       </div>
+
+      {detailModal && (
+        <div className="modal-overlay" onClick={() => setDetailModal(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-tasks" /> Task Details</h3>
+              <button className="btn-close" onClick={() => setDetailModal(null)}><i className="fas fa-times" /></button>
+            </div>
+            <div className="modal-body">
+              <h4 style={{ marginBottom: '0.5rem' }}>{detailModal.taskName || detailModal.task_description || detailModal.taskDescription}</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem', whiteSpace: 'pre-line' }}>{detailModal.task_description || detailModal.taskDescription}</p>
+              <div className="task-meta">
+                <div className="task-meta-item"><i className="fas fa-tag" /><span>{detailModal.category}</span></div>
+                <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{detailModal.area_suburb || detailModal.area}</span></div>
+                {(detailModal.date_time_needed || detailModal.dateNeeded) && <div className="task-meta-item"><i className="fas fa-calendar" /><span>{new Date(detailModal.date_time_needed || detailModal.dateNeeded!).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
+                <div className="task-meta-item"><i className="fas fa-money-bill-wave" /><span>You earn: <strong>R{getRunnerPayout(detailModal.budget)}</strong></span></div>
+                {detailModal.notes && <div className="task-meta-item"><i className="fas fa-sticky-note" /><span>{detailModal.notes}</span></div>}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setDetailModal(null)}>Close</button>
+              <button
+                className="btn btn-primary"
+                disabled={isButtonDisabled(detailModal)}
+                onClick={() => { setDetailModal(null); handleAccept(detailModal) }}
+              >
+                <i className="fas fa-handshake" /> {getButtonText(detailModal)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {claimModal && (
         <div className="modal-overlay" onClick={() => setClaimModal(null)}>

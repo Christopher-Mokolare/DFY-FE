@@ -104,3 +104,9 @@
   .filters-row .form-select { width: 100%; }
   .pagination-wrapper { flex-direction: column; }
 }
+
+/* On very small screens hide button text, show icon only */
+@media (max-width: 400px) {
+  .task-card-footer .btn-label { display: none; }
+  .task-card-footer .btn-sm { padding: 0.5rem; }
+}
