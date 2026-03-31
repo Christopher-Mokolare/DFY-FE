@@ -102,9 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const ut = user?.userType
     if (ut) return ut === 'creator' || ut === 'both'
     const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-    if (prefs.canCreateTasks === true) return true
-    // Allow if no userType set yet — let the post flow handle profile completion
-    return true
+    return prefs.canCreateTasks === true
   }, [user, isAuthenticated, isAdmin])
 
   const canAcceptTasks = useCallback(() => {
