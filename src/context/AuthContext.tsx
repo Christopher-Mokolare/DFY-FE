@@ -90,19 +90,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isProfileComplete = useCallback(() => {
     if (!user) return false
-    if (typeof user.profileCompleted === 'boolean') return user.profileCompleted
-    return !!(user.firstName && user.lastName && user.email && user.contact && user.userType && user.idNumber && user.address)
+    const phone = user.contact || user.phoneNumber
+    return !!(user.firstName && user.lastName && user.email && phone
+      && user.userType && user.idNumber && user.address)
   }, [user])
 
   const isProfileIncomplete = useCallback(() => !isProfileComplete(), [isProfileComplete])
 
   const canPostErrands = useCallback(() => {
-    if (!isAuthenticated() || isAdmin() || isProfileIncomplete()) return false
+    if (!isAuthenticated() || isAdmin()) return false
     const ut = user?.userType
     if (ut) return ut === 'creator' || ut === 'both'
     const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-    return prefs.canCreateTasks === true
-  }, [user, isAuthenticated, isAdmin, isProfileIncomplete])
+    if (prefs.canCreateTasks === true) return true
+    // Allow if no userType set yet — let the post flow handle profile completion
+    return true
+  }, [user, isAuthenticated, isAdmin])
 
   const canAcceptTasks = useCallback(() => {
     if (!isAuthenticated() || isAdmin() || isProfileIncomplete()) return false

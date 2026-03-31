@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
+import { usePostErrand } from '../../hooks/usePostErrand'
 import './Header.css'
 
 export default function Header() {
-  const { user, isAuthenticated, isAdmin, logout, canPostErrands, isProfileIncomplete } = useAuth()
+  const { user, isAuthenticated, isAdmin, logout } = useAuth()
   const { unreadCount } = useNotifications()
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const [menuOpen, setMenuOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const navigate = useNavigate()
@@ -29,13 +31,6 @@ export default function Header() {
     setDropdownOpen(false)
   }
 
-  const handlePostErrand = () => {
-    if (!isAuthenticated()) { navigate('/login'); return }
-    if (isProfileIncomplete()) { navigate('/user/profile'); return }
-    navigate('/tasks/post')
-    setMenuOpen(false)
-  }
-
   const close = () => { setDropdownOpen(false); setMenuOpen(false) }
 
   const displayName = user
@@ -43,6 +38,7 @@ export default function Header() {
     : ''
 
   return (
+    <>
     <nav className="navbar">
       <div className="container navbar-inner">
         <Link to="/" className="navbar-brand" onClick={() => setMenuOpen(false)}>
@@ -93,8 +89,8 @@ export default function Header() {
                       {!isAdmin() ? (
                         <>
                           <li><Link to="/dashboard" onClick={close}>Dashboard</Link></li>
-                          {canPostErrands() && !isProfileIncomplete() && (
-                            <li><Link to="/tasks/post" onClick={close}>Post Errand</Link></li>
+                          {isAuthenticated() && !isAdmin() && (
+                            <li><button onClick={() => { handlePostErrand(); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit', padding: 0, textAlign: 'left' }}>Post Errand</button></li>
                           )}
                           <li><Link to="/tasks/my-posted" onClick={close}>My Posted Tasks</Link></li>
                           <li><Link to="/tasks/my-active" onClick={close}>My Active Tasks</Link></li>
@@ -130,7 +126,7 @@ export default function Header() {
             )}
           </ul>
 
-          {isAuthenticated() && !isAdmin() && canPostErrands() && (
+          {isAuthenticated() && !isAdmin() && (
             <button className="btn-post-errand" onClick={handlePostErrand}>
               POST AN ERRAND <span className="pulse-dot" />
             </button>
@@ -138,5 +134,8 @@ export default function Header() {
         </div>
       </div>
     </nav>
+
+      {ProfileIncompleteModal}
+    </>
   )
 }

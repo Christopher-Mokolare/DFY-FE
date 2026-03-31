@@ -51,6 +51,21 @@ export default function Profile() {
 
   const set = (f: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm(prev => ({ ...prev, [f]: e.target.value }))
 
+  const handleIdNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const id = e.target.value.replace(/\D/g, '').substring(0, 13)
+    const updates: any = { idNumber: id }
+    if (id.length === 13) {
+      const yy = id.substring(0, 2)
+      const mm = id.substring(2, 4)
+      const dd = id.substring(4, 6)
+      const year = parseInt(yy) <= new Date().getFullYear() % 100 ? `20${yy}` : `19${yy}`
+      const dob = `${year}-${mm}-${dd}`
+      const date = new Date(dob)
+      if (!isNaN(date.getTime())) updates.dateOfBirth = dob
+    }
+    setForm(prev => ({ ...prev, ...updates }))
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError(''); setSuccess('')
     try {
@@ -130,7 +145,7 @@ export default function Profile() {
                 <div className="form-group"><label className="form-label">Phone Number</label><input type="tel" className="form-input" value={form.phoneNumber} onChange={set('phoneNumber')} /></div>
               </div>
               <div className="form-row-2">
-                <div className="form-group"><label className="form-label">ID Number</label><input className="form-input" value={form.idNumber} onChange={set('idNumber')} maxLength={13} /></div>
+                <div className="form-group"><label className="form-label">ID Number</label><input className="form-input" value={form.idNumber} onChange={handleIdNumber} maxLength={13} /></div>
                 <div className="form-group"><label className="form-label">Date of Birth</label><input type="date" className="form-input" value={form.dateOfBirth} onChange={set('dateOfBirth')} /></div>
               </div>
               <div className="form-group"><label className="form-label">Address</label><input className="form-input" value={form.address} onChange={set('address')} /></div>

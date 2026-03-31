@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi } from '../api'
+import { usePostErrand } from '../hooks/usePostErrand'
 
 export function PaymentSuccess() {
   const [params] = useSearchParams()
@@ -36,6 +37,7 @@ export function PaymentSuccess() {
 
 export function PaymentCancelled() {
   const navigate = useNavigate()
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', padding: '3rem' }}>
@@ -44,7 +46,8 @@ export function PaymentCancelled() {
         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Your payment was cancelled. Your task has been saved as a draft.</p>
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
           <button className="btn btn-secondary" onClick={() => navigate('/tasks/my-posted')}>View My Tasks</button>
-          <button className="btn btn-primary" onClick={() => navigate('/tasks/post')}>Try Again</button>
+          <button className="btn btn-primary" onClick={handlePostErrand}>Try Again</button>
+          {ProfileIncompleteModal}
         </div>
       </div>
     </div>

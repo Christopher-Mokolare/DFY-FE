@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { tasksApi, ratingsApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
+import { usePostErrand } from '../../hooks/usePostErrand'
 import type { Task } from '../../types'
 import './MyPostedTasks.css'
 
@@ -26,6 +27,7 @@ function getInitials(name: string) {
 
 export default function MyPostedTasks() {
   const navigate = useNavigate()
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -151,7 +153,8 @@ export default function MyPostedTasks() {
   ]
 
   return (
-    <div className="my-posted-page">
+    <>
+      <div className="my-posted-page">
       <div className="page-header">
         <div className="container">
           <h1><i className="fas fa-list-check" /> My Posted Tasks</h1>
@@ -161,12 +164,15 @@ export default function MyPostedTasks() {
       <div className="container">
         {error && <div className="alert alert-error mb-4"><i className="fas fa-exclamation-circle" /> {error}</div>}
         {tasks.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-clipboard-list" />
-            <h3>No Posted Tasks</h3>
-            <p>You haven't posted any tasks yet.</p>
-            <Link to="/tasks/post" className="btn btn-primary">Post Your First Task</Link>
-          </div>
+          <>
+            <div className="empty-state">
+              <i className="fas fa-clipboard-list" />
+              <h3>No Posted Tasks</h3>
+              <p>You haven't posted any tasks yet.</p>
+              <button className="btn btn-primary" onClick={handlePostErrand}>Post Your First Task</button>
+            </div>
+            {ProfileIncompleteModal}
+          </>
         ) : (
           sections.map(({ key, icon, label }) => grouped[key].length > 0 && (
             <div key={key} className="status-section">
@@ -208,7 +214,7 @@ export default function MyPostedTasks() {
                       <div className="task-card-footer">
                         {key === 'pendingPayment' && (
                           <div className="action-row">
-                            <button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/post?edit=${task.taskId}`)}><i className="fas fa-edit" /> Edit</button>
+                            <button className="btn btn-outline btn-sm" onClick={() => { handlePostErrand(); navigate(`/tasks/post?edit=${task.taskId}`) }}><i className="fas fa-edit" /> Edit</button>
                             <button className="btn btn-danger btn-sm" onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel</button>
                             <button className="btn btn-primary btn-sm" onClick={() => handlePayNow(task.taskId)}><i className="fas fa-credit-card" /> Pay Now</button>
                           </div>
@@ -481,5 +487,7 @@ export default function MyPostedTasks() {
         </div>
       )}
     </div>
+    {ProfileIncompleteModal}
+  </>
   )
 }

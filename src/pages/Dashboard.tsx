@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { tasksApi, ratingsApi } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { usePostErrand } from '../hooks/usePostErrand'
 import './Dashboard.css'
 
 export default function Dashboard() {
   const { user, isProfileIncomplete, isAdmin, canPostErrands, canAcceptTasks } = useAuth()
   const navigate = useNavigate()
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const [stats, setStats] = useState<any>(null)
   const [activity, setActivity] = useState<any[]>([])
   const [myRatings, setMyRatings] = useState<any[]>([])
@@ -54,6 +56,7 @@ export default function Dashboard() {
   const profileCompletion = user?.profileCompletion ?? 0
 
   return (
+    <>
     <div className="dashboard-page">
       <div className="dashboard-header">
         <div className="container">
@@ -198,7 +201,7 @@ export default function Dashboard() {
               <div className="section-header"><h2><i className="fas fa-bolt" /> Quick Actions</h2></div>
               <div className="quick-actions">
                 {canPostErrands() && !isProfileIncomplete() && (
-                  <button className="btn btn-primary" onClick={() => navigate('/tasks/post')}><i className="fas fa-plus" /> Post New Task</button>
+                  <button className="btn btn-primary" onClick={handlePostErrand}><i className="fas fa-plus" /> Post New Task</button>
                 )}
                 {canAcceptTasks() && !isProfileIncomplete() && (
                   <button className="btn btn-primary" onClick={() => navigate('/tasks/browse')}><i className="fas fa-search" /> Find Tasks</button>
@@ -220,6 +223,7 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+    {ProfileIncompleteModal}
+    </>
   )
 }
-

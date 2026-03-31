@@ -1,11 +1,12 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { usePostErrand } from '../../hooks/usePostErrand'
 import './BottomNav.css'
 
 export default function BottomNav() {
   const { isAuthenticated, isAdmin, canPostErrands } = useAuth()
   const { pathname } = useLocation()
-  const navigate = useNavigate()
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
 
   if (!isAuthenticated()) return null
 
@@ -35,40 +36,43 @@ export default function BottomNav() {
   const canPost = canPostErrands()
 
   return (
-    <nav className="bottom-nav">
-      <NavLink to="/dashboard" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
-        <i className="fas fa-home" />
-        <span>Home</span>
-      </NavLink>
-      <NavLink to="/tasks/browse" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
-        <i className="fas fa-search" />
-        <span>Browse</span>
-      </NavLink>
-
-      {canPost ? (
-        <NavLink to="/tasks/post" className={() => `bnav-item bnav-post ${pathname === '/tasks/post' ? 'active' : ''}`}>
-          <div className="bnav-post-btn">
-            <i className="fas fa-plus" />
-          </div>
-          <span>Post</span>
+    <>
+      <nav className="bottom-nav">
+        <NavLink to="/dashboard" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
+          <i className="fas fa-home" />
+          <span>Home</span>
         </NavLink>
-      ) : (
-        <NavLink to="/tasks/my-active" className={({ isActive }) => `bnav-item bnav-post ${isActive ? 'active' : ''}`}>
-          <div className="bnav-post-btn bnav-post-btn--runner">
-            <i className="fas fa-tasks" />
-          </div>
-          <span>My Tasks</span>
+        <NavLink to="/tasks/browse" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
+          <i className="fas fa-search" />
+          <span>Browse</span>
         </NavLink>
-      )}
 
-      <NavLink to="/wallet" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
-        <i className="fas fa-wallet" />
-        <span>Wallet</span>
-      </NavLink>
-      <NavLink to="/user/profile" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
-        <i className="fas fa-user" />
-        <span>Profile</span>
-      </NavLink>
-    </nav>
+        {canPost ? (
+          <button className={`bnav-item bnav-post ${pathname === '/tasks/post' ? 'active' : ''}`} onClick={handlePostErrand} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <div className="bnav-post-btn">
+              <i className="fas fa-plus" />
+            </div>
+            <span>Post</span>
+          </button>
+        ) : (
+          <NavLink to="/tasks/my-active" className={({ isActive }) => `bnav-item bnav-post ${isActive ? 'active' : ''}`}>
+            <div className="bnav-post-btn bnav-post-btn--runner">
+              <i className="fas fa-tasks" />
+            </div>
+            <span>My Tasks</span>
+          </NavLink>
+        )}
+
+        <NavLink to="/wallet" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
+          <i className="fas fa-wallet" />
+          <span>Wallet</span>
+        </NavLink>
+        <NavLink to="/user/profile" className={({ isActive }) => `bnav-item ${isActive ? 'active' : ''}`}>
+          <i className="fas fa-user" />
+          <span>Profile</span>
+        </NavLink>
+      </nav>
+      {ProfileIncompleteModal}
+    </>
   )
 }

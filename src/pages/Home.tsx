@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
+import { usePostErrand } from '../hooks/usePostErrand'
 import './Home.css'
 
 const features = [
@@ -9,17 +9,10 @@ const features = [
 ]
 
 export default function Home() {
-  const { isAuthenticated, canPostErrands, isProfileIncomplete } = useAuth()
-  const navigate = useNavigate()
-
-  const handlePostErrand = () => {
-    if (!isAuthenticated()) { navigate('/login'); return }
-    if (isProfileIncomplete()) { navigate('/user/profile'); return }
-    if (!canPostErrands()) { navigate('/user/profile'); return }
-    navigate('/tasks/post')
-  }
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
 
   return (
+    <>
     <div className="home-page">
       {/* Hero */}
       <section className="hero-section">
@@ -98,5 +91,7 @@ export default function Home() {
         </div>
       </section>
     </div>
+    {ProfileIncompleteModal}
+    </>
   )
 }

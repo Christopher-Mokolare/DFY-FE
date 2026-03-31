@@ -1,17 +1,10 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { usePostErrand } from '../../hooks/usePostErrand'
 import './Footer.css'
 
 export default function Footer() {
-  const { canPostErrands, isProfileIncomplete } = useAuth()
+  const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const year = new Date().getFullYear()
-
-  const handlePostErrand = (e: React.MouseEvent) => {
-    if (!canPostErrands() || isProfileIncomplete()) {
-      e.preventDefault()
-      window.location.href = '/user/profile'
-    }
-  }
 
   return (
     <footer className="site-footer">
@@ -39,7 +32,7 @@ export default function Footer() {
               <li><Link to="/about">About Us</Link></li>
               <li><Link to="/contact">Contact</Link></li>
               <li><Link to="/tasks/browse">Browse Errands</Link></li>
-              {canPostErrands() && <li><Link to="/tasks/post" onClick={handlePostErrand}>Post An Errand</Link></li>}
+              <li><button onClick={handlePostErrand} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit', padding: 0 }}>Post An Errand</button></li>
             </ul>
           </div>
           <div>
@@ -70,6 +63,11 @@ export default function Footer() {
           <span>Made with <i className="fas fa-heart" style={{ color: 'var(--primary)' }} /> in South Africa</span>
         </div>
       </div>
+
+      {ProfileIncompleteModal}
     </footer>
+
+
   )
+
 }
