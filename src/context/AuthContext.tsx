@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User } from '../types'
 import { authApi } from '../api'
 
+
 interface AuthContextType {
   user: User | null
   token: string | null
@@ -30,8 +31,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedUser = localStorage.getItem('currentUser')
     if (storedToken && storedUser) {
       try {
+        const parsed = JSON.parse(storedUser)
         setToken(storedToken)
-        setUser(JSON.parse(storedUser))
+        setUser(parsed)
+        // If stored user is missing idNumber/address, fetch full profile to self-heal
+        if (!parsed.idNumber || !parsed.address) {
+          authApi.getProfile()
+            .then(r => {
+              const d = r.data?.data || r.data
+              if (d) {
+                const merged = { ...parsed, ...d }
+                localStorage.setItem('currentUser', JSON.stringify(merged))
+                setUser(merged)
+              }
+            })
+            .catch(() => { /* keep existing user */ })
+        }
       } catch {
         localStorage.removeItem('token')
         localStorage.removeItem('currentUser')
@@ -47,16 +62,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.message || 'Login failed')
     }
     localStorage.setItem('token', data.token)
-    localStorage.setItem('currentUser', JSON.stringify(data.user))
-    if (!localStorage.getItem('userPreferences') && data.user.userType) {
+    setToken(data.token)
+    // Fetch full profile so idNumber/address are available for isProfileComplete
+    let fullUser = data.user
+    try {
+      const profileRes = await authApi.getProfile()
+      const profileData = profileRes.data?.data || profileRes.data
+      if (profileData) fullUser = { ...data.user, ...profileData }
+    } catch { /* fall back to login user */ }
+    localStorage.setItem('currentUser', JSON.stringify(fullUser))
+    if (!localStorage.getItem('userPreferences') && fullUser.userType) {
       const prefs = {
-        canCreateTasks: data.user.userType === 'creator' || data.user.userType === 'both',
-        canAcceptTasks: data.user.userType === 'runner' || data.user.userType === 'both',
+        canCreateTasks: fullUser.userType === 'creator' || fullUser.userType === 'both',
+        canAcceptTasks: fullUser.userType === 'runner' || fullUser.userType === 'both',
       }
       localStorage.setItem('userPreferences', JSON.stringify(prefs))
     }
-    setToken(data.token)
-    setUser(data.user)
+    setUser(fullUser)
   }, [])
 
   const logout = useCallback(() => {

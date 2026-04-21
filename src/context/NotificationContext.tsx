@@ -26,6 +26,7 @@ interface NotificationContextValue {
   loadMore: () => Promise<void>
   markRead: (id: number) => Promise<void>
   markAllRead: () => Promise<void>
+  markTaskNotificationsRead: (taskId: string | number) => void
   remove: (id: number) => Promise<void>
   clearRead: () => Promise<void>
   refresh: () => Promise<void>
@@ -43,6 +44,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [totalPages, setTotalPages] = useState(1)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hubRef = useRef<signalR.HubConnection | null>(null)
+  const localReadIdsRef = useRef<Set<number>>(new Set())
 
   const startPolling = useCallback((fetchFn: () => Promise<void>) => {
     if (pollRef.current) return
@@ -59,7 +61,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       const res = await notificationsApi.getAll(1, PAGE_SIZE)
       if (res.data?.success) {
-        setNotifications(res.data.data || [])
+        let data: AppNotification[] = res.data.data || []
+        // Preserve local read state for IDs we've already marked read (server may lag)
+        data = data.map(n => localReadIdsRef.current.has(n.id) ? { ...n, isRead: true } : n)
+        // Auto-mark message notifications as read if user is on that task's chat page
+        const chatMatch = window.location.pathname.match(/^\/tasks\/([^/]+)\/chat$/)
+        if (chatMatch) {
+          const activeChatTaskId = Number(chatMatch[1])
+          const toMark = data.filter(n => !n.isRead && n.type === 'new_message' && n.relatedTaskId === activeChatTaskId)
+          if (toMark.length > 0) {
+            toMark.forEach(n => localReadIdsRef.current.add(n.id))
+            notificationsApi.markTaskRead(activeChatTaskId)
+              .then(() => toMark.forEach(n => localReadIdsRef.current.delete(n.id)))
+              .catch(() => {})
+            data = data.map(n => toMark.some(m => m.id === n.id) ? { ...n, isRead: true } : n)
+          }
+        }
+        setNotifications(data)
         setTotalPages(res.data.totalPages || 1)
         setPage(1)
       }
@@ -86,6 +104,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [isAuthenticated, page])
 
   const pushNotification = useCallback((raw: any) => {
+    // Suppress new message notifications when user is already on that task's chat page
+    if (raw.type === 'new_message' && raw.relatedTaskId != null) {
+      const onChatPage = window.location.pathname === `/tasks/${raw.relatedTaskId}/chat`
+      if (onChatPage) return
+    }
     const n: AppNotification = {
       id: raw.id ?? Date.now(),
       type: raw.type || 'system',
@@ -145,13 +168,31 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   const markRead = useCallback(async (id: number) => {
+    localReadIdsRef.current.add(id)
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
-    await notificationsApi.markRead(String(id)).catch(() => {})
+    await notificationsApi.markRead(String(id))
+      .then(() => localReadIdsRef.current.delete(id)) // server confirmed — no longer need to track
+      .catch(() => { /* keep in localReadIdsRef so poll won't restore it */ })
   }, [])
 
   const markAllRead = useCallback(async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
-    await notificationsApi.markAllRead().catch(() => {})
+    setNotifications(prev => { prev.forEach(n => localReadIdsRef.current.add(n.id)); return prev.map(n => ({ ...n, isRead: true })) })
+    await notificationsApi.markAllRead()
+      .then(() => localReadIdsRef.current.clear())
+      .catch(() => {})
+  }, [])
+
+  const markTaskNotificationsRead = useCallback((taskId: string | number) => {
+    setNotifications(prev => {
+      const toMark = prev.filter(n => !n.isRead && n.type === 'new_message' && String(n.relatedTaskId) === String(taskId))
+      if (toMark.length === 0) return prev
+      toMark.forEach(n => localReadIdsRef.current.add(n.id))
+      // Single bulk API call instead of N individual calls
+      notificationsApi.markTaskRead(Number(taskId))
+        .then(() => toMark.forEach(n => localReadIdsRef.current.delete(n.id)))
+        .catch(() => {})
+      return prev.map(n => toMark.some(m => m.id === n.id) ? { ...n, isRead: true } : n)
+    })
   }, [])
 
   const remove = useCallback(async (id: number) => {
@@ -165,7 +206,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [])
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, loading, hasMore: page < totalPages, loadMore, markRead, markAllRead, remove, clearRead, refresh: fetch }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, loading, hasMore: page < totalPages, loadMore, markRead, markAllRead, markTaskNotificationsRead, remove, clearRead, refresh: fetch }}>
       {children}
     </NotificationContext.Provider>
   )

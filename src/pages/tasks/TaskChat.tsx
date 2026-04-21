@@ -4,6 +4,7 @@ import * as signalR from '@microsoft/signalr'
 import DOMPurify from 'dompurify'
 import { tasksApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationContext'
 import type { ChatMessage } from '../../types'
 import env from '../../env'
 import './TaskChat.css'
@@ -15,6 +16,7 @@ export default function TaskChat() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { notifications, markTaskNotificationsRead } = useNotifications()
 
   const taskTitle = searchParams.get('title') || 'Task Chat'
 
@@ -144,6 +146,11 @@ export default function TaskChat() {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }
   }, [fetchMessages])
+
+  // Mark all unread message notifications for this task as read on mount and when notifications update
+  useEffect(() => {
+    if (taskId) markTaskNotificationsRead(taskId)
+  }, [notifications, taskId, markTaskNotificationsRead])
 
   // Scroll to bottom when messages load or new ones arrive
   useEffect(() => {

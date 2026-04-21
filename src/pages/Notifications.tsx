@@ -51,7 +51,7 @@ const TABS: { id: Tab; label: string; icon: string; types?: string[] }[] = [
 ]
 
 export default function Notifications() {
-  const { notifications, unreadCount, loading, hasMore, loadMore, markRead, markAllRead, remove, clearRead } = useNotifications()
+  const { notifications, unreadCount, loading, hasMore, loadMore, markRead, markAllRead, markTaskNotificationsRead, remove, clearRead } = useNotifications()
   const navigate = useNavigate()
   const { user } = useAuth()
   const isAdmin = user?.roles?.includes('Admin')
@@ -89,7 +89,11 @@ export default function Notifications() {
   }), [notifications])
 
   const handleClick = async (n: AppNotification) => {
-    if (!n.isRead) await markRead(n.id)
+    if (n.type === 'new_message' && n.relatedTaskId != null) {
+      markTaskNotificationsRead(n.relatedTaskId)
+    } else if (!n.isRead) {
+      await markRead(n.id)
+    }
     if (!n.relatedTaskStringId && !n.relatedTaskId) return
     const taskId = n.relatedTaskStringId
     if (n.type === 'new_message') {

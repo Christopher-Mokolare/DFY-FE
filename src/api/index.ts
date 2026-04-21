@@ -164,6 +164,7 @@ export const notificationsApi = {
   },
   markRead: (id: string) => api.post(`/notifications/${id}/mark-read`, {}),
   markAllRead: () => api.post('/notifications/mark-all-read', {}),
+  markTaskRead: (taskId: number) => api.post('/notifications/mark-task-read', { taskId }),
   remove: (id: string) => api.delete(`/notifications/${id}`),
   clearRead: () => api.delete('/notifications/clear-read'),
 }
