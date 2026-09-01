@@ -47,13 +47,32 @@ export default function AdminTasks() {
   const [deleteModal, setDeleteModal] = useState<any | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => { load() }, [page, filter])
   useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, filter, search, true) }, 400); return () => clearTimeout(t) }, [search])
 
-  const verify = async (id: string) => { await adminApi.verifyPayment(id); load() }
-  const unverify = async (id: string) => { await adminApi.unverifyPayment(id); load() }
-  const bulkVerify = async () => { await adminApi.bulkVerify(selected); setSelected([]); load() }
+  const verify = async (id: string) => {
+    try {
+      const r = await adminApi.verifyPayment(id)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Verify failed'); return }
+      setActionError(''); load()
+    } catch { setActionError('Verify failed') }
+  }
+  const unverify = async (id: string) => {
+    try {
+      const r = await adminApi.unverifyPayment(id)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Unverify failed'); return }
+      setActionError(''); load()
+    } catch { setActionError('Unverify failed') }
+  }
+  const bulkVerify = async () => {
+    try {
+      const r = await adminApi.bulkVerify(selected)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Bulk verify failed'); return }
+      setActionError(''); setSelected([]); load()
+    } catch { setActionError('Bulk verify failed') }
+  }
   const toggleSelect = (id: string) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
 
   const confirmDelete = async () => {
@@ -110,6 +129,7 @@ export default function AdminTasks() {
               <button className="btn btn-secondary btn-sm" onClick={exportTasksPDF} disabled={tasks.length === 0}><i className="fas fa-file-pdf" /><span> PDF</span></button>
             </div>
           </div>
+          {actionError && <div className="alert alert-error" style={{ margin: '0.75rem 0' }}><i className="fas fa-exclamation-circle" /> {actionError}</div>}
           {loading ? <div className="loading-state"><div className="spinner" /></div> : (
             <>
               {/* Desktop table */}

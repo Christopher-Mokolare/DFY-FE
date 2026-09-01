@@ -20,6 +20,9 @@ export default function Wallet() {
   const [showAddBank, setShowAddBank] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [bankError, setBankError] = useState('')
+  const [withdrawError, setWithdrawError] = useState('')
+  const [withdrawSuccess, setWithdrawSuccess] = useState('')
   const [fee, setFee] = useState(0)
   const [minWithdraw, setMinWithdraw] = useState(50)
   const [maxWithdraw, setMaxWithdraw] = useState(10000)
@@ -56,25 +59,31 @@ export default function Wallet() {
   const calcFee = (amt: number) => Math.max(amt * 0.02, 5)
 
   const handleAddBank = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault(); setLoading(true); setBankError('')
     try {
-      await walletApi.addBankAccount(bankForm)
+      const res = await walletApi.addBankAccount(bankForm)
+      if (res.data?.success === false) { setBankError(res.data?.message || 'Failed to add account'); return }
       const r = await walletApi.getBankAccounts()
       setBankAccounts(r.data?.data || [])
       setShowAddBank(false)
       setBankForm({ bankName: '', accountHolderName: '', accountNumber: '', branchCode: '', accountType: 'Cheque' })
-    } catch { /* ignore */ } finally { setLoading(false) }
+    } catch (err: any) {
+      setBankError(err.response?.data?.message || 'Failed to add account')
+    } finally { setLoading(false) }
   }
 
   const handleWithdraw = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault(); setLoading(true); setWithdrawError(''); setWithdrawSuccess('')
     try {
-      await walletApi.requestWithdrawal({ amount: parseFloat(withdrawForm.amount), bankAccountId: parseInt(withdrawForm.bankAccountId) })
-      setShowWithdraw(false)
+      const res = await walletApi.requestWithdrawal({ amount: parseFloat(withdrawForm.amount), bankAccountId: parseInt(withdrawForm.bankAccountId) })
+      if (res.data?.success === false) { setWithdrawError(res.data?.message || 'Withdrawal failed'); return }
+      setWithdrawSuccess(res.data?.message || 'Withdrawal request submitted.')
       const r = await walletApi.getBalance()
       const d = r.data?.data || r.data
       setBalance(d?.availableBalance ?? d?.balance ?? 0)
-    } catch { /* ignore */ } finally { setLoading(false) }
+    } catch (err: any) {
+      setWithdrawError(err.response?.data?.message || 'Withdrawal failed')
+    } finally { setLoading(false) }
   }
 
   return (
@@ -184,8 +193,9 @@ export default function Wallet() {
                   </select>
                 </div>
               </div>
+              {bankError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0.5rem 0 0' }}>{bankError}</p>}
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAddBank(false)}>Cancel</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowAddBank(false); setBankError('') }}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Adding...' : 'Add Account'}</button>
               </div>
             </form>
@@ -221,10 +231,12 @@ export default function Wallet() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', padding: '0.5rem 0 0.25rem', borderTop: '1px solid var(--border)', fontWeight: 600 }}><span>You receive:</span><span className="text-primary">{fmt((parseFloat(withdrawForm.amount) || 0) - fee)}</span></div>
                   </div>
                 )}
+                {withdrawError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>{withdrawError}</p>}
+                {withdrawSuccess && <p style={{ color: 'var(--success)', fontSize: '0.85rem' }}>{withdrawSuccess}</p>}
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowWithdraw(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Processing...' : 'Withdraw'}</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowWithdraw(false); setWithdrawError(''); setWithdrawSuccess('') }}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={loading || !!withdrawSuccess}>{loading ? 'Processing...' : 'Withdraw'}</button>
               </div>
             </form>
           </div>

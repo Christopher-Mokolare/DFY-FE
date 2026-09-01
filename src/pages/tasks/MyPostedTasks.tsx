@@ -36,6 +36,7 @@ export default function MyPostedTasks() {
   })
   const [confirmModal, setConfirmModal] = useState<Task | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError] = useState('')
   const [cancelModal, setCancelModal] = useState<Task | null>(null)
   const [cancelLoading, setCancelLoading] = useState(false)
   const [cancelMessage, setCancelMessage] = useState('')
@@ -82,12 +83,15 @@ export default function MyPostedTasks() {
 
   const handleConfirm = async () => {
     if (!confirmModal) return
-    setActionLoading(true)
+    setActionLoading(true); setActionError('')
     try {
-      await tasksApi.confirm(confirmModal.taskId)
+      const res = await tasksApi.confirm(confirmModal.taskId)
+      if (res.data?.success === false) { setActionError(res.data?.message || 'Failed to confirm task'); return }
       setConfirmModal(null)
       await loadTasks()
-    } catch { /* ignore */ } finally { setActionLoading(false) }
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to confirm task')
+    } finally { setActionLoading(false) }
   }
 
   const handleRating = async () => {
@@ -275,8 +279,9 @@ export default function MyPostedTasks() {
               <p className="mt-2"><strong>{confirmModal.taskDescription}</strong></p>
               <div className="alert alert-info mt-3"><i className="fas fa-info-circle" /> Confirming will release payment to the runner.</div>
             </div>
+            {actionError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{actionError}</p>}
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setConfirmModal(null)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setConfirmModal(null); setActionError('') }}>Cancel</button>
               <button className="btn btn-primary" onClick={handleConfirm} disabled={actionLoading}>
                 {actionLoading ? <><span className="spinner spinner-sm" /> Processing...</> : 'Confirm & Release Payment'}
               </button>

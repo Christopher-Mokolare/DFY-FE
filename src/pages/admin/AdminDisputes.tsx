@@ -9,6 +9,7 @@ export default function AdminDisputes() {
   const [resolution, setResolution] = useState('')
   const [action, setAction] = useState('none')
   const [actionLoading, setActionLoading] = useState(false)
+  const [resolveError, setResolveError] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -24,14 +25,17 @@ export default function AdminDisputes() {
 
   const resolve = async () => {
     if (!resolveModal || !resolution.trim()) return
-    setActionLoading(true)
+    setActionLoading(true); setResolveError('')
     try {
-      await adminApi.resolveDispute(resolveModal.id, resolution, action)
+      const res = await adminApi.resolveDispute(resolveModal.id, resolution, action)
+      if (res.data?.success === false) { setResolveError(res.data?.message || 'Failed to resolve dispute'); return }
       setResolveModal(null)
       setResolution('')
       setAction('none')
       load()
-    } catch { /* ignore */ } finally { setActionLoading(false) }
+    } catch (err: any) {
+      setResolveError(err.response?.data?.message || 'Failed to resolve dispute')
+    } finally { setActionLoading(false) }
   }
 
   return (
@@ -154,8 +158,9 @@ export default function AdminDisputes() {
                 />
               </div>
             </div>
+            {resolveError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{resolveError}</p>}
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setResolveModal(null)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setResolveModal(null); setResolveError('') }}>Cancel</button>
               <button className="btn btn-primary" onClick={resolve} disabled={actionLoading || !resolution.trim()}>
                 {actionLoading ? <><span className="spinner spinner-sm" /> Resolving...</> : 'Resolve Dispute'}
               </button>

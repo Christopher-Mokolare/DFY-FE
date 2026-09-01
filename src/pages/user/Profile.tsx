@@ -70,7 +70,8 @@ export default function Profile() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError(''); setSuccess('')
     try {
-      await authApi.updateProfile(form)
+      const res = await authApi.updateProfile(form)
+      if (res.data?.success === false) { setError(res.data?.message || 'Failed to update profile.'); return }
       const r = await authApi.getProfile()
       const d = r.data?.data || r.data
       if (d) { localStorage.setItem('currentUser', JSON.stringify(d)); refreshUser() }

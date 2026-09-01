@@ -28,6 +28,8 @@ export default function MyActiveTasks() {
   const [ratingLoading, setRatingLoading] = useState(false)
   const [ratingError, setRatingError] = useState('')
   const [ratedTaskIds, setRatedTaskIds] = useState<Set<string>>(new Set())
+  const [actionError, setActionError] = useState('')
+  const [disputeError, setDisputeError] = useState('')
 
   const loadTasks = async () => {
     try {
@@ -42,24 +44,30 @@ export default function MyActiveTasks() {
 
   const handleComplete = async () => {
     if (!completeModal) return
-    setActionLoading(true)
+    setActionLoading(true); setActionError('')
     try {
-      await tasksApi.complete(completeModal.taskId)
+      const res = await tasksApi.complete(completeModal.taskId)
+      if (res.data?.success === false) { setActionError(res.data?.message || 'Failed to mark complete'); return }
       setCompleteModal(null)
       await loadTasks()
-    } catch { /* ignore */ } finally { setActionLoading(false) }
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to mark complete')
+    } finally { setActionLoading(false) }
   }
 
   const handleDispute = async () => {
     if (!disputeModal || !disputeIssue.trim()) return
-    setDisputeLoading(true)
+    setDisputeLoading(true); setDisputeError('')
     try {
-      await disputesApi.raise(disputeModal.taskId, disputeIssue, disputeCategory)
+      const res = await disputesApi.raise(disputeModal.taskId, disputeIssue, disputeCategory)
+      if (res.data?.success === false) { setDisputeError(res.data?.message || 'Failed to raise dispute'); return }
       setDisputeModal(null)
       setDisputeIssue('')
       setDisputeCategory('General')
       await loadTasks()
-    } catch { /* ignore */ } finally { setDisputeLoading(false) }
+    } catch (err: any) {
+      setDisputeError(err.response?.data?.message || 'Failed to raise dispute')
+    } finally { setDisputeLoading(false) }
   }
 
   const handleRating = async () => {
@@ -173,8 +181,9 @@ export default function MyActiveTasks() {
               <p className="mt-2"><strong>{completeModal.description || completeModal.taskDescription || completeModal.title}</strong></p>
               <div className="alert alert-info mt-3"><i className="fas fa-info-circle" /> The task creator will be notified to confirm and release payment.</div>
             </div>
+            {actionError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{actionError}</p>}
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setCompleteModal(null)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setCompleteModal(null); setActionError('') }}>Cancel</button>
               <button className="btn btn-primary" onClick={handleComplete} disabled={actionLoading}>
                 {actionLoading ? <><span className="spinner spinner-sm" /> Processing...</> : 'Mark Complete'}
               </button>
@@ -208,8 +217,9 @@ export default function MyActiveTasks() {
                 <textarea className="form-textarea" placeholder="Explain what went wrong..." value={disputeIssue} onChange={e => setDisputeIssue(e.target.value)} rows={4} />
               </div>
             </div>
+            {disputeError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{disputeError}</p>}
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setDisputeModal(null)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setDisputeModal(null); setDisputeError('') }}>Cancel</button>
               <button className="btn btn-danger" onClick={handleDispute} disabled={disputeLoading || !disputeIssue.trim()}>
                 {disputeLoading ? <><span className="spinner spinner-sm" /> Submitting...</> : 'Submit Dispute'}
               </button>
