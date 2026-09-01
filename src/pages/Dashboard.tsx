@@ -60,10 +60,34 @@ export default function Dashboard() {
     <div className="dashboard-page">
       <div className="dashboard-header">
         <div className="container">
-          {userType === 'creator' && <><h1><i className="fas fa-user-tie" /> Task Creator Dashboard</h1><p>Manage and track your posted tasks</p></>}
-          {userType === 'runner'  && <><h1><i className="fas fa-running" /> Task Runner Dashboard</h1><p>Find tasks and track your earnings</p></>}
-          {userType === 'both'   && <><h1><i className="fas fa-tachometer-alt" /> My Dashboard</h1><p>Manage your tasks as both creator and runner</p></>}
-          {!userType             && <><h1><i className="fas fa-home" /> Welcome, {displayName}!</h1><p>Set up your profile to get started</p></>}
+          {userType === 'creator' && (
+            <>
+              <div className="dashboard-role-pill"><i className="fas fa-user-tie" /> Creator</div>
+              <h1><i className="fas fa-user-tie" /> Task Creator Dashboard</h1>
+              <p>Manage and track your posted tasks</p>
+            </>
+          )}
+          {userType === 'runner' && (
+            <>
+              <div className="dashboard-role-pill"><i className="fas fa-running" /> Runner</div>
+              <h1><i className="fas fa-running" /> Task Runner Dashboard</h1>
+              <p>Find tasks and track your earnings</p>
+            </>
+          )}
+          {userType === 'both' && (
+            <>
+              <div className="dashboard-role-pill"><i className="fas fa-shield-alt" /> Creator & Runner</div>
+              <h1><i className="fas fa-tachometer-alt" /> My Dashboard</h1>
+              <p>Manage your tasks as both creator and runner</p>
+            </>
+          )}
+          {!userType && (
+            <>
+              <div className="dashboard-role-pill"><i className="fas fa-home" /> Welcome</div>
+              <h1><i className="fas fa-home" /> Welcome, {displayName}!</h1>
+              <p>Set up your profile to get started</p>
+            </>
+          )}
 
           {isProfileIncomplete() && (
             <div className="profile-alert">

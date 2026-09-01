@@ -6,10 +6,67 @@ import { useAuth } from '../../context/AuthContext'
 import './PostErrand.css'
 
 const DEFAULT_CATEGORIES = ['Grocery Shopping','Delivery','Cleaning','Gardening','Moving','Repairs','Tutoring','Pet Care','Cooking','Other']
+const GAUTENG_CITIES = ['Johannesburg','Sandton','Randburg','Roodepoort','Soweto','Midrand','Pretoria','Centurion','Tembisa','Benoni','Boksburg','Germiston','Alberton','Vereeniging','Vanderbijlpark','Krugersdorp','Brakpan']
 
 function calcCommission(budget: number) {
   const commission = Math.max(budget * 0.15, 0)
   return { total: budget, commission, payout: budget - commission }
+}
+
+function validateTaskForm(values: {
+  taskDescription: string
+  category: string
+  customCategory: string
+  area: string
+  priority: string
+  dateNeeded: string
+  budget: string
+  notes: string
+  termsAccepted: boolean
+}) {
+  const errors: Record<string, string> = {}
+
+  const description = values.taskDescription.trim()
+  if (!description) errors.taskDescription = 'Task description is required.'
+  else if (description.length < 20 || description.length > 500) errors.taskDescription = 'Task description must be between 20 and 500 characters.'
+
+  const categoryValue = values.category === 'Other' ? values.customCategory.trim() : values.category.trim()
+  if (!categoryValue) errors.category = 'Please select a category.'
+  else if (!DEFAULT_CATEGORIES.some(c => c.toLowerCase() === categoryValue.toLowerCase())) {
+    errors.category = 'Invalid category selection.'
+  }
+
+  const area = values.area.trim()
+  if (!area) errors.area = 'Location is required.'
+  else if (area.length < 2) errors.area = 'Area must be at least 2 characters long.'
+  else if (!GAUTENG_CITIES.some(c => c.toLowerCase() === area.toLowerCase())) {
+    errors.area = 'Location must be within Gauteng. Please choose an approved Gauteng city.'
+  }
+
+  const priority = values.priority.trim().toLowerCase()
+  if (!['standard', 'urgent', 'low', 'medium', 'high'].includes(priority)) errors.priority = 'Please choose a valid priority.'
+
+  const budgetValue = Number(values.budget)
+  if (!values.budget || Number.isNaN(budgetValue)) errors.budget = 'Budget is required.'
+  else if (budgetValue < 50 || budgetValue > 100000) errors.budget = 'Budget must be between R50 and R100000.'
+
+  if (values.dateNeeded) {
+    const date = new Date(values.dateNeeded)
+    const now = new Date()
+    if (Number.isNaN(date.getTime())) errors.dateNeeded = 'Please enter a valid date.'
+    else if (date <= new Date(now.getTime() + 30 * 60 * 1000)) errors.dateNeeded = 'Date needed must be in the future.'
+    else if (date > new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)) errors.dateNeeded = 'Date needed cannot be more than 365 days in the future.'
+  } else {
+    errors.dateNeeded = 'Please select a deadline.'
+  }
+
+  if (values.notes.trim().length > 1000) errors.notes = 'Notes must be 1000 characters or less.'
+  if (!values.termsAccepted) errors.termsAccepted = 'You must accept the terms and conditions.'
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+  }
 }
 
 export default function PostErrand() {
@@ -29,6 +86,7 @@ export default function PostErrand() {
   const [showCustom, setShowCustom] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [minAmount, setMinAmount] = useState(50)
   const [maxAmount, setMaxAmount] = useState(5000)
 
@@ -72,10 +130,42 @@ export default function PostErrand() {
     const val = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value
     setForm(f => ({ ...f, [field]: val }))
     if (field === 'category') setShowCustom(e.target.value === 'Other')
+
+    const updatedForm = { ...form, [field]: val }
+    const result = validateTaskForm(updatedForm as any)
+    setFieldErrors(prev => ({ ...prev, [field]: result.errors[field] || '' }))
+    if (field === 'termsAccepted' && result.errors.termsAccepted) setError(result.errors.termsAccepted)
   }
 
-  const isStep1Valid = () => form.taskName.trim().length >= 3 && form.taskDescription.length >= 10 && form.category && form.area && form.priority
-  const isStep2Valid = () => !!form.dateNeeded && parseFloat(form.budget) >= minAmount
+  const validationSummary = validateTaskForm(form as any)
+  const isStep1Valid = () => {
+    const step1Result = validateTaskForm({
+      taskDescription: form.taskDescription,
+      category: form.category,
+      customCategory: form.customCategory,
+      area: form.area,
+      priority: form.priority,
+      dateNeeded: form.dateNeeded,
+      budget: form.budget,
+      notes: form.notes,
+      termsAccepted: form.termsAccepted,
+    })
+    return step1Result.valid
+  }
+  const isStep2Valid = () => {
+    const step2Result = validateTaskForm({
+      taskDescription: form.taskDescription,
+      category: form.category,
+      customCategory: form.customCategory,
+      area: form.area,
+      priority: form.priority,
+      dateNeeded: form.dateNeeded,
+      budget: form.budget,
+      notes: form.notes,
+      termsAccepted: form.termsAccepted,
+    })
+    return step2Result.valid
+  }
   const budget = parseFloat(form.budget) || 0
   const commission = calcCommission(budget)
 
@@ -189,6 +279,7 @@ export default function PostErrand() {
                   <label className="form-label">Describe your task *</label>
                   <textarea className="form-textarea" rows={4} placeholder="Tell us what you need help with..." value={form.taskDescription} onChange={set('taskDescription')} required minLength={10} />
                   <small className="text-muted text-xs">Be specific - the more details, the better matches!</small>
+                  {fieldErrors.taskDescription && <small className="text-error">{fieldErrors.taskDescription}</small>}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Category *</label>
@@ -199,6 +290,7 @@ export default function PostErrand() {
                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
+                  {fieldErrors.category && <small className="text-error">{fieldErrors.category}</small>}
                   {showCustom && (
                     <input className="form-input mt-2" placeholder="Enter custom category..." value={form.customCategory} onChange={set('customCategory')} required={showCustom} />
                   )}
@@ -208,8 +300,12 @@ export default function PostErrand() {
                     <label className="form-label">Location *</label>
                     <div className="input-with-icon">
                       <i className="fas fa-map-marker-alt" />
-                      <input className="form-input" placeholder="Area / Suburb" value={form.area} onChange={set('area')} required />
+                      <input className="form-input" placeholder="Area / Suburb" value={form.area} onChange={set('area')} required list="gauteng-cities" />
+                      <datalist id="gauteng-cities">
+                        {GAUTENG_CITIES.map(city => <option key={city} value={city} />)}
+                      </datalist>
                     </div>
+                    {fieldErrors.area && <small className="text-error">{fieldErrors.area}</small>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Urgency *</label>
@@ -241,6 +337,7 @@ export default function PostErrand() {
                       <i className="fas fa-calendar" />
                       <input type="datetime-local" className="form-input" value={form.dateNeeded} onChange={set('dateNeeded')} required />
                     </div>
+                    {fieldErrors.dateNeeded && <small className="text-error">{fieldErrors.dateNeeded}</small>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Your Budget (R) *</label>
@@ -249,6 +346,7 @@ export default function PostErrand() {
                       <input type="number" className="form-input budget-input" placeholder="100.00" min={50} step={0.01} value={form.budget} onChange={set('budget')} required />
                     </div>
                     <small className="text-muted text-xs">Minimum R50</small>
+                    {fieldErrors.budget && <small className="text-error">{fieldErrors.budget}</small>}
                     {budget >= 50 && (
                       <div className="commission-breakdown">
                         <div className="breakdown-row"><span>Task Budget:</span><span>R{commission.total.toFixed(2)}</span></div>

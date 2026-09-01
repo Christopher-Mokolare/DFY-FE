@@ -21,12 +21,25 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="page-header"><div className="container"><h1><i className="fas fa-tachometer-alt" /> Admin Dashboard</h1></div></div>
+      <div className="page-header"><div className="container"><div className="dashboard-role-pill"><i className="fas fa-shield-alt" /> Admin</div><h1><i className="fas fa-tachometer-alt" /> Admin Dashboard</h1></div></div>
       <div className="container">
         {loading && <div className="loading-state"><div className="spinner" /><p>Loading...</p></div>}
         {error && <div className="alert alert-error">{error}</div>}
         {stats && (
           <>
+            <div className="admin-overview-card">
+              <div>
+                <p className="admin-overview-label">Operations overview</p>
+                <h2>Marketplace health at a glance</h2>
+              </div>
+              <div className="admin-overview-chips">
+                <span><i className="fas fa-users" /> {stats.totalUsers ?? 0} Users</span>
+                <span><i className="fas fa-tasks" /> {stats.totalTasks ?? 0} Tasks</span>
+                <span><i className="fas fa-money-bill-wave" /> R{(stats.platformEarnings ?? 0).toFixed(2)}</span>
+                <span><i className="fas fa-gavel" /> {stats.openDisputes ?? 0} Disputes</span>
+              </div>
+            </div>
+
             <div className="stats-grid">
               <div className="stat-card"><div className="stat-icon bg-secondary"><i className="fas fa-users" /></div><div className="stat-content"><h3>{stats.totalUsers ?? 0}</h3><p>Total Users</p></div></div>
               <div className="stat-card"><div className="stat-icon bg-primary"><i className="fas fa-tasks" /></div><div className="stat-content"><h3>{stats.totalTasks ?? 0}</h3><p>Total Tasks</p></div></div>

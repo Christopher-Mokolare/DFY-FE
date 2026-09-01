@@ -18,11 +18,17 @@ export default function Home() {
       <section className="hero-section">
         <div className="container hero-content">
           <div className="hero-text">
-            <h1>Let's get it done<span className="dot">.</span></h1>
-            <p>We are a Freelance Platform that allows ordinary South Africans to perform tasks for each other, providing an opportunity for you to earn extra cash</p>
+            <div className="hero-badge"><i className="fas fa-bolt" /> Trusted local task marketplace</div>
+            <h1>Let’s get it done<span className="dot">.</span></h1>
+            <p>Connect with reliable people in your area to post errands, complete tasks, and earn extra income without the hassle.</p>
             <div className="hero-actions">
               <Link to="/tasks/browse" className="btn btn-secondary btn-lg">Browse Errands</Link>
               <button onClick={handlePostErrand} className="btn btn-primary btn-lg">Post An Errand</button>
+            </div>
+            <div className="hero-stats">
+              <div><strong>2k+</strong><span>Tasks completed</span></div>
+              <div><strong>1.4k+</strong><span>Active runners</span></div>
+              <div><strong>4.9/5</strong><span>Average rating</span></div>
             </div>
           </div>
         </div>

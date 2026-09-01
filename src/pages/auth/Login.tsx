@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import './Auth.css'
 
 export default function Login() {
-  const { login, isAdmin } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as any)?.from?.pathname || null
@@ -20,8 +20,9 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
-      const dest = from || (isAdmin() ? '/admin/dashboard' : '/dashboard')
+      const loggedInUser = await login(email, password)
+      const isAdminUser = !!loggedInUser?.isAdmin || !!loggedInUser?.roles?.includes('Admin')
+      const dest = from || (isAdminUser ? '/admin/dashboard' : '/dashboard')
       navigate(dest, { replace: true })
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed. Please try again.')
