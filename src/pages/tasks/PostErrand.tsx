@@ -14,6 +14,7 @@ function calcCommission(budget: number) {
 }
 
 function validateTaskForm(values: {
+  taskName: string
   taskDescription: string
   category: string
   customCategory: string
@@ -25,6 +26,10 @@ function validateTaskForm(values: {
   termsAccepted: boolean
 }) {
   const errors: Record<string, string> = {}
+
+  const name = values.taskName.trim()
+  if (!name) errors.taskName = 'Task name is required.'
+  else if (name.length > 60) errors.taskName = 'Task name must be 60 characters or less.'
 
   const description = values.taskDescription.trim()
   if (!description) errors.taskDescription = 'Task description is required.'
@@ -62,6 +67,72 @@ function validateTaskForm(values: {
 
   if (values.notes.trim().length > 1000) errors.notes = 'Notes must be 1000 characters or less.'
   if (!values.termsAccepted) errors.termsAccepted = 'You must accept the terms and conditions.'
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+  }
+}
+
+function validateStepOne(values: {
+  taskName: string
+  taskDescription: string
+  category: string
+  customCategory: string
+  area: string
+  priority: string
+}) {
+  const errors: Record<string, string> = {}
+
+  const name = values.taskName.trim()
+  if (!name) errors.taskName = 'Task name is required.'
+  else if (name.length > 60) errors.taskName = 'Task name must be 60 characters or less.'
+
+  const description = values.taskDescription.trim()
+  if (!description) errors.taskDescription = 'Task description is required.'
+  else if (description.length < 20 || description.length > 500) errors.taskDescription = 'Task description must be between 20 and 500 characters.'
+
+  const categoryValue = values.category === 'Other' ? values.customCategory.trim() : values.category.trim()
+  if (!categoryValue) errors.category = 'Please select a category.'
+  else if (!DEFAULT_CATEGORIES.some(c => c.toLowerCase() === categoryValue.toLowerCase())) {
+    errors.category = 'Invalid category selection.'
+  }
+
+  const area = values.area.trim()
+  if (!area) errors.area = 'Location is required.'
+  else if (area.length < 2) errors.area = 'Area must be at least 2 characters long.'
+  else if (!GAUTENG_CITIES.some(c => c.toLowerCase() === area.toLowerCase())) {
+    errors.area = 'Location must be within Gauteng. Please choose an approved Gauteng city.'
+  }
+
+  const priority = values.priority.trim().toLowerCase()
+  if (!['standard', 'urgent', 'low', 'medium', 'high'].includes(priority)) errors.priority = 'Please choose a valid priority.'
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+  }
+}
+
+function validateStepTwo(values: {
+  dateNeeded: string
+  budget: string
+}) {
+  const errors: Record<string, string> = {}
+
+  const budgetValue = Number(values.budget)
+  if (!values.budget || Number.isNaN(budgetValue)) errors.budget = 'Budget is required.'
+  else if (budgetValue < 50 || budgetValue > 100000) errors.budget = 'Budget must be between R50 and R100000.'
+
+  if (values.dateNeeded) {
+    const date = new Date(values.dateNeeded)
+    const now = new Date()
+    if (Number.isNaN(date.getTime())) errors.dateNeeded = 'Please enter a valid date.'
+    else if (date <= new Date(now.getTime() + 30 * 60 * 1000)) errors.dateNeeded = 'Date needed must be in the future.'
+    else if (date > new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)) errors.dateNeeded = 'Date needed cannot be more than 365 days in the future.'
+  } else {
+    errors.dateNeeded = 'Please select a deadline.'
+  }
 
   return {
     valid: Object.keys(errors).length === 0,
@@ -137,32 +208,21 @@ export default function PostErrand() {
     if (field === 'termsAccepted' && result.errors.termsAccepted) setError(result.errors.termsAccepted)
   }
 
-  const validationSummary = validateTaskForm(form as any)
   const isStep1Valid = () => {
-    const step1Result = validateTaskForm({
+    const step1Result = validateStepOne({
+      taskName: form.taskName,
       taskDescription: form.taskDescription,
       category: form.category,
       customCategory: form.customCategory,
       area: form.area,
       priority: form.priority,
-      dateNeeded: form.dateNeeded,
-      budget: form.budget,
-      notes: form.notes,
-      termsAccepted: form.termsAccepted,
     })
     return step1Result.valid
   }
   const isStep2Valid = () => {
-    const step2Result = validateTaskForm({
-      taskDescription: form.taskDescription,
-      category: form.category,
-      customCategory: form.customCategory,
-      area: form.area,
-      priority: form.priority,
+    const step2Result = validateStepTwo({
       dateNeeded: form.dateNeeded,
       budget: form.budget,
-      notes: form.notes,
-      termsAccepted: form.termsAccepted,
     })
     return step2Result.valid
   }
