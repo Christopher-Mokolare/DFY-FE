@@ -37,6 +37,7 @@ export default function Profile() {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState('')
+  const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false })
   const [prefSaving, setPrefSaving] = useState(false)
   const [prefSuccess, setPrefSuccess] = useState('')
 
@@ -197,10 +198,28 @@ export default function Profile() {
             {pwSuccess && <div className="alert alert-success mb-4"><i className="fas fa-check-circle" /> {pwSuccess}</div>}
             {pwError && <div className="alert alert-error mb-4"><i className="fas fa-exclamation-circle" /> {pwError}</div>}
             <form onSubmit={handlePwChange}>
-              <div className="form-group"><label className="form-label">Current Password</label><input type="password" className="form-input" value={pwForm.currentPassword} onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))} required /></div>
+              <div className="form-group">
+                <label className="form-label">Current Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input type={showPw.current ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.currentPassword} onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))} required />
+                  <button type="button" onClick={() => setShowPw(s => ({ ...s, current: !s.current }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #6b7280)', padding: 0 }} aria-label={showPw.current ? 'Hide password' : 'Show password'}><i className={`fas ${showPw.current ? 'fa-eye-slash' : 'fa-eye'}`} /></button>
+                </div>
+              </div>
               <div className="form-row-2">
-                <div className="form-group"><label className="form-label">New Password</label><input type="password" className="form-input" value={pwForm.newPassword} onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))} required minLength={6} /></div>
-                <div className="form-group"><label className="form-label">Confirm Password</label><input type="password" className="form-input" value={pwForm.confirmPassword} onChange={e => setPwForm(f => ({ ...f, confirmPassword: e.target.value }))} required /></div>
+                <div className="form-group">
+                  <label className="form-label">New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input type={showPw.new ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.newPassword} onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))} required minLength={6} />
+                    <button type="button" onClick={() => setShowPw(s => ({ ...s, new: !s.new }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #6b7280)', padding: 0 }} aria-label={showPw.new ? 'Hide password' : 'Show password'}><i className={`fas ${showPw.new ? 'fa-eye-slash' : 'fa-eye'}`} /></button>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Confirm Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input type={showPw.confirm ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.confirmPassword} onChange={e => setPwForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
+                    <button type="button" onClick={() => setShowPw(s => ({ ...s, confirm: !s.confirm }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #6b7280)', padding: 0 }} aria-label={showPw.confirm ? 'Hide password' : 'Show password'}><i className={`fas ${showPw.confirm ? 'fa-eye-slash' : 'fa-eye'}`} /></button>
+                  </div>
+                </div>
               </div>
               <button type="submit" className="btn btn-primary" disabled={pwLoading}>{pwLoading ? 'Changing...' : 'Change Password'}</button>
             </form>
