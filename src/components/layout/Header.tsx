@@ -6,7 +6,7 @@ import { usePostErrand } from '../../hooks/usePostErrand'
 import './Header.css'
 
 export default function Header() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth()
+  const { user, isAuthenticated, isAdmin, logout, canAcceptTasks } = useAuth()
   const { unreadCount } = useNotifications()
   const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -36,6 +36,7 @@ export default function Header() {
   const displayName = user
     ? (user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.name ?? '')
     : ''
+  const canViewActiveTasks = user?.userType === 'runner' || user?.userType === 'both'
 
   const UserMenuItems = ({ onClose }: { onClose: () => void }) => (
     <>
@@ -43,7 +44,9 @@ export default function Header() {
         <>
           <li><Link to="/dashboard" onClick={onClose}><i className="fas fa-home" /> Dashboard</Link></li>
           <li><Link to="/tasks/my-posted" onClick={onClose}><i className="fas fa-list" /> My Posted Tasks</Link></li>
-          <li><Link to="/tasks/my-active" onClick={onClose}><i className="fas fa-running" /> My Active Tasks</Link></li>
+          {canViewActiveTasks && (
+            <li><Link to="/tasks/my-active" onClick={onClose}><i className="fas fa-running" /> My Active Tasks</Link></li>
+          )}
           <li><Link to="/user/profile" onClick={onClose}><i className="fas fa-user" /> My Profile</Link></li>
           <li><Link to="/wallet" onClick={onClose}><i className="fas fa-wallet" /> Wallet</Link></li>
           <li className="divider" />

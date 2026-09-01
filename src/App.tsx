@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
-import { RequireAuth, RequireAdmin } from './context/Guards'
+import { RequireAuth, RequireAdmin, RequireRunnerAccess } from './context/Guards'
 import Layout from './components/layout/Layout'
 
 // Pages
@@ -50,7 +50,7 @@ export default function App() {
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
               <Route path="/tasks/post" element={<RequireAuth><PostErrand /></RequireAuth>} />
               <Route path="/tasks/my-posted" element={<RequireAuth><MyPostedTasks /></RequireAuth>} />
-              <Route path="/tasks/my-active" element={<RequireAuth><MyActiveTasks /></RequireAuth>} />
+              <Route path="/tasks/my-active" element={<RequireRunnerAccess><MyActiveTasks /></RequireRunnerAccess>} />
               <Route path="/tasks/:taskId/chat" element={<RequireAuth><TaskChat /></RequireAuth>} />
               <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
               <Route path="/wallet" element={<RequireAuth><Wallet /></RequireAuth>} />
