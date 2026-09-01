@@ -107,8 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = useCallback(() => {
     if (!user) return false
-    if (typeof user.isAdmin === 'boolean') return user.isAdmin
-    return user.roles?.includes('Admin') ?? false
+    if (typeof user.isAdmin === 'boolean' && user.isAdmin) return true
+    if (user.roles?.includes('Admin')) return true
+    return user.userType === 'Admin'
   }, [user])
 
   const isProfileComplete = useCallback(() => {

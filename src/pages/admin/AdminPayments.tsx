@@ -5,17 +5,26 @@ import { exportCSV, exportPDF } from '../../utils/export'
 export default function AdminPayments() {
   const [data, setData] = useState<any>(null)
   const [withdrawals, setWithdrawals] = useState<any[]>([])
+  const [bankAccounts, setBankAccounts] = useState<any[]>([])
+  const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    Promise.all([
-      adminApi.getPayments(),
-      adminApi.getWithdrawalRequests(),
-    ]).then(([paymentsRes, withdrawalsRes]) => {
-      setData(paymentsRes.data?.data || paymentsRes.data)
-      setWithdrawals(withdrawalsRes.data?.data?.withdrawals || [])
-    }).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+  const loadAll = () => Promise.all([
+    adminApi.getPayments(),
+    adminApi.getWithdrawalRequests(),
+    adminApi.getBankAccounts(),
+  ]).then(([paymentsRes, withdrawalsRes, bankRes]) => {
+    setData(paymentsRes.data?.data || paymentsRes.data)
+    setWithdrawals(withdrawalsRes.data?.data?.withdrawals || [])
+    setBankAccounts(bankRes.data?.data || [])
+  }).catch(() => {}).finally(() => setLoading(false))
+
+  useEffect(() => { loadAll() }, [])
+
+  const handleVerifyBank = async (id: number) => {
+    setVerifyingId(id)
+    try { await adminApi.verifyBankAccount(id); await loadAll() } catch { /* ignore */ } finally { setVerifyingId(null) }
+  }
 
   if (loading) return <div className="loading-state"><div className="spinner" /></div>
 
@@ -201,6 +210,51 @@ export default function AdminPayments() {
                 ))}
               </div>
             </>
+          )}
+        </div>
+        {/* Bank Account Verification */}
+        <div className="section-card" style={{ marginTop: '1.5rem' }}>
+          <div className="section-header">
+            <h2><i className="fas fa-university" /> Bank Account Verification</h2>
+            <span className="text-muted text-sm">{bankAccounts.filter((b: any) => !b.isVerified).length} pending</span>
+          </div>
+          {bankAccounts.length === 0 ? (
+            <div className="empty-state"><i className="fas fa-university" /><p>No bank accounts</p></div>
+          ) : (
+            <div className="admin-table-wrap">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
+                    {['User', 'Bank', 'Account', 'Type', 'Status', ''].map(h => (
+                      <th key={h} style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bankAccounts.map((b: any) => (
+                    <tr key={b.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        <div style={{ fontWeight: 500 }}>{b.accountHolderName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{b.userEmail}</div>
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>{b.bankName}</td>
+                      <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace' }}>****{b.accountNumber?.slice(-4)}</td>
+                      <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{b.accountType}</td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        <span className={`badge badge-${b.isVerified ? 'success' : 'warning'}`}>{b.isVerified ? 'Verified' : 'Pending'}</span>
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        {!b.isVerified && (
+                          <button className="btn btn-primary btn-sm" onClick={() => handleVerifyBank(b.id)} disabled={verifyingId === b.id}>
+                            {verifyingId === b.id ? <span className="spinner spinner-sm" /> : <><i className="fas fa-check" /> Verify</>}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

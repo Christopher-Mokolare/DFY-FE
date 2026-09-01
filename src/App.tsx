@@ -16,6 +16,7 @@ import BrowseErrands from './pages/tasks/BrowseErrands'
 import PostErrand from './pages/tasks/PostErrand'
 import MyPostedTasks from './pages/tasks/MyPostedTasks'
 import MyActiveTasks from './pages/tasks/MyActiveTasks'
+import MyCompletedTasks from './pages/tasks/MyCompletedTasks'
 import TaskChat from './pages/tasks/TaskChat'
 import Notifications from './pages/Notifications'
 import Wallet from './pages/user/Wallet'
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="/tasks/post" element={<RequireAuth><PostErrand /></RequireAuth>} />
               <Route path="/tasks/my-posted" element={<RequireAuth><MyPostedTasks /></RequireAuth>} />
               <Route path="/tasks/my-active" element={<RequireRunnerAccess><MyActiveTasks /></RequireRunnerAccess>} />
+              <Route path="/tasks/my-completed" element={<RequireAuth><MyCompletedTasks /></RequireAuth>} />
               <Route path="/tasks/:taskId/chat" element={<RequireAuth><TaskChat /></RequireAuth>} />
               <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
               <Route path="/wallet" element={<RequireAuth><Wallet /></RequireAuth>} />

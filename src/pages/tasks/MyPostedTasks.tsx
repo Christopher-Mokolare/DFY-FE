@@ -125,8 +125,7 @@ export default function MyPostedTasks() {
   const isTrustedUrl = (url: string): boolean => {
     try {
       const u = new URL(url)
-      const trustedHosts = ['payment.example.com', 'checkout.example.com'] // Replace with your actual trusted payment domains
-      return trustedHosts.some(host => u.hostname.endsWith(host))
+      return u.hostname === 'www.payfast.co.za' || u.hostname === 'sandbox.payfast.co.za'
     } catch {
       return false
     }
