@@ -85,7 +85,8 @@ export default function Profile() {
     if (pwForm.newPassword !== pwForm.confirmPassword) { setPwError('Passwords do not match'); return }
     setPwLoading(true); setPwError(''); setPwSuccess('')
     try {
-      await authApi.changePassword(pwForm)
+      const res = await authApi.changePassword(pwForm)
+      if (!res.data?.success) throw new Error(res.data?.message || 'Failed to change password.')
       setPwSuccess('Password changed successfully!')
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (err: any) {
