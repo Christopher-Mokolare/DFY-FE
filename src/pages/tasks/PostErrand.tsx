@@ -36,9 +36,6 @@ function validateTaskForm(values: {
 
   const categoryValue = values.category === 'Other' ? values.customCategory.trim() : values.category.trim()
   if (!categoryValue) errors.category = 'Please select a category.'
-  else if (!DEFAULT_CATEGORIES.some(c => c.toLowerCase() === categoryValue.toLowerCase())) {
-    errors.category = 'Invalid category selection.'
-  }
 
   const area = values.area.trim()
   if (!area) errors.area = 'Location is required.'
@@ -90,9 +87,6 @@ function validateStepOne(values: {
 
   const categoryValue = values.category === 'Other' ? values.customCategory.trim() : values.category.trim()
   if (!categoryValue) errors.category = 'Please select a category.'
-  else if (!DEFAULT_CATEGORIES.some(c => c.toLowerCase() === categoryValue.toLowerCase())) {
-    errors.category = 'Invalid category selection.'
-  }
 
   const area = values.area.trim()
   if (!area) errors.area = 'Location is required.'
