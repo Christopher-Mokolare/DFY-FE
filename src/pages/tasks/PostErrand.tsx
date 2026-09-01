@@ -6,7 +6,6 @@ import { useAuth } from '../../context/AuthContext'
 import './PostErrand.css'
 
 const DEFAULT_CATEGORIES = ['Grocery Shopping','Delivery','Cleaning','Gardening','Moving','Repairs','Tutoring','Pet Care','Cooking','Other']
-const GAUTENG_CITIES = ['Johannesburg','Sandton','Randburg','Roodepoort','Soweto','Sebokeng','Midrand','Pretoria','Centurion','Tembisa','Benoni','Boksburg','Germiston','Alberton','Vereeniging','Vanderbijlpark','Krugersdorp','Brakpan']
 
 function calcCommission(budget: number) {
   const commission = Math.max(budget * 0.15, 0)
@@ -44,9 +43,6 @@ function validateTaskForm(values: {
   const area = values.area.trim()
   if (!area) errors.area = 'Location is required.'
   else if (area.length < 2) errors.area = 'Area must be at least 2 characters long.'
-  else if (!GAUTENG_CITIES.some(c => c.toLowerCase() === area.toLowerCase())) {
-    errors.area = 'Location must be within Gauteng. Please choose an approved Gauteng city.'
-  }
 
   const priority = values.priority.trim().toLowerCase()
   if (!['standard', 'urgent', 'low', 'medium', 'high'].includes(priority)) errors.priority = 'Please choose a valid priority.'
@@ -101,9 +97,6 @@ function validateStepOne(values: {
   const area = values.area.trim()
   if (!area) errors.area = 'Location is required.'
   else if (area.length < 2) errors.area = 'Area must be at least 2 characters long.'
-  else if (!GAUTENG_CITIES.some(c => c.toLowerCase() === area.toLowerCase())) {
-    errors.area = 'Location must be within Gauteng. Please choose an approved Gauteng city.'
-  }
 
   const priority = values.priority.trim().toLowerCase()
   if (!['standard', 'urgent', 'low', 'medium', 'high'].includes(priority)) errors.priority = 'Please choose a valid priority.'
@@ -360,10 +353,7 @@ export default function PostErrand() {
                     <label className="form-label">Location *</label>
                     <div className="input-with-icon">
                       <i className="fas fa-map-marker-alt" />
-                      <input className="form-input" placeholder="Area / Suburb" value={form.area} onChange={set('area')} required list="gauteng-cities" />
-                      <datalist id="gauteng-cities">
-                        {GAUTENG_CITIES.map(city => <option key={city} value={city} />)}
-                      </datalist>
+                      <input className="form-input" placeholder="Area / Suburb" value={form.area} onChange={set('area')} required />
                     </div>
                     {fieldErrors.area && <small className="text-error">{fieldErrors.area}</small>}
                   </div>
