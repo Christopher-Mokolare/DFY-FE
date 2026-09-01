@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import './PostErrand.css'
 
 const DEFAULT_CATEGORIES = ['Grocery Shopping','Delivery','Cleaning','Gardening','Moving','Repairs','Tutoring','Pet Care','Cooking','Other']
-const GAUTENG_CITIES = ['Johannesburg','Sandton','Randburg','Roodepoort','Soweto','Midrand','Pretoria','Centurion','Tembisa','Benoni','Boksburg','Germiston','Alberton','Vereeniging','Vanderbijlpark','Krugersdorp','Brakpan']
+const GAUTENG_CITIES = ['Johannesburg','Sandton','Randburg','Roodepoort','Soweto','Sebokeng','Midrand','Pretoria','Centurion','Tembisa','Benoni','Boksburg','Germiston','Alberton','Vereeniging','Vanderbijlpark','Krugersdorp','Brakpan']
 
 function calcCommission(budget: number) {
   const commission = Math.max(budget * 0.15, 0)
