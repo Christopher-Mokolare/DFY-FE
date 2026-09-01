@@ -73,9 +73,9 @@ export const tasksApi = {
   // Returns: { success, data: { paymentUrl } }
   getPaymentUrl: (id: string) => api.get(`/tasks/${id}/payment-url`),
 
-  // POST /api/v1/payment/initiate  body: { taskId }
+  // POST /api/v1/tasks/payment/initiate  body: { taskId }
   // Returns: { success, data: { paymentUrl, paymentId } }
-  initiatePayment: (taskId: string) => api.post('/payment/initiate', { taskId }),
+  initiatePayment: (taskId: string) => api.post('/tasks/payment/initiate', { taskId }),
 
   // POST /api/v1/tasks/payment-success
   handlePaymentSuccess: (taskId?: string) => api.post('/tasks/payment-success', taskId ? { taskId } : {}),
@@ -103,8 +103,8 @@ export const walletApi = {
   // POST /api/v1/banking/accounts
   addBankAccount: (data: object) => api.post('/banking/accounts', data),
 
-  // POST /api/v1/wallet/withdraw
-  requestWithdrawal: (data: object) => api.post('/wallet/withdraw', data),
+  // POST /api/v1/banking/withdraw
+  requestWithdrawal: (data: object) => api.post('/banking/withdraw', data),
 
   getPendingWithdrawals: () => api.get('/wallet/withdrawals/pending'),
   verifyOtp: (data: object) => api.post('/wallet/verify-otp', data),
