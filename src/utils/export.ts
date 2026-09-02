@@ -1,3 +1,13 @@
+export async function exportAllCSV<T>(filename: string, headers: string[], fetchAll: () => Promise<T[]>, mapRow: (item: T) => (string | number)[]) {
+  const items = await fetchAll()
+  exportCSV(filename, headers, items.map(mapRow))
+}
+
+export async function exportAllPDF<T>(title: string, headers: string[], fetchAll: () => Promise<T[]>, mapRow: (item: T) => (string | number)[]) {
+  const items = await fetchAll()
+  exportPDF(title, headers, items.map(mapRow))
+}
+
 export function exportCSV(filename: string, headers: string[], rows: (string | number)[][]) {
   const escape = (v: string | number) => {
     const s = String(v ?? '').replace(/"/g, '""')

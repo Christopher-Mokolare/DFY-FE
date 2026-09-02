@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminApi, ratingsApi } from '../../api'
-import { exportCSV, exportPDF } from '../../utils/export'
+import { exportAllCSV, exportAllPDF } from '../../utils/export'
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([])
@@ -89,11 +89,14 @@ export default function AdminUsers() {
     } finally { setDeleteLoading(false) }
   }
 
-  const exportUsersCSV = () => exportCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Joined'],
-    users.map(u => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]))
+  const fetchAllUsers = async () => {
+    const r = await adminApi.getUsers({ page: 1, pageSize: 10000 })
+    return r.data?.data?.users || []
+  }
+  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
-  const exportUsersPDF = () => exportPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Joined'],
-    users.map(u => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]))
+  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Joined'], fetchAllUsers, mapUserRow)
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
