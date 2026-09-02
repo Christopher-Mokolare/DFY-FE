@@ -130,6 +130,7 @@ export const adminApi = {
   resolveDispute: (id: number, resolution: string, action: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action }),
   deleteTask: (taskId: string) => api.delete(`/admin/tasks/${taskId}`),
   deleteUser: (userId: number) => api.delete(`/admin/users/${userId}`),
+  getTaskMessages: (taskId: string) => api.get(`/admin/tasks/${taskId}/messages`),
 }
 
 export const disputesApi = {
