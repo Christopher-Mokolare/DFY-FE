@@ -5,22 +5,28 @@ import { useNotifications, type AppNotification } from '../context/NotificationC
 import './Notifications.css'
 
 const TYPE_ICON: Record<string, string> = {
-  task_claimed:    'fa-hand-paper',
-  task_completed:  'fa-check-circle',
-  task_posted:     'fa-bullhorn',
-  payment_received:'fa-money-bill-wave',
-  payment_verified:'fa-shield-alt',
-  new_message:     'fa-comment',
-  system:          'fa-cog',
+  task_claimed:     'fa-hand-paper',
+  task_completed:   'fa-check-circle',
+  task_posted:      'fa-bullhorn',
+  payment_received: 'fa-money-bill-wave',
+  payment_verified: 'fa-shield-alt',
+  payment_pending:  'fa-clock',
+  new_message:      'fa-comment',
+  dispute_raised:   'fa-exclamation-triangle',
+  new_user:         'fa-user-plus',
+  system:           'fa-cog',
 }
 const TYPE_COLOR: Record<string, string> = {
-  task_claimed:    '#f59e0b',
-  task_completed:  '#22c55e',
-  task_posted:     '#3b82f6',
-  payment_received:'#10b981',
-  payment_verified:'#10b981',
-  new_message:     'var(--primary)',
-  system:          '#6b7280',
+  task_claimed:     '#f59e0b',
+  task_completed:   '#22c55e',
+  task_posted:      '#3b82f6',
+  payment_received: '#10b981',
+  payment_verified: '#10b981',
+  payment_pending:  '#f59e0b',
+  new_message:      'var(--primary)',
+  dispute_raised:   '#ef4444',
+  new_user:         '#8b5cf6',
+  system:           '#6b7280',
 }
 
 function getIcon(type: string)  { return TYPE_ICON[type]  || 'fa-bell' }
@@ -45,9 +51,9 @@ type Tab = 'all' | 'unread' | 'messages' | 'tasks' | 'payments'
 const TABS: { id: Tab; label: string; icon: string; types?: string[] }[] = [
   { id: 'all',      label: 'All',      icon: 'fa-bell' },
   { id: 'unread',   label: 'Unread',   icon: 'fa-circle' },
-  { id: 'messages', label: 'Messages', icon: 'fa-comment',        types: ['new_message'] },
-  { id: 'tasks',    label: 'Tasks',    icon: 'fa-tasks',          types: ['task_claimed', 'task_completed', 'task_posted'] },
-  { id: 'payments', label: 'Payments', icon: 'fa-money-bill-wave',types: ['payment_received', 'payment_verified', 'payment_released'] },
+  { id: 'messages', label: 'Messages', icon: 'fa-comment',         types: ['new_message'] },
+  { id: 'tasks',    label: 'Tasks',    icon: 'fa-tasks',           types: ['task_claimed', 'task_completed', 'task_posted', 'payment_pending', 'new_user'] },
+  { id: 'payments', label: 'Payments', icon: 'fa-money-bill-wave', types: ['payment_received', 'payment_verified', 'payment_released'] },
 ]
 
 export default function Notifications() {
@@ -94,18 +100,41 @@ export default function Notifications() {
     } else if (!n.isRead) {
       await markRead(n.id)
     }
-    if (!n.relatedTaskStringId && !n.relatedTaskId) return
+
     const taskId = n.relatedTaskStringId
+
+    // Admin-specific notification routing
+    if (isAdmin) {
+      if (n.type === 'dispute_raised') {
+        navigate('/admin/disputes')
+        return
+      }
+      if (n.type === 'new_user') {
+        navigate('/admin/users')
+        return
+      }
+      if (n.type === 'payment_pending') {
+        navigate(taskId ? `/admin/tasks?highlight=${taskId}` : '/admin/tasks')
+        return
+      }
+      if (['task_posted', 'task_claimed', 'task_completed'].includes(n.type)) {
+        navigate(taskId ? `/admin/tasks?highlight=${taskId}` : '/admin/tasks')
+        return
+      }
+      if (n.type === 'payment_released') {
+        navigate(taskId ? `/admin/payments?highlight=${taskId}` : '/admin/payments')
+        return
+      }
+    }
+
+    // Regular user routing
+    if (!n.relatedTaskStringId && !n.relatedTaskId) return
     if (n.type === 'new_message') {
       if (taskId) navigate(`/tasks/${taskId}/chat`)
     } else if (n.type === 'payment_received') {
       navigate('/wallet')
-    } else if (isAdmin && ['task_posted','task_claimed','task_completed'].includes(n.type)) {
-      navigate(taskId ? `/admin/tasks?highlight=${taskId}` : '/admin/tasks')
-    } else if (isAdmin && n.type === 'payment_released') {
-      navigate(taskId ? `/admin/payments?highlight=${taskId}` : '/admin/payments')
     } else {
-      navigate('/tasks/my-posted')
+      navigate(taskId ? `/tasks/${taskId}` : '/tasks/my-posted')
     }
   }
 
