@@ -73,7 +73,9 @@ export default function AdminDisputes() {
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>{d.reportedBy}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className="badge badge-info">{d.category}</span></td>
-                        <td style={{ padding: '0.75rem 0.5rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.issue}</td>
+                        <td style={{ padding: '0.75rem 0.5rem', maxWidth: 260 }}>
+                          <div style={{ fontSize: '0.85rem', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{d.issue}</div>
+                        </td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           <span className={`badge ${d.status === 'Open' ? 'badge-danger' : 'badge-success'}`}>{d.status}</span>
                         </td>
@@ -136,8 +138,15 @@ export default function AdminDisputes() {
               <button className="btn-close" onClick={() => setResolveModal(null)}><i className="fas fa-times" /></button>
             </div>
             <div className="modal-body">
-              <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
-                <i className="fas fa-info-circle" /> <strong>{resolveModal.taskDescription}</strong> — {resolveModal.issue}
+              <div style={{ marginBottom: '1rem', padding: '0.875rem', background: 'var(--background)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--danger)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Task</div>
+                <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{resolveModal.taskDescription}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  <span className="badge badge-info" style={{ marginRight: '0.5rem' }}>{resolveModal.category}</span>
+                  Reported by <strong>{resolveModal.reportedBy}</strong>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issue</div>
+                <div style={{ fontSize: '0.875rem', lineHeight: 1.6, background: 'var(--surface)', padding: '0.625rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>{resolveModal.issue}</div>
               </div>
               <div className="form-group">
                 <label className="form-label">Financial Action</label>
