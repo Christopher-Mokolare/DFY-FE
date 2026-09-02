@@ -22,7 +22,7 @@ export default function AdminAuditLog() {
         const d = r.data?.data
         setLogs(d?.logs || [])
         setTotalPages(d?.totalPages || 1)
-        setTotalCount(d?.totalCount || 0)
+        setTotalCount(d?.totalCount || d?.total || 0)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
