@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
               <div className="stat-card"><div className="stat-icon bg-warning"><i className="fas fa-clock" /></div><div className="stat-content"><h3>{pendingVerification}</h3><p>Pending Payment</p></div></div>
               <div className="stat-card"><div className="stat-icon bg-info"><i className="fas fa-bullhorn" /></div><div className="stat-content"><h3>{unclaimedTasks}</h3><p>Active/Posted</p></div></div>
               <div className="stat-card"><div className="stat-icon bg-success"><i className="fas fa-check-circle" /></div><div className="stat-content"><h3>{stats.completedTasks ?? 0}</h3><p>Completed</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-dark"><i className="fas fa-money-bill-wave" /></div><div className="stat-content"><h3>R{(stats.platformEarnings ?? stats.totalRevenue ?? 0).toFixed(2)}</h3><p>Platform Earnings</p></div></div>
+              <div className="stat-card"><div className="stat-icon bg-dark"><i className="fas fa-money-bill-wave" /></div><div className="stat-content"><h3>R{(stats.platformEarnings ?? 0).toFixed(2)}</h3><p>Platform Earnings</p></div></div>
               <div className="stat-card"><div className="stat-icon bg-info"><i className="fas fa-chart-line" /></div><div className="stat-content"><h3>R{(stats.grossVolume ?? 0).toFixed(2)}</h3><p>Gross Volume</p></div></div>
               <div className="stat-card"><div className="stat-icon bg-danger"><i className="fas fa-gavel" /></div><div className="stat-content"><h3>{stats.openDisputes ?? 0}</h3><p>Open Disputes</p></div></div>
             </div>
