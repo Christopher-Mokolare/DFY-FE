@@ -39,8 +39,15 @@ export const tasksApi = {
 
 export const bankingApi = {
   getBankAccounts: () => api.get('/banking/accounts'),
+  getBanks: () => api.get('/banking/banks'),
   addBankAccount: (data: object) => api.post('/banking/accounts', data),
   verifyBankAccount: (id: number) => api.post(`/banking/bank-accounts/${id}/verify`, {}),
+}
+
+export const supportApi = {
+  createTicket: (data: { name?: string; email?: string; subject: string; message: string; category?: string; priority?: string }) => api.post('/support/tickets', data),
+  getMyTickets: () => api.get('/support/tickets'),
+  getTicket: (id: number) => api.get(`/support/tickets/${id}`),
 }
 
 export const adminApi = {
