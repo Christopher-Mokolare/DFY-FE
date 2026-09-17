@@ -7,7 +7,7 @@ export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as any)?.from?.pathname || '/dashboard'
+  const from = (location.state as any)?.from?.pathname || null
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,8 +20,10 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
-      navigate(from, { replace: true })
+      const loggedInUser = await login(email, password)
+      const isAdminUser = !!loggedInUser?.isAdmin || !!loggedInUser?.roles?.includes('Admin')
+      const dest = from || (isAdminUser ? '/admin/dashboard' : '/dashboard')
+      navigate(dest, { replace: true })
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed. Please try again.')
     } finally {

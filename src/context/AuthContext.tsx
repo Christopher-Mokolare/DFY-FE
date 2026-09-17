@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null
   token: string | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<User>
   logout: () => void
   refreshUser: () => void
   isAuthenticated: () => boolean
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false)
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<User> => {
     const res = await authApi.login({ email, password })
     const data = res.data
     if (!data.success || !data.token || !data.user) {
@@ -79,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('userPreferences', JSON.stringify(prefs))
     }
     setUser(fullUser)
+    return fullUser
   }, [])
 
   const logout = useCallback(() => {
@@ -106,8 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = useCallback(() => {
     if (!user) return false
-    if (typeof user.isAdmin === 'boolean') return user.isAdmin
-    return user.roles?.includes('Admin') ?? false
+    if (typeof user.isAdmin === 'boolean' && user.isAdmin) return true
+    if (user.roles?.includes('Admin')) return true
+    return user.userType === 'Admin'
   }, [user])
 
   const isProfileComplete = useCallback(() => {

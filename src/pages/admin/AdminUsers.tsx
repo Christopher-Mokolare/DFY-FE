@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminApi, ratingsApi } from '../../api'
-import { exportCSV, exportPDF } from '../../utils/export'
+import { exportAllCSV, exportAllPDF } from '../../utils/export'
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([])
@@ -14,6 +14,7 @@ export default function AdminUsers() {
   const [historyData, setHistoryData] = useState<any | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError] = useState('')
   const [deleteModal, setDeleteModal] = useState<any | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -42,17 +43,25 @@ export default function AdminUsers() {
   const isAdmin = (u: any) => u.role?.includes('Admin')
 
   const toggleVerify = async (id: number, current: boolean) => {
-    await adminApi.updateUserStatus(id, !current)
-    load()
+    try {
+      const r = await adminApi.updateUserStatus(id, !current)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Action failed'); return }
+      setActionError(''); load()
+    } catch { setActionError('Failed to update user status') }
   }
 
-  const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleModal(u) }
+  const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleModal(u); setActionError('') }
 
   const saveRole = async () => {
     if (!roleModal) return
-    setActionLoading(true)
-    try { await adminApi.updateUserRole(roleModal.id, roleValue); setRoleModal(null); load() }
-    catch { /* ignore */ } finally { setActionLoading(false) }
+    setActionLoading(true); setActionError('')
+    try {
+      const r = await adminApi.updateUserRole(roleModal.id, roleValue)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to update role'); return }
+      setRoleModal(null); load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to update role')
+    } finally { setActionLoading(false) }
   }
 
   const openHistory = async (u: any) => {
@@ -80,11 +89,14 @@ export default function AdminUsers() {
     } finally { setDeleteLoading(false) }
   }
 
-  const exportUsersCSV = () => exportCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Joined'],
-    users.map(u => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]))
+  const fetchAllUsers = async () => {
+    const r = await adminApi.getUsers({ page: 1, pageSize: 10000 })
+    return r.data?.data?.users || []
+  }
+  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
-  const exportUsersPDF = () => exportPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Joined'],
-    users.map(u => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]))
+  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Joined'], fetchAllUsers, mapUserRow)
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -229,6 +241,7 @@ export default function AdminUsers() {
                 </select>
               </div>
             </div>
+            {actionError && <div className="alert alert-error" style={{ margin: '0.75rem 0' }}><i className="fas fa-exclamation-circle" /> {actionError}</div>}
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setRoleModal(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={saveRole} disabled={actionLoading}>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { adminApi } from '../../api'
-import { exportCSV, exportPDF } from '../../utils/export'
+import { exportAllCSV, exportAllPDF } from '../../utils/export'
 
 function Stars({ value }: { value: number }) {
   return (
@@ -23,6 +23,7 @@ export default function AdminTasks() {
   const [search, setSearch] = useState(highlight)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function AdminTasks() {
         const inner = r.data?.data
         setTasks(inner?.tasks || inner?.Tasks || [])
         setTotalPages(inner?.totalPages || 1)
+        setTotalCount(inner?.totalCount || inner?.count || 0)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -51,13 +53,32 @@ export default function AdminTasks() {
   const [deleteModal, setDeleteModal] = useState<any | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => { load() }, [page, filter, paymentFilter, priorityFilter])
   useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, filter, search, true) }, 400); return () => clearTimeout(t) }, [search])
 
-  const verify = async (id: string) => { await adminApi.verifyPayment(id); load() }
-  const unverify = async (id: string) => { await adminApi.unverifyPayment(id); load() }
-  const bulkVerify = async () => { await adminApi.bulkVerify(selected); setSelected([]); load() }
+  const verify = async (id: string) => {
+    try {
+      const r = await adminApi.verifyPayment(id)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Verify failed'); return }
+      setActionError(''); load()
+    } catch { setActionError('Verify failed') }
+  }
+  const unverify = async (id: string) => {
+    try {
+      const r = await adminApi.unverifyPayment(id)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Unverify failed'); return }
+      setActionError(''); load()
+    } catch { setActionError('Unverify failed') }
+  }
+  const bulkVerify = async () => {
+    try {
+      const r = await adminApi.bulkVerify(selected)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Bulk verify failed'); return }
+      setActionError(''); setSelected([]); load()
+    } catch { setActionError('Bulk verify failed') }
+  }
   const toggleSelect = (id: string) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
 
   const confirmDelete = async () => {
@@ -74,11 +95,15 @@ export default function AdminTasks() {
     } finally { setDeleteLoading(false) }
   }
 
-  const exportTasksCSV = () => exportCSV('tasks', ['Task ID', 'Description', 'Category', 'User', 'Area', 'Budget', 'Payment Status', 'Task Status', 'Runner', 'Rating', 'Created'],
-    tasks.map(t => [t.taskId, t.taskDescription, t.category, t.userName, t.area, `R${t.budget}`, t.paymentStatus, t.taskStatus, t.helperName || '', t.rating ? `${t.rating.ratingValue}/5` : '', new Date(t.createdAt).toLocaleDateString('en-ZA')]))
+  const fetchAllTasks = async () => {
+    const r = await adminApi.getTasks({ page: 1, pageSize: 10000, ...(filter ? { status: filter } : {}), ...(search ? { search } : {}) })
+    const inner = r.data?.data
+    return inner?.tasks || inner?.Tasks || []
+  }
+  const mapTaskRow = (t: any) => [t.taskId, t.taskDescription, t.category, t.userName, t.area, `R${t.budget}`, t.paymentStatus, t.taskStatus, t.helperName || '', t.rating ? `${t.rating.ratingValue}/5` : '', new Date(t.createdAt).toLocaleDateString('en-ZA')]
 
-  const exportTasksPDF = () => exportPDF('Tasks Report', ['Task ID', 'Description', 'Category', 'User', 'Area', 'Budget', 'Payment', 'Status', 'Runner', 'Rating', 'Created'],
-    tasks.map(t => [t.taskId, t.taskDescription, t.category, t.userName, t.area, `R${t.budget}`, t.paymentStatus, t.taskStatus, t.helperName || '', t.rating ? `${t.rating.ratingValue}/5` : '', new Date(t.createdAt).toLocaleDateString('en-ZA')]))
+  const exportTasksCSV = () => exportAllCSV('tasks', ['Task ID', 'Description', 'Category', 'User', 'Area', 'Budget', 'Payment Status', 'Task Status', 'Runner', 'Rating', 'Created'], fetchAllTasks, mapTaskRow)
+  const exportTasksPDF = () => exportAllPDF('Tasks Report', ['Task ID', 'Description', 'Category', 'User', 'Area', 'Budget', 'Payment', 'Status', 'Runner', 'Rating', 'Created'], fetchAllTasks, mapTaskRow)
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -121,12 +146,13 @@ export default function AdminTasks() {
                 <i className="fas fa-check-double" /> Bulk Verify ({selected.length})
               </button>
             )}
-            <span className="text-muted text-sm admin-toolbar-spacer admin-toolbar-label">{tasks.length} tasks</span>
+            <span className="text-muted text-sm admin-toolbar-spacer admin-toolbar-label">{totalCount} tasks</span>
             <div className="admin-toolbar-actions">
               <button className="btn btn-secondary btn-sm" onClick={exportTasksCSV} disabled={tasks.length === 0}><i className="fas fa-file-csv" /><span> CSV</span></button>
               <button className="btn btn-secondary btn-sm" onClick={exportTasksPDF} disabled={tasks.length === 0}><i className="fas fa-file-pdf" /><span> PDF</span></button>
             </div>
           </div>
+          {actionError && <div className="alert alert-error" style={{ margin: '0.75rem 0' }}><i className="fas fa-exclamation-circle" /> {actionError}</div>}
           {loading ? <div className="loading-state"><div className="spinner" /></div> : (
             <>
               {/* Desktop table */}
@@ -247,13 +273,16 @@ export default function AdminTasks() {
               </div>
             </>
           )}
-          {totalPages > 1 && (
+          {(totalPages > 1 || totalCount > 0) && (
             <div className="pagination">
               <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}><i className="fas fa-chevron-left" /></button>
               {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map(p => (
                 <button key={p} className={`page-btn ${page === p ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
               ))}
               <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><i className="fas fa-chevron-right" /></button>
+              <span className="text-muted text-sm" style={{ marginLeft: '0.5rem', alignSelf: 'center' }}>
+                {((page - 1) * 20) + 1}–{Math.min(page * 20, totalCount)} of {totalCount}
+              </span>
             </div>
           )}
         </div>
