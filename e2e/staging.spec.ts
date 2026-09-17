@@ -6,7 +6,6 @@ function makeEmail(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}@test.dfy`
 }
 
-// ── Warm up both free-tier services before any test runs ─────────────────────
 test.beforeAll(async () => {
   const ctx = await request.newContext()
   await Promise.allSettled([
@@ -16,9 +15,7 @@ test.beforeAll(async () => {
   await ctx.dispose()
 })
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 async function waitForAppReady(page: Page) {
-  // Wait until Render's loading screen is gone
   await page.waitForFunction(
     () => document.title !== 'Render - Application loading',
     { timeout: 90_000 }
@@ -33,9 +30,7 @@ async function gotoWithRetry(page: Page, url: string) {
       return
     } catch (error) {
       lastError = error
-      if (attempt < 2) {
-        await page.waitForTimeout(2000)
-      }
+      if (attempt < 2) await page.waitForTimeout(2000)
     }
   }
   throw lastError
@@ -50,20 +45,17 @@ async function register(page: Page, email: string, userType: 'creator' | 'runner
     { timeout: 30_000 }
   )
 
-  // Step 1 — Personal Info
   await page.getByPlaceholder('First Name *').fill('Test')
   await page.getByPlaceholder('Last Name *').fill('User')
   await page.getByPlaceholder('Email Address *').fill(email)
   await page.getByPlaceholder('Phone Number *').fill('0821234567')
   await page.getByRole('button', { name: /continue/i }).click()
 
-  // Step 2 — Role & Details (radio input is hidden by CSS, click the label)
   await page.locator(`label.role-card:has(input[value="${userType}"])`).click({ force: true })
   await page.getByPlaceholder('ID Number *').fill('9001015009087')
   await page.getByPlaceholder('Address *').fill('123 Test Street, Johannesburg')
   await page.getByRole('button', { name: /continue/i }).last().click()
 
-  // Step 3 — Security
   await page.locator('input[placeholder="Password *"]').fill(PASSWORD)
   await page.locator('input[placeholder="Confirm Password *"]').fill(PASSWORD)
   await page.getByRole('button', { name: /create account/i }).click()
@@ -86,35 +78,30 @@ async function login(page: Page, email: string) {
   await expect(page).toHaveURL(/dashboard/i, { timeout: 30_000 })
 }
 
-// ── 1. Home page loads ────────────────────────────────────────────────────────
 test('home page loads', async ({ page }) => {
   await gotoWithRetry(page, '/')
   await waitForAppReady(page)
   await expect(page.getByText(/DoForYou|DFY/i).first()).toBeVisible({ timeout: 15_000 })
 })
 
-// ── 2. Unauthenticated redirect ───────────────────────────────────────────────
 test('unauthenticated user is redirected from dashboard', async ({ page }) => {
   await gotoWithRetry(page, '/dashboard')
   await waitForAppReady(page)
   await expect(page).toHaveURL(/login/i, { timeout: 15_000 })
 })
 
-// ── 3. Register poster ────────────────────────────────────────────────────────
 test('poster can register', async ({ page }) => {
   const email = makeEmail('poster')
   await register(page, email, 'creator')
   await expect(page).toHaveURL(/login/i)
 })
 
-// ── 4. Register runner ────────────────────────────────────────────────────────
 test('runner can register', async ({ page }) => {
   const email = makeEmail('runner')
   await register(page, email, 'runner')
   await expect(page).toHaveURL(/login/i)
 })
 
-// ── 5. Login ──────────────────────────────────────────────────────────────────
 test('poster can log in', async ({ page }) => {
   const email = makeEmail('poster-login')
   await register(page, email, 'creator')
@@ -122,7 +109,6 @@ test('poster can log in', async ({ page }) => {
   await expect(page).toHaveURL(/dashboard/i)
 })
 
-// ── 6. Dashboard loads ────────────────────────────────────────────────────────
 test('dashboard shows content after login', async ({ page }) => {
   const email = makeEmail('poster-dashboard')
   await register(page, email, 'creator')
@@ -130,7 +116,6 @@ test('dashboard shows content after login', async ({ page }) => {
   await expect(page.getByText(/task creator dashboard|welcome/i).first()).toBeVisible({ timeout: 15_000 })
 })
 
-// ── 7. Profile page ───────────────────────────────────────────────────────────
 test('user can view profile page', async ({ page }) => {
   const email = makeEmail('poster-profile')
   await register(page, email, 'creator')
@@ -139,9 +124,7 @@ test('user can view profile page', async ({ page }) => {
   await expect(page.getByText(/profile/i).first()).toBeVisible({ timeout: 15_000 })
 })
 
-// ── 8. Browse tasks ───────────────────────────────────────────────────────────
 test('runner can browse available tasks', async ({ page }) => {
-
   const email = makeEmail('runner-browse')
   await register(page, email, 'runner')
   await login(page, email)
@@ -149,7 +132,6 @@ test('runner can browse available tasks', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /start earning today!/i })).toBeVisible({ timeout: 15_000 })
 })
 
-// ── 9. Post errand page loads ─────────────────────────────────────────────────
 test('poster can access post errand page', async ({ page }) => {
   const email = makeEmail('poster-post')
   await register(page, email, 'creator')
@@ -158,7 +140,6 @@ test('poster can access post errand page', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /create your task/i })).toBeVisible({ timeout: 15_000 })
 })
 
-// ── 10. My posted tasks ───────────────────────────────────────────────────────
 test('poster can view my posted tasks', async ({ page }) => {
   const email = makeEmail('poster-posted')
   await register(page, email, 'creator')
@@ -168,21 +149,20 @@ test('poster can view my posted tasks', async ({ page }) => {
   await expect(postedHeading).toBeVisible({ timeout: 15_000 })
 })
 
-// ── 11. Wallet page ───────────────────────────────────────────────────────────
-test('wallet page loads', async ({ page }) => {
-  const email = makeEmail('runner-wallet')
+test('legacy wallet route redirects to the dashboard', async ({ page }) => {
+  const email = makeEmail('runner-wallet-route')
   await register(page, email, 'runner')
   await login(page, email)
   await gotoWithRetry(page, '/wallet')
-  await expect(page.getByRole('heading', { name: /my wallet/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page).toHaveURL(/dashboard/i, { timeout: 15_000 })
+  await expect(page.getByText(/task runner dashboard|welcome/i).first()).toBeVisible({ timeout: 15_000 })
 })
-// ── 12. Logout ────────────────────────────────────────────────────────────────
+
 test('user can log out', async ({ page }) => {
   const email = makeEmail('poster-logout')
   await register(page, email, 'creator')
   await login(page, email)
 
-  // Open the user dropdown then click logout
   await page.locator('.dropdown-trigger').first().click()
   await page.locator('.dropdown-logout').first().click()
   await expect(page).toHaveURL(/login|\//, { timeout: 10_000 })
