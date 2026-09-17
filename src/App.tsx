@@ -19,6 +19,7 @@ import MyCompletedTasks from './pages/tasks/MyCompletedTasks'
 import TaskChat from './pages/tasks/TaskChat'
 import Notifications from './pages/Notifications'
 import Profile from './pages/user/Profile'
+import BankAccounts from './pages/user/BankAccounts'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminTasks from './pages/admin/AdminTasks'
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="/tasks/:taskId/chat" element={<RequireAuth><TaskChat /></RequireAuth>} />
               <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
               <Route path="/user/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+              <Route path="/user/bank-accounts" element={<RequireAuth><BankAccounts /></RequireAuth>} />
 
               <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
               <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
@@ -68,7 +70,7 @@ export default function App() {
               <Route path="/payment-cancelled" element={<Navigate to="/payments/cancelled" replace />} />
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
-              {/* The old wallet route is intentionally retired. Runner money is paid directly to the verified bank account through Ozow. */}
+              {/* The old wallet route is intentionally retired. */}
               <Route path="/wallet" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
