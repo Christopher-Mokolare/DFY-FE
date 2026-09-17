@@ -70,8 +70,8 @@ export default function App() {
               <Route path="/payment-cancelled" element={<Navigate to="/payments/cancelled" replace />} />
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
-              {/* The old wallet route is intentionally retired. Runner money is paid directly to the verified bank account through Ozow. */}
-              <Route path="/wallet" element={<Navigate to="/user/bank-accounts" replace />} />
+              {/* The old wallet route is intentionally retired. */}
+              <Route path="/wallet" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
