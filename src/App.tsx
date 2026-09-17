@@ -4,7 +4,6 @@ import { NotificationProvider } from './context/NotificationContext'
 import { RequireAuth, RequireAdmin, RequireRunnerAccess } from './context/Guards'
 import Layout from './components/layout/Layout'
 
-// Pages
 import Home from './pages/Home'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -19,7 +18,6 @@ import MyActiveTasks from './pages/tasks/MyActiveTasks'
 import MyCompletedTasks from './pages/tasks/MyCompletedTasks'
 import TaskChat from './pages/tasks/TaskChat'
 import Notifications from './pages/Notifications'
-import Wallet from './pages/user/Wallet'
 import Profile from './pages/user/Profile'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -36,7 +34,6 @@ export default function App() {
         <NotificationProvider>
           <Routes>
             <Route element={<Layout />}>
-              {/* Public */}
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
@@ -47,7 +44,6 @@ export default function App() {
               <Route path="/payments/success" element={<PaymentSuccess />} />
               <Route path="/payments/cancelled" element={<PaymentCancelled />} />
 
-              {/* Auth required */}
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
               <Route path="/tasks/post" element={<RequireAuth><PostErrand /></RequireAuth>} />
               <Route path="/tasks/my-posted" element={<RequireAuth><MyPostedTasks /></RequireAuth>} />
@@ -55,10 +51,8 @@ export default function App() {
               <Route path="/tasks/my-completed" element={<RequireAuth><MyCompletedTasks /></RequireAuth>} />
               <Route path="/tasks/:taskId/chat" element={<RequireAuth><TaskChat /></RequireAuth>} />
               <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
-              <Route path="/wallet" element={<RequireAuth><Wallet /></RequireAuth>} />
               <Route path="/user/profile" element={<RequireAuth><Profile /></RequireAuth>} />
 
-              {/* Admin */}
               <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
               <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
               <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
@@ -66,7 +60,6 @@ export default function App() {
               <Route path="/admin/disputes" element={<RequireAdmin><AdminDisputes /></RequireAdmin>} />
               <Route path="/admin/audit-log" element={<RequireAdmin><AdminAuditLog /></RequireAdmin>} />
 
-              {/* Legacy redirects */}
               <Route path="/browse-errands" element={<Navigate to="/tasks/browse" replace />} />
               <Route path="/post-errand" element={<Navigate to="/tasks/post" replace />} />
               <Route path="/profile" element={<Navigate to="/user/profile" replace />} />
@@ -75,6 +68,8 @@ export default function App() {
               <Route path="/payment-cancelled" element={<Navigate to="/payments/cancelled" replace />} />
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
+              {/* The old wallet route is intentionally retired. Runner money is paid directly to the verified bank account through Ozow. */}
+              <Route path="/wallet" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
