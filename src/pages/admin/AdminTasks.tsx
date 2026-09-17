@@ -16,8 +16,6 @@ export default function AdminTasks() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<string[]>([])
   const [filter, setFilter] = useState('')
-  const [paymentFilter, setPaymentFilter] = useState('')
-  const [priorityFilter, setPriorityFilter] = useState('')
   const [searchParams] = useSearchParams()
   const highlight = searchParams.get('highlight') || ''
   const [search, setSearch] = useState(highlight)
@@ -32,13 +30,11 @@ export default function AdminTasks() {
     }
   }, [tasks, highlight])
 
-  const load = (p = page, f = filter, s = search, silent = false, pf = paymentFilter, pr = priorityFilter) => {
+  const load = (p = page, f = filter, s = search, silent = false) => {
     if (!silent) setLoading(true)
     const params: any = { page: p, pageSize: 20 }
     if (f) params.status = f
     if (s) params.search = s
-    if (pf) params.paymentStatus = pf
-    if (pr) params.priority = pr
     adminApi.getTasks(params)
       .then(r => {
         const inner = r.data?.data
@@ -55,7 +51,7 @@ export default function AdminTasks() {
   const [deleteError, setDeleteError] = useState('')
   const [actionError, setActionError] = useState('')
 
-  useEffect(() => { load() }, [page, filter, paymentFilter, priorityFilter])
+  useEffect(() => { load() }, [page, filter])
   useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, filter, search, true) }, 400); return () => clearTimeout(t) }, [search])
 
   const verify = async (id: string) => {
@@ -111,26 +107,13 @@ export default function AdminTasks() {
       <div className="container">
         <div className="section-card">
           <div className="admin-toolbar">
-            <select className="form-select" style={{ width: 160 }} value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setPage(1) }}>
-              <option value="">Payment Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Completed">Completed</option>
-              <option value="EscrowHeld">Escrow Held</option>
-              <option value="EscrowReleased">Escrow Released</option>
-              <option value="Refunded">Refunded</option>
-            </select>
-            <select className="form-select" style={{ width: 150 }} value={filter} onChange={e => { setFilter(e.target.value); setPage(1) }}>
-              <option value="">Task Status</option>
+            <select className="form-select" style={{ width: 180 }} value={filter} onChange={e => { setFilter(e.target.value); setPage(1) }}>
+              <option value="">All Tasks</option>
               <option value="PendingPayment">Pending Payment</option>
               <option value="Posted">Posted</option>
               <option value="Claimed">Claimed</option>
-              <option value="Completed">Completed</option>
+              <option value="Completed">Completed / Paid</option>
               <option value="RunnerPaid">Runner Paid</option>
-            </select>
-            <select className="form-select" style={{ width: 130 }} value={priorityFilter} onChange={e => { setPriorityFilter(e.target.value); setPage(1) }}>
-              <option value="">Priority</option>
-              <option value="standard">Standard</option>
-              <option value="urgent">Urgent</option>
             </select>
             <input
               className="form-input"
@@ -163,7 +146,7 @@ export default function AdminTasks() {
                       <th style={{ padding: '0.75rem 0.5rem', width: 32 }}>
                         <input type="checkbox" onChange={e => setSelected(e.target.checked ? tasks.map(t => t.taskId) : [])} />
                       </th>
-                      {['Task ID', 'Description', 'Area', 'Budget', 'Payment', 'Status', 'Priority', 'Runner / Rating', 'Actions'].map(h => (
+                      {['Task ID', 'Description', 'Area', 'Budget', 'Payment', 'Status', 'Runner / Rating', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
@@ -185,11 +168,6 @@ export default function AdminTasks() {
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--primary)' }}>R{t.budget}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge badge-${(t.paymentStatus || '').toLowerCase()}`}>{t.paymentStatus}</span></td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge badge-${(t.taskStatus || '').toLowerCase().replace(/ /g, '_')}`}>{t.taskStatus}</span></td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}>
-                          <span className={`badge badge-${(t.priority || 'standard').toLowerCase() === 'urgent' ? 'warning' : 'secondary'}`}>
-                            {t.priority || 'Standard'}
-                          </span>
-                        </td>
                         <td style={{ padding: '0.75rem 0.5rem', minWidth: 140 }}>
                           {t.helperName
                             ? <div>
