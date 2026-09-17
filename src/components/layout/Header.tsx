@@ -41,6 +41,7 @@ export default function Header() {
         <li><Link to="/dashboard" onClick={onClose}><i className="fas fa-home" /> Dashboard</Link></li>
         <li><Link to="/tasks/my-posted" onClick={onClose}><i className="fas fa-list" /> My Posted Tasks</Link></li>
         {canViewActiveTasks && <li><Link to="/tasks/my-active" onClick={onClose}><i className="fas fa-running" /> My Active Tasks</Link></li>}
+        <li><Link to="/user/bank-accounts" onClick={onClose}><i className="fas fa-university" /> Bank Accounts</Link></li>
         <li><Link to="/notifications" onClick={onClose}><i className="fas fa-bell" /> Notifications</Link></li>
         <li><Link to="/user/profile" onClick={onClose}><i className="fas fa-user" /> My Profile</Link></li>
         <li className="divider" />
