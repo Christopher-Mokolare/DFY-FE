@@ -1,0 +1,443 @@
+/* Unified creator / runner workspace
+   Keeps every authenticated page aligned to the same admin-inspired shell. */
+
+.user-dashboard-shell,
+.user-dashboard-shell * { min-width: 0; }
+
+.user-dashboard-content > * {
+  width: 100%;
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.user-dashboard-content .container {
+  width: 100%;
+  max-width: 1320px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.user-dashboard-content .page-header {
+  background: transparent;
+  color: #172033;
+  padding: 0;
+  margin: 0 auto 1.5rem;
+  box-shadow: none;
+  max-width: 1320px;
+}
+
+.user-dashboard-content .page-header .container {
+  display: block;
+  padding: 0;
+}
+
+.user-dashboard-content .page-header h1 {
+  color: #172033;
+  font-size: clamp(1.5rem, 2.7vw, 2rem);
+  letter-spacing: -0.035em;
+}
+
+.user-dashboard-content .page-header h1 i {
+  color: var(--primary);
+  margin-right: .5rem;
+}
+
+.user-dashboard-content .page-header p {
+  color: #718096;
+  opacity: 1;
+  font-size: .86rem;
+  margin-top: .4rem;
+}
+
+.user-dashboard-content .section-card,
+.user-dashboard-content .profile-card,
+.user-dashboard-content .task-card,
+.user-dashboard-content .status-section,
+.user-dashboard-content .notifications-card,
+.user-dashboard-content .notification-card,
+.user-dashboard-content .bank-account-card {
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-dashboard-content .section-card {
+  border-color: #e7ebf1;
+}
+
+.user-dashboard-content .tasks-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .9rem;
+}
+
+.user-dashboard-content .task-card {
+  min-width: 0;
+  border-color: #e7ebf1;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-dashboard-content .task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(15,23,42,.07);
+}
+
+.user-dashboard-content .task-card-header,
+.user-dashboard-content .task-card-body,
+.user-dashboard-content .task-card-footer {
+  min-width: 0;
+}
+
+.user-dashboard-content .task-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.user-dashboard-content .task-card-footer .action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  width: 100%;
+}
+
+.user-dashboard-content .task-card-footer .action-row > * {
+  min-width: 0;
+}
+
+.user-dashboard-content .task-card-footer .action-col {
+  width: 100%;
+}
+
+.user-dashboard-content .form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.user-dashboard-content .form-group {
+  min-width: 0;
+}
+
+.user-dashboard-content .profile-grid {
+  max-width: 1320px;
+  display: grid;
+  grid-template-columns: minmax(220px, .7fr) minmax(0, 1.8fr);
+  gap: 1rem;
+  padding: 0;
+}
+
+.user-dashboard-content .profile-grid > * {
+  min-width: 0;
+}
+
+.user-dashboard-content .profile-card {
+  position: sticky;
+  top: 82px;
+  background: #fff;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  padding: 1.5rem;
+}
+
+.user-dashboard-content .profile-grid > div:last-child {
+  min-width: 0;
+}
+
+.user-dashboard-content .browse-hero,
+.user-dashboard-content .post-hero {
+  border-radius: 15px;
+  margin: 0 auto 1rem;
+  overflow: hidden;
+}
+
+.user-dashboard-content .browse-hero {
+  padding: 0;
+}
+
+.user-dashboard-content .browse-hero .container,
+.user-dashboard-content .post-hero .container {
+  max-width: none;
+}
+
+.user-dashboard-content .filters-card {
+  margin-bottom: 1rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-dashboard-content .filters-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, .35fr) auto;
+  gap: .75rem;
+}
+
+.user-dashboard-content .search-wrapper {
+  min-width: 0;
+}
+
+.user-dashboard-content .pagination {
+  padding-bottom: .5rem;
+}
+
+.user-dashboard-content .status-section {
+  margin-bottom: 1rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.user-dashboard-content .status-section .tasks-grid {
+  padding: 1rem;
+}
+
+.user-dashboard-content .status-heading {
+  width: 100%;
+  min-height: 58px;
+  padding: .9rem 1.1rem;
+  border: 0;
+  border-bottom: 1px solid #edf0f4;
+  background: #fff;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 700 .8rem var(--font-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.user-dashboard-content .status-heading i:first-child {
+  color: var(--primary);
+  margin-right: .45rem;
+}
+
+.user-dashboard-content .my-posted-page,
+.user-dashboard-content .my-active-page,
+.user-dashboard-content .my-completed-page,
+.user-dashboard-content .notifications-page,
+.user-dashboard-content .chat-page,
+.user-dashboard-content .profile-page,
+.user-dashboard-content .bank-accounts-page {
+  padding-bottom: 0;
+}
+
+.user-dashboard-content .modal-box {
+  max-width: 560px;
+}
+
+.user-dashboard-content .task-detail-modal {
+  max-width: 720px;
+}
+
+.user-dashboard-content .empty-state {
+  background: #fff;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-dashboard-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+}
+
+.user-dashboard-mobile-menu {
+  display: none;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid #e5e9f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+}
+
+.user-dashboard-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .user-dashboard-content .tasks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .user-dashboard-content .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .profile-card {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-dashboard-mobile-menu {
+    display: grid;
+    place-items: center;
+  }
+
+  .user-dashboard-sidebar {
+    position: fixed;
+    inset: 62px auto 0 0;
+    width: min(290px, 86vw);
+    height: calc(100vh - 62px);
+    transform: translateX(-105%);
+    transition: transform 220ms ease;
+    box-shadow: 18px 0 45px rgba(15,23,42,.2);
+    z-index: 1200;
+  }
+
+  .user-dashboard-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .user-dashboard-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 62px 0 0;
+    z-index: 1150;
+    width: 100%;
+    border: 0;
+    background: rgba(15,23,42,.45);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+  }
+
+  .user-dashboard-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .user-dashboard-topbar {
+    height: 62px;
+    padding: 0 1rem;
+  }
+
+  .user-dashboard-content {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .user-dashboard-content .page-header {
+    margin-bottom: 1rem;
+  }
+
+  .user-dashboard-content .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .user-dashboard-content .filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .filters-row .btn {
+    width: 100%;
+  }
+
+  .user-dashboard-content .profile-grid {
+    gap: .75rem;
+  }
+
+  .user-dashboard-content .section-card {
+    border-radius: 13px;
+  }
+
+  .user-dashboard-content .task-card-footer {
+    padding: .75rem 1rem;
+  }
+
+  .user-dashboard-content .task-card-footer .btn {
+    min-height: 40px;
+  }
+
+  .user-dashboard-content .status-section .tasks-grid {
+    padding: .75rem;
+  }
+
+  .user-dashboard-content .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .user-dashboard-content .modal-box {
+    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+    max-width: none;
+  }
+
+  .user-dashboard-content .modal-box::before {
+    display: block;
+  }
+
+  .user-dashboard-content .modal-footer {
+    flex-wrap: wrap;
+  }
+
+  .user-dashboard-content .modal-footer .btn {
+    flex: 1;
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 560px) {
+  .user-dashboard-topbar > .user-dashboard-topbar-actions {
+    gap: .35rem;
+  }
+
+  .user-dashboard-topbar-actions .user-dashboard-live {
+    display: none;
+  }
+
+  .user-dashboard-content {
+    padding: 1rem .75rem 1.5rem;
+  }
+
+  .user-dashboard-content .page-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .user-dashboard-content .section-card {
+    padding: 0;
+  }
+
+  .user-dashboard-content .section-header {
+    padding: 1rem;
+  }
+
+  .user-dashboard-content .section-header h2 {
+    font-size: .95rem;
+  }
+
+  .user-dashboard-content .task-card-header {
+    padding: .85rem 1rem .7rem;
+  }
+
+  .user-dashboard-content .task-card-body {
+    padding: .9rem 1rem;
+  }
+
+  .user-dashboard-content .task-budget {
+    font-size: 1.15rem;
+  }
+
+  .user-dashboard-content .task-card-footer .action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .user-dashboard-content .task-card-footer .action-row .btn {
+    width: 100%;
+  }
+
+  .user-dashboard-content .empty-state {
+    padding: 3rem 1rem;
+  }
+}
