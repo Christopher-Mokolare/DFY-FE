@@ -40,13 +40,23 @@ export default function Profile() {
   const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false })
   const [prefSaving, setPrefSaving] = useState(false)
   const [prefSuccess, setPrefSuccess] = useState('')
+  const [completion, setCompletion] = useState(0)
+  const [missingProfileFields, setMissingProfileFields] = useState<string[]>([])
 
   useEffect(() => {
     authApi.getProfile().then(r => {
       const d = r.data?.data || r.data
-      if (d) setForm({ firstName: d.firstName || '', lastName: d.lastName || '', email: d.email || '', phoneNumber: d.phoneNumber || d.contact || '', userType: d.userType || '', idNumber: d.idNumber || '', address: d.address || '', dateOfBirth: d.dateOfBirth ? d.dateOfBirth.substring(0, 10) : '' })
+      if (d) {
+        setForm({ firstName: d.firstName || '', lastName: d.lastName || '', email: d.email || '', phoneNumber: d.phoneNumber || d.contact || '', userType: d.userType || '', idNumber: d.idNumber || '', address: d.address || '', dateOfBirth: d.dateOfBirth ? d.dateOfBirth.substring(0, 10) : '' })
+        setCompletion(d.profileCompletion ?? 0)
+        setMissingProfileFields(d.missingProfileFields ?? [])
+      }
     }).catch(() => {
-      if (user) setForm({ firstName: user.firstName || '', lastName: user.lastName || '', email: user.email || '', phoneNumber: user.phoneNumber || user.contact || '', userType: user.userType || '', idNumber: user.idNumber || '', address: user.address || '', dateOfBirth: '' })
+      if (user) {
+        setForm({ firstName: user.firstName || '', lastName: user.lastName || '', email: user.email || '', phoneNumber: user.phoneNumber || user.contact || '', userType: user.userType || '', idNumber: user.idNumber || '', address: user.address || '', dateOfBirth: '' })
+        setCompletion(user.profileCompletion ?? 0)
+        setMissingProfileFields((user as any).missingProfileFields ?? [])
+      }
     })
   }, [user])
 
@@ -69,7 +79,7 @@ export default function Profile() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError(''); setSuccess('')
-    if (!/^0(6|7|8)\\d{8}$/.test(form.phoneNumber.replace(/\\s/g, ''))) {
+    if (!/^0(6|7|8)\d{8}$/.test(form.phoneNumber.replace(/\s/g, ''))) {
       setError('Enter a valid South African mobile number, e.g. 0821234567.')
       setLoading(false)
       return
@@ -89,7 +99,12 @@ export default function Profile() {
       if (res.data?.success === false) { setError(res.data?.message || 'Failed to update profile.'); return }
       const r = await authApi.getProfile()
       const d = r.data?.data || r.data
-      if (d) { localStorage.setItem('currentUser', JSON.stringify(d)); refreshUser() }
+      if (d) {
+        localStorage.setItem('currentUser', JSON.stringify(d))
+        setCompletion(d.profileCompletion ?? 0)
+        setMissingProfileFields(d.missingProfileFields ?? [])
+        refreshUser()
+      }
       setSuccess('Profile updated successfully!')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update profile.')
@@ -120,7 +135,13 @@ export default function Profile() {
         canCreateTasks: value === 'creator' || value === 'both',
         canAcceptTasks: value === 'runner' || value === 'both',
       })
-      // Backend is authoritative. Refresh the complete user context after the mutation.
+      const profileResponse = await authApi.getProfile()
+      const profile = profileResponse.data?.data || profileResponse.data
+      if (profile) {
+        setForm(prev => ({ ...prev, userType: profile.userType || value }))
+        setCompletion(profile.profileCompletion ?? completion)
+        setMissingProfileFields(profile.missingProfileFields ?? [])
+      }
       refreshUser()
       setPrefSuccess('Preferences saved!')
       setTimeout(() => setPrefSuccess(''), 3000)
@@ -130,8 +151,6 @@ export default function Profile() {
       setError(err.response?.data?.message || 'Could not save your account type.')
     } finally { setPrefSaving(false) }
   }
-
-  const completion = user?.profileCompletion ?? 0
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -143,16 +162,19 @@ export default function Profile() {
             <h3>{form.firstName} {form.lastName}</h3>
             <p className="text-muted">{form.email}</p>
             <span className={`badge ${form.userType === 'creator' ? 'badge-posted' : form.userType === 'runner' ? 'badge-claimed' : 'badge-info'}`}>{form.userType || 'Not set'}</span>
-            {completion > 0 && (
-              <div className="completion-bar">
+            <div className="completion-bar">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '0.375rem' }}>
                   <span>Profile Completion</span><span>{completion}%</span>
                 </div>
                 <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px' }}>
                   <div style={{ height: '100%', width: `${completion}%`, background: 'var(--primary-gradient)', borderRadius: '3px' }} />
                 </div>
-              </div>
-            )}
+              {missingProfileFields.length > 0 && (
+                <p className="text-muted text-sm" style={{ margin: '.55rem 0 0', lineHeight: 1.4 }}>
+                  {missingProfileFields.map(field => field === 'idNumber' ? 'ID number needs verification' : field === 'phoneNumber' ? 'Valid phone number required' : field === 'dateOfBirth' ? 'Date of birth required' : field === 'userType' ? 'Choose an account type' : field === 'address' ? 'Address required' : field).join(' · ')}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

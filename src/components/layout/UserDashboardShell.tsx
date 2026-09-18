@@ -16,7 +16,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const roleLabel = isRunner && isCreator ? 'Creator & Runner' : isRunner ? 'Runner' : 'Creator'
 
   const navigation = [
-    { label: 'Dashboard', to: '/dashboard', icon: 'fa-chart-pie', show: true },
+    { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true },
     { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator },
     { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner },
     { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true },
@@ -26,7 +26,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   ].filter(item => item.show)
 
   const pageTitles: Record<string, string> = {
-    '/dashboard': 'Dashboard',
+    '/dashboard': 'Overview',
     '/tasks/post': 'Post an Errand',
     '/tasks/browse': 'Browse Errands',
     '/tasks/my-posted': 'My Posted Tasks',
@@ -37,22 +37,15 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     '/user/profile': 'My Profile',
   }
 
-  const pageTitle = pageTitles[pathname] || (pathname.includes('/chat') ? 'Task Chat' : 'Dashboard')
+  const pageTitle = pageTitles[pathname] || (pathname.includes('/chat') ? 'Task Chat' : 'Overview')
 
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
+  useEffect(() => { setMobileOpen(false) }, [pathname])
 
   useEffect(() => {
     if (!mobileOpen) return
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMobileOpen(false)
-    }
-
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileOpen(false) }
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', onKeyDown)
-
     return () => {
       document.body.style.overflow = ''
       window.removeEventListener('keydown', onKeyDown)
@@ -60,35 +53,25 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   }, [mobileOpen])
 
   return (
-    <div className="user-dashboard-shell">
-      {mobileOpen && (
-        <button
-          className="user-dashboard-sidebar-backdrop"
-          aria-label="Close navigation"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      <aside className={`user-dashboard-sidebar ${mobileOpen ? 'is-open' : ''}`}>
-        <div className="user-dashboard-brand">
-          <img src="/DFY.png" alt="DoForYou" />
+    <div className="admin-shell user-workspace-shell">
+      <aside className={`admin-sidebar user-workspace-sidebar ${mobileOpen ? 'is-open' : ''}`}>
+        <div className="admin-brand">
+          <img className="admin-brand-mark" src="/DFY.png" alt="DoForYou" />
           <div>
             <strong>DoForYou<span>.</span></strong>
             <small>{roleLabel}</small>
           </div>
         </div>
 
-        <div className="user-dashboard-sidebar-label">Workspace</div>
-
-        <nav className="user-dashboard-nav" aria-label="Dashboard navigation">
+        <div className="admin-sidebar-label">Workspace</div>
+        <nav className="admin-nav" aria-label="User navigation">
           {navigation.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={() => setMobileOpen(false)}
               end={item.to === '/dashboard'}
-              className={({ isActive }) =>
-                `user-dashboard-nav-item ${isActive ? 'active' : ''}`
-              }
+              className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
             >
               <i className={`fas ${item.icon}`} />
               <span>{item.label}</span>
@@ -96,56 +79,54 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
           ))}
         </nav>
 
-        <div className="user-dashboard-sidebar-spacer" />
+        <div className="admin-sidebar-spacer" />
 
-        <NavLink className="user-dashboard-post" to="/tasks/post">
-          <i className="fas fa-plus" />
-          <span>POST AN ERRAND</span>
-        </NavLink>
+        {isCreator && (
+          <NavLink className="user-workspace-post admin-nav-item" to="/tasks/post" onClick={() => setMobileOpen(false)}>
+            <i className="fas fa-plus" />
+            <span>POST AN ERRAND</span>
+          </NavLink>
+        )}
 
-        <div className="user-dashboard-sidebar-footer">
-          <div className="user-dashboard-avatar">
-            {displayName.charAt(0).toUpperCase()}
+        <div className="admin-sidebar-footer">
+          <div className="admin-profile-mini">
+            <div className="admin-avatar">{displayName.charAt(0).toUpperCase()}</div>
+            <div>
+              <strong>{displayName}</strong>
+              <span>{roleLabel}</span>
+            </div>
           </div>
-          <div>
-            <strong>{displayName}</strong>
-            <span>{roleLabel}</span>
-          </div>
-          <button type="button" onClick={logout} title="Logout" aria-label="Logout">
+          <button type="button" className="admin-logout" onClick={logout} title="Sign out" aria-label="Sign out">
             <i className="fas fa-arrow-right-from-bracket" />
           </button>
         </div>
       </aside>
 
-      <div className="user-dashboard-main">
-        <div className="user-dashboard-topbar">
-          <div className="user-dashboard-topbar-left">
-            <button
-              type="button"
-              className="user-dashboard-mobile-menu"
-              onClick={() => setMobileOpen(v => !v)}
-              aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
-            >
+      {mobileOpen && <button className="admin-sidebar-backdrop" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
+
+      <div className="admin-main user-workspace-main">
+        <header className="admin-topbar">
+          <div className="admin-topbar-left">
+            <button type="button" className="admin-mobile-menu" onClick={() => setMobileOpen(v => !v)} aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}>
               <i className={`fas ${mobileOpen ? 'fa-times' : 'fa-bars'}`} />
             </button>
-
             <div>
-              <span>DoForYou /</span>
+              <span className="admin-breadcrumb">DoForYou /</span>
               <strong>{pageTitle}</strong>
             </div>
           </div>
-
-          <div className="user-dashboard-topbar-actions">
-            <NavLink to="/notifications" title="Notifications" aria-label="Notifications">
+          <div className="admin-topbar-right">
+            <NavLink to="/notifications" className="admin-icon-button" title="Notifications" aria-label="Notifications">
               <i className="fas fa-bell" />
             </NavLink>
-            <span className="user-dashboard-live">
-              <i /> Account active
-            </span>
+            <div className="admin-live-status">
+              <span />
+              Account active
+            </div>
           </div>
-        </div>
+        </header>
 
-        <main className="user-dashboard-content">{children}</main>
+        <main className="admin-content user-dashboard-content">{children}</main>
       </div>
     </div>
   )

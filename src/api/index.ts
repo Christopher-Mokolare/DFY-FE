@@ -86,8 +86,8 @@ export const ratingsApi = {
 export const categoryApi = { getAll: () => api.get('/categories') }
 
 export const userPreferencesApi = {
-  get: () => api.get('/UserPreferences'),
-  update: (data: object) => api.put('/UserPreferences', data),
+  get: () => api.get('/user/preferences'),
+  update: (data: object) => api.put('/user/preferences', data),
 }
 
 export const notificationsApi = {

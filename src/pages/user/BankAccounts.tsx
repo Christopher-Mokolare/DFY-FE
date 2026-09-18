@@ -25,6 +25,8 @@ export default function BankAccounts() {
   const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
+  const [banksError, setBanksError] = useState('')
+  const [accountsError, setAccountsError] = useState('')
   const [form, setForm] = useState({
     bankGroupId: '',
     accountNumber: '',
@@ -35,20 +37,33 @@ export default function BankAccounts() {
   const load = async () => {
     setLoading(true)
     setError('')
-    try {
-      const [banksResponse, accountsResponse] = await Promise.all([
-        bankingApi.getBanks(),
-        bankingApi.getBankAccounts(),
-      ])
-      const bankData = banksResponse.data?.data ?? []
-      const accountData = accountsResponse.data?.data ?? []
+    setBanksError('')
+    setAccountsError('')
+
+    const [banksResult, accountsResult] = await Promise.allSettled([
+      bankingApi.getBanks(),
+      bankingApi.getBankAccounts(),
+    ])
+
+    if (banksResult.status === 'fulfilled') {
+      const bankData = banksResult.value.data?.data ?? []
       setBanks(bankData)
-      setAccounts(accountData)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Unable to load your bank details.')
-    } finally {
-      setLoading(false)
+      if (bankData.length === 0) setBanksError(banksResult.value.data?.message || 'The bank list is temporarily unavailable.')
+    } else {
+      const err: any = banksResult.reason
+      setBanks([])
+      setBanksError(err.response?.data?.message || 'The bank list is temporarily unavailable. Please try again.')
     }
+
+    if (accountsResult.status === 'fulfilled') {
+      setAccounts(accountsResult.value.data?.data ?? [])
+    } else {
+      const err: any = accountsResult.reason
+      setAccounts([])
+      setAccountsError(err.response?.data?.message || 'Unable to load your bank accounts. Please try again.')
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => { void load() }, [])
@@ -132,6 +147,17 @@ export default function BankAccounts() {
             Your bank details are verified before DFY can release a direct payout through Ozow.
           </p>
 
+          {banksError && (
+            <div className="alert alert-warning mb-4">
+              <i className="fas fa-triangle-exclamation" />
+              <div style={{ flex: 1 }}>
+                <strong>Bank list unavailable</strong>
+                <div>{banksError}</div>
+              </div>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => void load()} disabled={loading}>Retry</button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="form-row-2">
               <div className="form-group">
@@ -177,6 +203,12 @@ export default function BankAccounts() {
 
           {loading ? (
             <p className="text-muted">Loading bank accounts...</p>
+          ) : accountsError ? (
+            <div className="empty-state" style={{ padding: '2rem', textAlign: 'center' }}>
+              <i className="fas fa-triangle-exclamation" style={{ fontSize: '1.5rem', color: 'var(--primary)', marginBottom: '.75rem' }} />
+              <p className="text-muted" style={{ marginBottom: '.9rem' }}>{accountsError}</p>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => void load()}>Retry</button>
+            </div>
           ) : accounts.length === 0 ? (
             <p className="text-muted">No active bank accounts have been added yet.</p>
           ) : (
