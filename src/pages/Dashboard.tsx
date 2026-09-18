@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { tasksApi, ratingsApi } from '../api'
 import { useAuth } from '../context/AuthContext'
@@ -6,102 +6,98 @@ import { usePostErrand } from '../hooks/usePostErrand'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { user, isProfileIncomplete, isAdmin, canPostErrands, canAcceptTasks } = useAuth()
+  const { user, isProfileIncomplete, canPostErrands, canAcceptTasks } = useAuth()
   const navigate = useNavigate()
   const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const [stats, setStats] = useState<any>(null)
   const [activity, setActivity] = useState<any[]>([])
-  const [myRatings, setMyRatings] = useState<any[]>([])
-  const [ratingsPage, setRatingsPage] = useState(1)
-  const [ratingsTotalPages, setRatingsTotalPages] = useState(1)
-  const [ratingsTotalCount, setRatingsTotalCount] = useState(0)
-  const [ratingsBreakdown, setRatingsBreakdown] = useState<Record<number, number>>({})
-  const [ratingsAvg, setRatingsAvg] = useState(0)
-  const [ratingsLoading, setRatingsLoading] = useState(false)
+  const [ratings, setRatings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const userType = user?.userType || ''
-
-  const loadRatings = async (p: number) => {
-    if (!user?.id) return
-    setRatingsLoading(true)
-    try {
-      const res = await ratingsApi.getForUser(user.id, p, 5)
-      const d = res.data?.data
-      setMyRatings(d?.ratings || [])
-      setRatingsTotalPages(d?.totalPages || 1)
-      setRatingsTotalCount(d?.count || 0)
-      setRatingsBreakdown(d?.starBreakdown || {})
-      setRatingsAvg(d?.average || 0)
-    } catch { /* ignore */ } finally { setRatingsLoading(false) }
-  }
+  const [ratingsLoading, setRatingsLoading] = useState(false)
+  const type = user?.userType || ''
+  const name = user?.firstName || user?.name || 'there'
+  const completion = user?.profileCompletion ?? 0
 
   useEffect(() => {
     Promise.all([
       tasksApi.getDashboardStats().catch(() => ({ data: null })),
       tasksApi.getRecentActivity(5).catch(() => ({ data: null })),
-    ]).then(([statsRes, actRes]) => {
-      if (statsRes.data?.data) setStats(statsRes.data.data)
-      const acts = actRes.data?.data
-      setActivity(Array.isArray(acts) ? acts : [])
+    ]).then(([s, a]) => {
+      setStats(s.data?.data || null)
+      const items = a.data?.data
+      setActivity(Array.isArray(items) ? items : [])
     }).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
-    if ((userType === 'runner' || userType === 'both') && user?.id) loadRatings(ratingsPage)
-  }, [ratingsPage, userType, user?.id])
+    if (type === 'runner' || type === 'both') {
+      setRatingsLoading(true)
+      ratingsApi.getForUser(user?.id ?? 0, 1, 3)
+        .then(r => setRatings(r.data?.data?.ratings || []))
+        .catch(() => setRatings([]))
+        .finally(() => setRatingsLoading(false))
+    }
+  }, [type, user?.id])
 
-  const displayName = user ? (user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.name) : ''
-  const profileCompletion = user?.profileCompletion ?? 0
+  const statCards: Array<[string, string | number, string]> = type === 'creator'
+    ? [
+        ['Posted tasks', stats?.postedTasks ?? 0, 'fa-tasks'],
+        ['Awaiting action', (stats?.pendingPayment ?? 0) + (stats?.awaitingConfirmation ?? 0), 'fa-clock'],
+        ['Active', stats?.activeTasks ?? 0, 'fa-spinner'],
+        ['Completed', stats?.completedTasks ?? 0, 'fa-check-circle'],
+      ]
+    : type === 'runner'
+      ? [
+          ['Available', stats?.availableTasks ?? 0, 'fa-search'],
+          ['Active', stats?.myActiveTasks ?? 0, 'fa-running'],
+          ['Pending payout', 'R' + Number(stats?.pendingPayouts ?? 0).toFixed(0), 'fa-hourglass-half'],
+          ['Paid out', 'R' + Number(stats?.totalEarnings ?? 0).toFixed(0), 'fa-university'],
+        ]
+      : [
+          ['Posted', stats?.postedTasks ?? 0, 'fa-tasks'],
+          ['Active', stats?.myActiveTasks ?? 0, 'fa-running'],
+          ['Awaiting action', (stats?.pendingPayment ?? 0) + (stats?.awaitingConfirmation ?? 0), 'fa-clock'],
+          ['Paid out', 'R' + Number(stats?.totalEarnings ?? 0).toFixed(0), 'fa-university'],
+        ]
 
   return (
     <>
       <div className="dashboard-page">
         <div className="dashboard-header"><div className="container">
-          {userType === 'creator' && <><div className="dashboard-role-pill"><i className="fas fa-user-tie" /> Creator</div><h1><i className="fas fa-user-tie" /> Task Creator Dashboard</h1><p>Manage and track your posted tasks</p></>}
-          {userType === 'runner' && <><div className="dashboard-role-pill"><i className="fas fa-running" /> Runner</div><h1><i className="fas fa-running" /> Task Runner Dashboard</h1><p>Find tasks and track your payouts</p></>}
-          {userType === 'both' && <><div className="dashboard-role-pill"><i className="fas fa-shield-alt" /> Creator & Runner</div><h1><i className="fas fa-tachometer-alt" /> My Dashboard</h1><p>Manage your tasks and runner payouts</p></>}
-          {!userType && <><div className="dashboard-role-pill"><i className="fas fa-home" /> Welcome</div><h1><i className="fas fa-home" /> Welcome, {displayName}!</h1><p>Set up your profile to get started</p></>}
-          {isProfileIncomplete() && <div className="profile-alert"><div><h6><i className="fas fa-user-circle" /> Profile Completion: {profileCompletion}%</h6><div className="progress-bar-wrap"><div className="progress-bar-fill" style={{ width: `${profileCompletion}%` }} /></div><p>Complete your profile to unlock all features</p></div><Link to="/user/profile" className="btn btn-secondary btn-sm">Complete Profile</Link></div>}
+          <div className="dashboard-role-pill"><i className={'fas ' + (type === 'runner' ? 'fa-running' : type === 'both' ? 'fa-handshake' : 'fa-user-tie')} /> {type === 'both' ? 'Creator & Runner' : type ? (type === 'creator' ? 'Creator' : 'Runner') : 'Account setup'}</div>
+          <h1>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {name}</h1>
+          <p>{type === 'runner' ? 'Find tasks, manage active work and track your payouts.' : type === 'both' ? 'Manage your posted tasks and the work you are completing.' : 'Manage your posted tasks, payments and activity.'}</p>
+          {isProfileIncomplete() && <div className="profile-alert">
+            <div><h6><i className="fas fa-user-circle" /> Profile {completion}% complete</h6><div className="progress-bar-wrap"><div className="progress-bar-fill" style={{ width: completion + '%' }} /></div><p>Complete your profile before posting or accepting tasks.</p></div>
+            <Link to="/user/profile" className="btn btn-secondary btn-sm">Complete Profile</Link>
+          </div>}
         </div></div>
 
         <div className="container dashboard-body">
-          {loading ? <div className="loading-state"><div className="spinner" /><p>Loading dashboard...</p></div> : <>
-            {(userType === 'creator' || userType === 'both') && stats && <div className="stats-grid">
-              <div className="stat-card"><div className="stat-icon bg-primary"><i className="fas fa-tasks" /></div><div className="stat-content"><h3>{stats.postedTasks ?? 0}</h3><p>Posted Tasks</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-danger"><i className="fas fa-exclamation-circle" /></div><div className="stat-content"><h3>{stats.pendingPayment ?? 0}</h3><p>Pending Payment</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-warning"><i className="fas fa-spinner" /></div><div className="stat-content"><h3>{stats.activeTasks ?? 0}</h3><p>Active Tasks</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-info"><i className="fas fa-clock" /></div><div className="stat-content"><h3>{stats.awaitingConfirmation ?? 0}</h3><p>Awaiting Confirmation</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-success"><i className="fas fa-check-circle" /></div><div className="stat-content"><h3>{stats.completedTasks ?? 0}</h3><p>Completed</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-dark"><i className="fas fa-money-bill-wave" /></div><div className="stat-content"><h3>R{(stats.totalSpent ?? 0).toFixed(0)}</h3><p>Total Spent</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-secondary"><i className="fas fa-calendar" /></div><div className="stat-content"><h3>R{(stats.thisMonthSpending ?? 0).toFixed(0)}</h3><p>This Month</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-primary"><i className="fas fa-chart-line" /></div><div className="stat-content"><h3>R{(stats.averageTaskCost ?? 0).toFixed(0)}</h3><p>Avg Task Cost</p></div></div>
+          {loading ? <div className="loading-state"><div className="spinner" /><p>Loading your dashboard...</p></div> : <>
+            <div className="stats-grid">{statCards.map(([label, value, icon]) => <div className="stat-card" key={String(label)}><div className="stat-icon bg-primary"><i className={'fas ' + icon} /></div><div className="stat-content"><h3>{value}</h3><p>{label}</p></div></div>)}</div>
+
+            <div className="section-card">
+              <div className="section-header"><h2><i className="fas fa-bolt" /> Quick actions</h2></div>
+              <div className="quick-actions">
+                {canPostErrands() && !isProfileIncomplete() && <button className="btn btn-primary" onClick={handlePostErrand}><i className="fas fa-plus" /> Post a Task</button>}
+                {canAcceptTasks() && <button className="btn btn-primary" onClick={() => navigate('/tasks/browse')}><i className="fas fa-search" /> Find a Task</button>}
+                {(type === 'creator' || type === 'both') && <Link to="/tasks/my-posted" className="btn btn-outline"><i className="fas fa-list" /> My Posted Tasks</Link>}
+                {(type === 'runner' || type === 'both') && <Link to="/tasks/my-active" className="btn btn-outline"><i className="fas fa-tasks" /> My Active Tasks</Link>}
+                {(type === 'runner' || type === 'both') && <Link to="/user/profile?section=banking" className="btn btn-secondary"><i className="fas fa-university" /> Bank Account</Link>}
+                <Link to="/notifications" className="btn btn-outline"><i className="fas fa-bell" /> Notifications</Link>
+                <Link to="/user/profile" className="btn btn-secondary"><i className="fas fa-user" /> Profile</Link>
+              </div>
+            </div>
+
+            {activity.length > 0 && <div className="section-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent activity</h2></div><div className="activity-feed">
+              {activity.map((a, i) => <div key={a.id || i} className="activity-item"><div className="activity-icon"><i className={'fas ' + (a.type === 'created' ? 'fa-plus-circle' : 'fa-handshake')} /></div><div className="activity-content"><p>{a.description || a.message || 'Task updated'}</p><span className="text-xs text-muted">{a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''} · {a.status || 'Updated'}</span></div></div>)}
+            </div></div>}
+
+            {(type === 'runner' || type === 'both') && <div className="section-card"><div className="section-header"><h2><i className="fas fa-star" /> Recent reviews</h2></div>
+              {ratingsLoading ? <div className="loading-state"><div className="spinner" /></div> : ratings.length === 0 ? <p className="text-muted">No reviews yet. Complete tasks to build your reputation.</p> :
+                ratings.map(r => <div className="rating-card" key={r.id}><div className="rating-card-header"><span className="rating-card-title">{r.taskName || 'Completed task'}</span><span className="rating-card-stars">{'★'.repeat(r.ratingValue)}{'☆'.repeat(5 - r.ratingValue)}</span></div>{r.review && <p className="rating-card-review">"{r.review}"</p>}</div>)}
             </div>}
-
-            {(userType === 'runner' || userType === 'both') && stats && <div className="stats-grid">
-              <div className="stat-card"><div className="stat-icon bg-info"><i className="fas fa-search" /></div><div className="stat-content"><h3>{stats.availableTasks ?? 0}</h3><p>Available Tasks</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-warning"><i className="fas fa-hand-paper" /></div><div className="stat-content"><h3>{stats.myActiveTasks ?? 0}</h3><p>My Active Tasks</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-success"><i className="fas fa-trophy" /></div><div className="stat-content"><h3>{stats.runnerCompletedTasks ?? 0}</h3><p>Completed</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-primary"><i className="fas fa-coins" /></div><div className="stat-content"><h3>R{(stats.totalEarnings ?? 0).toFixed(0)}</h3><p>Total Ozow Payouts</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-warning"><i className="fas fa-hourglass-half" /></div><div className="stat-content"><h3>R{(stats.pendingPayouts ?? 0).toFixed(0)}</h3><p>Pending Payouts</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-info"><i className="fas fa-calendar" /></div><div className="stat-content"><h3>R{(stats.thisMonthEarnings ?? 0).toFixed(0)}</h3><p>This Month</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-dark"><i className="fas fa-percentage" /></div><div className="stat-content"><h3>{(stats.completionRate ?? 0).toFixed(0)}%</h3><p>Completion Rate</p></div></div>
-              <div className="stat-card"><div className="stat-icon bg-secondary"><i className="fas fa-calculator" /></div><div className="stat-content"><h3>R{(stats.averageEarning ?? 0).toFixed(0)}</h3><p>Avg Payout</p></div></div>
-            </div>}
-
-            {activity.length > 0 && <div className="section-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent Activity</h2></div><div className="activity-feed">{activity.map((a, i) => <div key={i} className="activity-item"><div className="activity-icon"><i className={`fas fa-${a.type === 'created' ? 'plus-circle' : 'handshake'}`} /></div><div className="activity-content"><p>{(a.description || a.message || '').substring(0, 80)}</p><span className="text-xs text-muted">{new Date(a.updatedAt || a.timestamp).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}{' · '}<span className={`badge badge-${(a.status || '').toLowerCase()}`}>{a.status}</span></span></div></div>)}</div></div>}
-
-            {(userType === 'runner' || userType === 'both') && <div className="section-card"><div className="section-header"><h2><i className="fas fa-star" /> My Ratings</h2></div>{ratingsTotalCount > 0 && <div className="ratings-stats"><div className="ratings-score"><div className="ratings-score-num">{ratingsAvg.toFixed(1)}</div><div className="ratings-score-stars">{'★'.repeat(Math.round(ratingsAvg))}{'☆'.repeat(5 - Math.round(ratingsAvg))}</div><div className="ratings-score-count">{ratingsTotalCount} review{ratingsTotalCount !== 1 ? 's' : ''}</div></div><div className="ratings-bars">{[5,4,3,2,1].map(star => { const cnt = ratingsBreakdown[star] || 0; const pct = ratingsTotalCount > 0 ? Math.round((cnt / ratingsTotalCount) * 100) : 0; return <div key={star} className="ratings-bar-row"><span className="ratings-bar-label">{star}</span><span className="ratings-bar-star">★</span><div className="ratings-bar-track"><div className="ratings-bar-fill" style={{ width: pct + '%' }} /></div><span className="ratings-bar-count">{cnt}</span></div> })}</div></div>}{ratingsLoading ? <div className="loading-state"><div className="spinner" /></div> : ratingsTotalCount === 0 ? <p style={{ color: 'var(--text-muted)', padding: '1rem 0', fontSize: '0.9rem' }}>No ratings yet. Complete tasks to receive reviews.</p> : <><div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>{myRatings.map((r: any) => <div key={r.id} className="rating-card"><div className="rating-card-header"><span className="rating-card-title">{r.taskName || r.taskDescription || 'Task'}</span><span className="rating-card-stars">{'★'.repeat(r.ratingValue)}{'☆'.repeat(5 - r.ratingValue)}</span></div>{r.review && <p className="rating-card-review">"{r.review}"</p>}<p className="rating-card-meta">by {r.ratedBy} · {new Date(r.createdAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</p></div>)}</div>{ratingsTotalPages > 1 && <div className="ratings-pagination"><button className="ratings-page-btn" disabled={ratingsPage === 1} onClick={() => setRatingsPage(p => p - 1)}>← Prev</button><span className="ratings-page-info">Page {ratingsPage} of {ratingsTotalPages}</span><button className="ratings-page-btn" disabled={ratingsPage === ratingsTotalPages} onClick={() => setRatingsPage(p => p + 1)}>Next →</button></div>}</>}</div>}
-
-            <div className="section-card"><div className="section-header"><h2><i className="fas fa-bolt" /> Quick Actions</h2></div><div className="quick-actions">
-              {canPostErrands() && !isProfileIncomplete() && <button className="btn btn-primary" onClick={handlePostErrand}><i className="fas fa-plus" /> Post New Task</button>}
-              {canAcceptTasks() && !isProfileIncomplete() && <button className="btn btn-primary" onClick={() => navigate('/tasks/browse')}><i className="fas fa-search" /> Find Tasks</button>}
-              {(userType === 'creator' || userType === 'both') && <Link to="/tasks/my-posted" className="btn btn-outline"><i className="fas fa-list" /> My Posted Tasks</Link>}
-              {(userType === 'runner' || userType === 'both') && <Link to="/tasks/my-active" className="btn btn-outline"><i className="fas fa-tasks" /> My Active Tasks</Link>}
-              <Link to="/notifications" className="btn btn-outline"><i className="fas fa-bell" /> Notifications</Link>
-              <Link to="/user/profile" className="btn btn-secondary"><i className="fas fa-user" /> My Profile</Link>
-              {(userType === 'runner' || userType === 'both') && <Link to="/user/profile?section=banking" className="btn btn-secondary"><i className="fas fa-university" /> Bank & Payout Details</Link>}
-              {isProfileIncomplete() && <Link to="/user/profile" className="btn btn-primary"><i className="fas fa-cog" /> Complete Profile</Link>}
-            </div></div>
           </>}
         </div>
       </div>

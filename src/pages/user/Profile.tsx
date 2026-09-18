@@ -69,6 +69,21 @@ export default function Profile() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError(''); setSuccess('')
+    if (!/^0(6|7|8)\\d{8}$/.test(form.phoneNumber.replace(/\\s/g, ''))) {
+      setError('Enter a valid South African mobile number, e.g. 0821234567.')
+      setLoading(false)
+      return
+    }
+    if (['just around', 'near me', 'around', 'n/a', 'na', 'tbc', 'unknown', 'somewhere'].includes(form.address.trim().toLowerCase())) {
+      setError('Please enter a real area or suburb.')
+      setLoading(false)
+      return
+    }
+    if (form.idNumber.length !== 13) {
+      setError('ID number must be 13 digits.')
+      setLoading(false)
+      return
+    }
     try {
       const res = await authApi.updateProfile(form)
       if (res.data?.success === false) { setError(res.data?.message || 'Failed to update profile.'); return }
@@ -83,6 +98,7 @@ export default function Profile() {
 
   const handlePwChange = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (pwForm.newPassword.length < 8) { setPwError('New password must be at least 8 characters.'); return }
     if (pwForm.newPassword !== pwForm.confirmPassword) { setPwError('Passwords do not match'); return }
     setPwLoading(true); setPwError(''); setPwSuccess('')
     try {
@@ -116,7 +132,11 @@ export default function Profile() {
       }
       setPrefSuccess('Preferences saved!')
       setTimeout(() => setPrefSuccess(''), 3000)
-    } catch { /* ignore */ } finally { setPrefSaving(false) }
+    } catch (err: any) {
+      setForm(prev => ({ ...prev, userType: user?.userType || '' }))
+      setPrefSuccess('')
+      setError(err.response?.data?.message || 'Could not save your account type.')
+    } finally { setPrefSaving(false) }
   }
 
   const completion = user?.profileCompletion ?? 0
@@ -155,7 +175,7 @@ export default function Profile() {
                 <div className="form-group"><label className="form-label">Last Name</label><input className="form-input" value={form.lastName} onChange={set('lastName')} required /></div>
               </div>
               <div className="form-row-2">
-                <div className="form-group"><label className="form-label">Email</label><input type="email" className="form-input" value={form.email} onChange={set('email')} required /></div>
+                <div className="form-group"><label className="form-label">Email</label><input type="email" className="form-input" value={form.email} readOnly disabled title="Email changes require account verification support." /></div>
                 <div className="form-group"><label className="form-label">Phone Number</label><input type="tel" className="form-input" value={form.phoneNumber} onChange={set('phoneNumber')} /></div>
               </div>
               <div className="form-row-2">
@@ -211,7 +231,7 @@ export default function Profile() {
                 <div className="form-group">
                   <label className="form-label">New Password</label>
                   <div style={{ position: 'relative' }}>
-                    <input type={showPw.new ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.newPassword} onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))} required minLength={6} />
+                    <input type={showPw.new ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.newPassword} onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))} required minLength={8} />
                     <button type="button" onClick={() => setShowPw(s => ({ ...s, new: !s.new }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #6b7280)', padding: 0 }} aria-label={showPw.new ? 'Hide password' : 'Show password'}><i className={`fas ${showPw.new ? 'fa-eye-slash' : 'fa-eye'}`} /></button>
                   </div>
                 </div>
