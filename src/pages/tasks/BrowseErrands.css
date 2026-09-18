@@ -366,3 +366,12 @@
   .browse-page .task-title { font-size: 1rem; }
   .task-earnings strong { font-size: 1.35rem; }
 }
+
+
+/* Authenticated workspace shell */
+.user-dashboard-content .browse-page { min-height: 0; background: transparent; padding-bottom: 0; }
+.user-dashboard-content .browse-page .browse-content { max-width: 1320px; }
+.user-dashboard-content .browse-page .browse-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; padding:.9rem 1rem; background:#fff; border:1px solid #e7ebf1; border-radius:12px; box-shadow:0 8px 28px rgba(15,23,42,.035); }
+.user-dashboard-content .browse-page .browse-toolbar-stat { display:flex; align-items:baseline; gap:.5rem; color:var(--text-muted); font-size:.78rem; }
+.user-dashboard-content .browse-page .browse-toolbar-stat strong { color:var(--text); font-size:1.1rem; }
+@media (max-width:768px){ .user-dashboard-content .browse-page .browse-toolbar{align-items:stretch;flex-direction:column;} .user-dashboard-content .browse-page .browse-toolbar .btn{width:100%;justify-content:center;} }
