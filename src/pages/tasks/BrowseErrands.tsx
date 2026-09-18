@@ -100,20 +100,10 @@ export default function BrowseErrands() {
 
   return (
     <div className="browse-page">
-      <div className="browse-hero">
-        <div className="container">
-          <div className="browse-hero-inner">
-            <div>
-              <h1><i className="fas fa-search" /> Find a Task</h1>
-              <p>Choose a task that fits your skills and schedule. Completed work is paid directly to your verified bank account.</p>
-              <div className="browse-stats"><div className="browse-stat"><span className="stat-num">{totalItems}</span><span>Available Tasks</span></div></div>
-            </div>
-            <button className="btn btn-secondary" onClick={() => load(page, search, category)} disabled={loading}>
-              <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`} /> {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <div className="page-header"><div className="container"><h1><i className="fas fa-search" /> Find a Task</h1><p>Choose a task that fits your skills and schedule. Completed work is paid directly to your verified bank account.</p></div></div>
+
+      <div className="container browse-content">
+        <div className="browse-toolbar"><div className="browse-toolbar-stat"><strong>{totalItems}</strong><span>Available Tasks</span></div><button className="btn btn-secondary btn-sm" onClick={() => load(page, search, category)} disabled={loading}><i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`} /> {loading ? 'Refreshing...' : 'Refresh'}</button></div>
 
       {!isAuthenticated() && <div className="container"><div className="guest-alert">
         <i className="fas fa-user-plus" /><div><h4>Ready to earn?</h4><p>Create an account to accept tasks and receive payouts directly to your bank account.</p></div>
@@ -121,7 +111,7 @@ export default function BrowseErrands() {
       </div></div>}
 
       <div className="container">
-        <div className="filters-card"><div className="filters-row">
+        <div className="filters-card section-card"><div className="filters-row">
           <div className="search-wrapper"><i className="fas fa-search" /><input className="form-input" placeholder="Search tasks..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && load(1)} /></div>
           <select className="form-select" value={category} onChange={e => { setCategory(e.target.value); setPage(1) }}>
             <option value="">All Categories</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
