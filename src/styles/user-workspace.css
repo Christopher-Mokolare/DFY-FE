@@ -800,3 +800,46 @@
 }
 
 
+
+
+/* Bank account form refinement */
+.user-dashboard-content .bank-account-form-card form {
+  max-width: 780px;
+}
+
+.user-dashboard-content .bank-account-form-card .form-input {
+  width: 100%;
+  max-width: 720px;
+}
+
+.user-dashboard-content .bank-account-form-card .bank-form-grid .form-input {
+  max-width: 100%;
+}
+
+.user-dashboard-content .bank-account-list-card {
+  padding: 1.5rem;
+}
+
+.user-dashboard-content .bank-account-list-card > div[style*="display: grid"] {
+  padding-top: .25rem;
+}
+
+/* Keep task filter actions compact in the authenticated workspace. */
+.user-dashboard-content .filters-row > .btn {
+  width: auto;
+  min-width: 92px;
+  max-width: 112px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .user-dashboard-content .filters-row > .btn {
+    width: auto;
+    max-width: 112px;
+  }
+
+  .user-dashboard-content .bank-account-form-card .form-input {
+    max-width: 100%;
+  }
+}
