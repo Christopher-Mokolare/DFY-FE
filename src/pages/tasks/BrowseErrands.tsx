@@ -149,6 +149,7 @@ export default function BrowseErrands() {
           <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><i className="fas fa-chevron-right" /></button>
         </div>}
       </div>
+      </div>
 
       {detailModal && <div className="modal-overlay" onClick={() => setDetailModal(null)}>
         <div className="modal-box task-detail-modal" onClick={e => e.stopPropagation()}>
