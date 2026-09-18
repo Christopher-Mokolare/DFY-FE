@@ -191,8 +191,8 @@ export default function PostErrand() {
 
   return (
     <div className="post-page">
-      <div className="post-hero"><div className="container"><div className="post-hero-icon"><i className="fas fa-magic" /></div><h1>{isEdit ? 'Edit Your Task' : 'Create Your Task'}<span className="dot">.</span></h1><p>{isEdit ? 'Update your task details' : 'Transform your to-do into someone else\'s opportunity'}</p>{user && <div className="user-welcome"><div className="user-avatar-badge">{displayName.charAt(0).toUpperCase()}</div><div><strong>{displayName}</strong><span>{user.contact || user.phoneNumber || user.email}</span></div></div>}</div></div>
-      <div className="container"><div className="post-form-card">
+      <div className="page-header"><div className="container"><h1><i className="fas fa-plus-circle" /> {isEdit ? 'Edit Your Task' : 'Create Your Task'}</h1><p>{isEdit ? 'Update your task details and keep your task information current.' : "Transform your to-do into someone else's opportunity."}</p></div></div>
+      <div className="container"><div className="post-form-card section-card">
         <div className="form-steps">{['Details', 'Budget', 'Payment'].map((s, i) => <div key={i} className={`form-step ${step > i + 1 ? 'done' : ''} ${step === i + 1 ? 'active' : ''}`}><span className="step-num">{step > i + 1 ? <i className="fas fa-check" /> : i + 1}</span><span>{s}</span></div>)}</div>
         {error && <div className="alert alert-error mb-4"><i className="fas fa-exclamation-circle" /> {error}</div>}
         <form onSubmit={handleSubmit}>
