@@ -452,4 +452,21 @@
   box-shadow: inset 3px 0 0 var(--primary);
 }
 .user-workspace-post:hover { color: #fff; background: rgba(255,255,255,.08); }
-.user-workspace-main .admin-content { width: 100%; }
+.user-workspace-main .admin-content {
+  width: 100%;
+  padding: 2rem 2.5rem 3rem;
+}
+
+.user-workspace-main .admin-content > .container,
+.user-workspace-main .admin-content > .dashboard-page,
+.user-workspace-main .admin-content > .page-header {
+  box-sizing: border-box;
+}
+
+.user-workspace-main .admin-content .page-header {
+  margin-bottom: 1.75rem;
+}
+
+.user-workspace-main .admin-content .section-card + .section-card {
+  margin-top: 1.5rem;
+}
