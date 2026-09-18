@@ -129,7 +129,7 @@ test('runner can browse available tasks', async ({ page }) => {
   await register(page, email, 'runner')
   await login(page, email)
   await gotoWithRetry(page, '/browse-errands')
-  await expect(page).toHaveURL(/tasks\/browse/i, { timeout: 15_000 })
+  await expect(page).toHaveURL(/tasks\\/browse/i, { timeout: 15_000 })
   await expect(page.locator('main').getByRole('heading').first()).toBeVisible({ timeout: 15_000 })
 })
 

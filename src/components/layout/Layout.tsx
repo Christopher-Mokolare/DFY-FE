@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import Header from './Header'
 import Footer from './Footer'
 import BackButton from '../shared/BackButton'
@@ -11,15 +12,15 @@ const USER_WORKSPACE_ROUTES = ['/dashboard', '/tasks/post', '/tasks/browse', '/t
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const { user, loading, isAuthenticated } = useAuth()
   const showFooter = PUBLIC_ROUTES.includes(pathname)
   const isAdminRoute = pathname.startsWith('/admin')
   const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
 
-  if (isUserWorkspaceRoute) return (
+  if (isUserWorkspaceRoute && !loading && isAuthenticated() && user) return (
     <div className="page-wrapper user-dashboard-page-wrapper">
-      <Header />
       <UserDashboardShell><Outlet /></UserDashboardShell>
     </div>
   )
