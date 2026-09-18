@@ -37,6 +37,7 @@ export interface User {
   isAdmin?: boolean
   idNumber?: string
   address?: string
+  dateOfBirth?: string
 }
 
 export interface AuthResponse {
