@@ -22,7 +22,7 @@ export default function AdminShell() {
     <div className="admin-shell">
       <aside className={`admin-sidebar ${mobileOpen ? 'is-open' : ''}`}>
         <div className="admin-brand">
-          <div className="admin-brand-mark">D</div>
+          <div className="admin-brand-mark" aria-hidden="true">D</div>
           <div>
             <strong>DoForYou<span>.</span></strong>
             <small>Operations</small>
