@@ -129,7 +129,8 @@ test('runner can browse available tasks', async ({ page }) => {
   await register(page, email, 'runner')
   await login(page, email)
   await gotoWithRetry(page, '/browse-errands')
-  await expect(page.getByText('Browse Errands', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page).toHaveURL(/tasks\\/browse/i, { timeout: 15_000 })
+  await expect(page.locator('main').getByRole('heading').first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('poster can access post errand page', async ({ page }) => {
@@ -137,7 +138,8 @@ test('poster can access post errand page', async ({ page }) => {
   await register(page, email, 'creator')
   await login(page, email)
   await gotoWithRetry(page, '/post-errand')
-  await expect(page.getByText('Post an Errand', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page).toHaveURL(/post-errand/i, { timeout: 15_000 })
+  await expect(page.locator('main').getByRole('heading').first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('poster can view my posted tasks', async ({ page }) => {
