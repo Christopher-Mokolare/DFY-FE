@@ -87,7 +87,7 @@ export default function AdminDisputes() {
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(d.createdAt).toLocaleDateString('en-ZA')}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           {d.status === 'Open' && (
-                            <button className="btn btn-primary btn-sm" onClick={() => setResolveModal(d)}>Resolve</button>
+                            <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('release_to_runner'); setResolveError('') }}>Resolve</button>
                           )}
                           {d.status === 'Resolved' && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{d.resolution?.substring(0, 40)}...</span>
