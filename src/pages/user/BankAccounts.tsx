@@ -127,39 +127,40 @@ export default function BankAccounts() {
   }
 
   return (
-    <div style={{ paddingBottom: '3rem' }}>
-      <div className="page-header">
-        <div className="container">
-          <h1><i className="fas fa-university" /> Bank Accounts</h1>
+    <div className="bank-accounts-page">
+      <div className="bank-accounts-header">
+        <div>
+          <div className="bank-accounts-eyebrow"><i className="fas fa-shield-alt" /> Secure payouts</div>
+          <h1>Bank Accounts</h1>
           <p>Add and verify the bank account that will receive your direct Ozow runner payouts.</p>
         </div>
+        <div className="bank-accounts-header-icon" aria-hidden="true"><i className="fas fa-university" /></div>
       </div>
 
-      <div className="container" style={{ maxWidth: 900, paddingTop: '2rem' }}>
+      <div className="bank-accounts-content">
         {success && <div className="alert alert-success mb-4"><i className="fas fa-check-circle" /> {success}</div>}
         {error && <div className="alert alert-error mb-4"><i className="fas fa-exclamation-circle" /> {error}</div>}
 
-        <div className="section-card" style={{ marginBottom: '1.5rem' }}>
-          <div className="section-header">
-            <h2><i className="fas fa-plus-circle" /> Add Bank Account</h2>
+        <div className="bank-account-form-card section-card">
+          <div className="bank-account-card-header">
+            <div className="bank-account-card-icon"><i className="fas fa-plus" /></div>
+            <div>
+              <h2>Add Bank Account</h2>
+              <p>Your details are securely verified before DFY releases a direct payout through Ozow.</p>
+            </div>
           </div>
-          <p className="text-muted text-sm" style={{ marginBottom: '1.25rem' }}>
-            Your bank details are verified before DFY can release a direct payout through Ozow.
-          </p>
+          <div className="bank-security-note"><i className="fas fa-lock" /><span>Your banking information is encrypted and used only for payout verification and settlement.</span></div>
 
           {banksError && (
-            <div className="alert alert-warning mb-4">
-              <i className="fas fa-triangle-exclamation" />
-              <div style={{ flex: 1 }}>
-                <strong>Bank list unavailable</strong>
-                <div>{banksError}</div>
-              </div>
+            <div className="bank-inline-error">
+              <div className="bank-inline-error-icon"><i className="fas fa-triangle-exclamation" /></div>
+              <div className="bank-inline-error-copy"><strong>Bank list unavailable</strong><span>{banksError}</span></div>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => void load()} disabled={loading}>Retry</button>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="form-row-2">
+            <div className="bank-form-grid">
               <div className="form-group">
                 <label className="form-label">Bank</label>
                 <select className="form-input" value={form.bankGroupId} onChange={set('bankGroupId')} required disabled={loading || saving}>
@@ -179,7 +180,7 @@ export default function BankAccounts() {
               </div>
             </div>
 
-            <div className="form-row-2">
+            <div className="bank-form-grid">
               <div className="form-group">
                 <label className="form-label">Account Holder Name</label>
                 <input className="form-input" value={form.accountHolderName} onChange={set('accountHolderName')} required disabled={saving} />
@@ -190,15 +191,16 @@ export default function BankAccounts() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" disabled={saving || loading || banks.length === 0}>
+            <button type="submit" className="btn btn-primary bank-submit" disabled={saving || loading || banks.length === 0}>
               {saving ? <><span className="spinner spinner-sm" /> Verifying...</> : <><i className="fas fa-shield-alt" /> Add &amp; Verify Account</>}
             </button>
           </form>
         </div>
 
-        <div className="section-card">
-          <div className="section-header">
-            <h2><i className="fas fa-list" /> Your Bank Accounts</h2>
+        <div className="bank-account-list-card section-card">
+          <div className="bank-account-card-header bank-account-list-header">
+            <div className="bank-account-card-icon"><i className="fas fa-wallet" /></div>
+            <div><h2>Your Bank Accounts</h2><p>Verified accounts available for direct runner payouts.</p></div>
           </div>
 
           {loading ? (
@@ -214,13 +216,11 @@ export default function BankAccounts() {
           ) : (
             <div style={{ display: 'grid', gap: '0.75rem' }}>
               {accounts.map(account => (
-                <div key={account.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem', display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div>
-                    <strong>{account.bankName}</strong>
-                    <div className="text-muted text-sm">{account.accountHolderName} · {account.accountType}</div>
+                <div key={account.id} className="bank-account-row">
+                  <div className="bank-account-row-main"><div className="bank-account-row-icon"><i className="fas fa-building-columns" /></div><div><strong>{account.bankName}</strong><div className="text-muted text-sm">{account.accountHolderName} · {account.accountType}</div>
                     <div className="text-muted text-sm">Account {account.accountNumber}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  </div></div>
+                  <div className="bank-account-row-actions">
                     <span className={`badge ${account.isVerified ? 'badge-posted' : 'badge-claimed'}`}>
                       {account.isVerified ? 'Verified' : 'Verification required'}
                     </span>
