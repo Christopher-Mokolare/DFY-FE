@@ -7,6 +7,7 @@ export default function AdminDisputes() {
   const [filter, setFilter] = useState('')
   const [resolveModal, setResolveModal] = useState<any | null>(null)
   const [resolution, setResolution] = useState('')
+  const [reason, setReason] = useState('')
   const [action, setAction] = useState('none')
   const [actionLoading, setActionLoading] = useState(false)
   const [resolveError, setResolveError] = useState('')
@@ -24,13 +25,17 @@ export default function AdminDisputes() {
   useEffect(() => { load() }, [filter])
 
   const resolve = async () => {
-    if (!resolveModal || !resolution.trim()) return
+    if (!resolveModal || !resolution.trim() || reason.trim().length < 5 || action === 'none') {
+      setResolveError('Select a financial action, enter resolution notes, and provide a reason of at least 5 characters.')
+      return
+    }
     setActionLoading(true); setResolveError('')
     try {
-      const res = await adminApi.resolveDispute(resolveModal.id, resolution, action)
+      const res = await adminApi.resolveDispute(resolveModal.id, resolution, action, reason.trim())
       if (res.data?.success === false) { setResolveError(res.data?.message || 'Failed to resolve dispute'); return }
       setResolveModal(null)
       setResolution('')
+      setReason('')
       setAction('none')
       load()
     } catch (err: any) {
@@ -151,7 +156,6 @@ export default function AdminDisputes() {
               <div className="form-group">
                 <label className="form-label">Financial Action</label>
                 <select className="form-select" value={action} onChange={e => setAction(e.target.value)}>
-                  <option value="none">No financial action — unfreeze escrow only</option>
                   <option value="release_to_runner">Release escrow to runner</option>
                   <option value="refund_creator">Refund creator (cancel task)</option>
                 </select>
@@ -166,11 +170,15 @@ export default function AdminDisputes() {
                   rows={4}
                 />
               </div>
+              <div className="form-group">
+                <label className="form-label">Admin Reason *</label>
+                <textarea className="form-textarea" placeholder="Why is this financial resolution being applied?" value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} />
+              </div>
             </div>
             {resolveError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{resolveError}</p>}
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => { setResolveModal(null); setResolveError('') }}>Cancel</button>
-              <button className="btn btn-primary" onClick={resolve} disabled={actionLoading || !resolution.trim()}>
+              <button className="btn btn-primary" onClick={resolve} disabled={actionLoading || !resolution.trim() || reason.trim().length < 5 || action === 'none'}>
                 {actionLoading ? <><span className="spinner spinner-sm" /> Resolving...</> : 'Resolve Dispute'}
               </button>
             </div>
