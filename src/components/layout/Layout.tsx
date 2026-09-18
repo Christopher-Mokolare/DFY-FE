@@ -7,7 +7,7 @@ import AdminShell from './AdminShell'
 import UserDashboardShell from './UserDashboardShell'
 
 const PUBLIC_ROUTES = ['/', '/about', '/contact', '/terms', '/payments/success', '/payments/cancelled']
-const USER_WORKSPACE_ROUTES = ['/dashboard', '/tasks/post', '/tasks/my-posted', '/tasks/my-active', '/tasks/my-completed', '/notifications', '/user/profile', '/user/bank-accounts']
+const USER_WORKSPACE_ROUTES = ['/dashboard', '/tasks/post', '/tasks/browse', '/tasks/my-posted', '/tasks/my-active', '/tasks/my-completed', '/notifications', '/user/profile', '/user/bank-accounts']
 
 export default function Layout() {
   const { pathname } = useLocation()
