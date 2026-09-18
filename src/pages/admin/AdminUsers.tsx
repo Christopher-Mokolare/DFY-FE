@@ -43,6 +43,11 @@ export default function AdminUsers() {
   const isAdmin = (u: any) => u.role?.includes('Admin')
 
   const toggleVerify = async (id: number, current: boolean) => {
+    const reason = window.prompt(`${current ? 'Unverify' : 'Verify'} user — enter a reason:`)?.trim() || ''
+    if (reason.length < 5) {
+      setActionError('A reason of at least 5 characters is required')
+      return
+    }
     try {
       const r = await adminApi.updateUserStatus(id, !current, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Action failed'); return }
