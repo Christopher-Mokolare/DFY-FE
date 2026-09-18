@@ -29,6 +29,9 @@ export interface User {
   isVerified: boolean
   profileCompleted: boolean
   profileCompletion?: number
+  missingProfileFields?: string[]
+  canCreateTasks?: boolean
+  canAcceptTasks?: boolean
   rating: number
   completedTasks: number
   createdAt: string

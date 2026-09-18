@@ -116,20 +116,12 @@ export default function Profile() {
     setPrefSaving(true); setPrefSuccess('')
     try {
       await userPreferencesApi.update({
+        userType: value,
         canCreateTasks: value === 'creator' || value === 'both',
         canAcceptTasks: value === 'runner' || value === 'both',
       })
-      // Update localStorage so canPostErrands/canAcceptTasks reflect the new type immediately
-      const stored = localStorage.getItem('currentUser')
-      if (stored) {
-        const updated = { ...JSON.parse(stored), userType: value }
-        localStorage.setItem('currentUser', JSON.stringify(updated))
-        localStorage.setItem('userPreferences', JSON.stringify({
-          canCreateTasks: value === 'creator' || value === 'both',
-          canAcceptTasks: value === 'runner' || value === 'both',
-        }))
-        refreshUser()
-      }
+      // Backend is authoritative. Refresh the complete user context after the mutation.
+      refreshUser()
       setPrefSuccess('Preferences saved!')
       setTimeout(() => setPrefSuccess(''), 3000)
     } catch (err: any) {

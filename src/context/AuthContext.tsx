@@ -71,13 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileData) fullUser = { ...data.user, ...profileData }
     } catch { /* fall back to login user */ }
     localStorage.setItem('currentUser', JSON.stringify(fullUser))
-    if (!localStorage.getItem('userPreferences') && fullUser.userType) {
-      const prefs = {
-        canCreateTasks: fullUser.userType === 'creator' || fullUser.userType === 'both',
-        canAcceptTasks: fullUser.userType === 'runner' || fullUser.userType === 'both',
-      }
-      localStorage.setItem('userPreferences', JSON.stringify(prefs))
-    }
     setUser(fullUser)
     return fullUser
   }, [])
@@ -91,10 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const refreshUser = useCallback(() => {
-    const stored = localStorage.getItem('currentUser')
-    if (stored) {
-      try { setUser(JSON.parse(stored)) } catch { /* ignore */ }
-    }
+    authApi.getProfile()
+      .then(r => {
+        const d = r.data?.data || r.data
+        if (d) {
+          localStorage.setItem('currentUser', JSON.stringify(d))
+          setUser(d)
+        }
+      })
+      .catch(() => { /* retain current state on transient refresh failure */ })
   }, [])
 
   const isAuthenticated = useCallback(() => {
@@ -112,39 +110,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return user.userType === 'Admin'
   }, [user])
 
-  const isProfileComplete = useCallback(() => {
-    if (!user) return false
-    if (user.profileCompletion === 100) return true
-    const phone = user.contact || user.phoneNumber
-    const id = (user.idNumber || '').replace(/\D/g, '')
-    const validId = id.length === 13 && id.split('').reduce((sum, char, i) => {
-      let d = Number(char)
-      if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9 }
-      return sum + d
-    }, 0) % 10 === 0
-    const validType = user.userType === 'creator' || user.userType === 'runner' || user.userType === 'both'
-    const validAddress = !!user.address && !['just around','near me','around','n/a','na','tbc','unknown','somewhere'].includes(user.address.trim().toLowerCase())
-    return !!(user.firstName?.trim() && user.lastName?.trim() && user.email?.includes('@') && phone?.trim()
-      && validType && validId && validAddress && user.dateOfBirth)
-  }, [user])
+  // These values are presentation mirrors of backend policy. The FE never
+  // independently validates profile completeness or role capabilities.
+  const isProfileComplete = useCallback(() => user?.profileCompleted === true, [user])
 
   const isProfileIncomplete = useCallback(() => !isProfileComplete(), [isProfileComplete])
 
-  const canPostErrands = useCallback(() => {
-    if (!isAuthenticated() || isAdmin()) return false
-    const ut = user?.userType
-    if (ut) return ut === 'creator' || ut === 'both'
-    const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-    return prefs.canCreateTasks === true
-  }, [user, isAuthenticated, isAdmin])
+  const canPostErrands = useCallback(() => (
+    isAuthenticated() && !isAdmin() && user?.canCreateTasks === true
+  ), [user, isAuthenticated, isAdmin])
 
-  const canAcceptTasks = useCallback(() => {
-    if (!isAuthenticated() || isAdmin() || isProfileIncomplete()) return false
-    const ut = user?.userType
-    if (ut) return ut === 'runner' || ut === 'both'
-    const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-    return prefs.canAcceptTasks === true
-  }, [user, isAuthenticated, isAdmin, isProfileIncomplete])
+  const canAcceptTasks = useCallback(() => (
+    isAuthenticated() && !isAdmin() && user?.canAcceptTasks === true
+  ), [user, isAuthenticated, isAdmin])
 
   const getProfileCompletion = useCallback(() => user?.profileCompletion ?? 0, [user])
 
