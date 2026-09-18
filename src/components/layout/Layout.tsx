@@ -13,7 +13,7 @@ export default function Layout() {
   const { pathname } = useLocation()
   const showFooter = PUBLIC_ROUTES.includes(pathname)
   const isAdminRoute = pathname.startsWith('/admin')
-  const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname)
+  const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
 
