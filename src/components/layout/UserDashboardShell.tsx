@@ -17,6 +17,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
 
   const navigation = [
     { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true },
+    { label: 'Browse Tasks', to: '/tasks/browse', icon: 'fa-search', show: true },
     { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator },
     { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner },
     { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true },
