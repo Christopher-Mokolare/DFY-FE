@@ -20,7 +20,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true },
   ].filter(item => item.show)
   const pageTitles: Record<string, string> = {
-    '/dashboard': 'Dashboard', '/tasks/post': 'Post an Errand', '/tasks/my-posted': 'My Posted Tasks',
+    '/dashboard': 'Dashboard', '/tasks/post': 'Post an Errand', '/tasks/browse': 'Browse Errands', '/tasks/my-posted': 'My Posted Tasks',
     '/tasks/my-active': 'My Active Tasks', '/tasks/my-completed': 'My Completed Tasks',
     '/user/bank-accounts': 'Bank Accounts', '/notifications': 'Notifications', '/user/profile': 'My Profile',
   }
