@@ -10,6 +10,7 @@ export default function AdminUsers() {
   const [totalPages, setTotalPages] = useState(1)
   const [roleModal, setRoleModal] = useState<any | null>(null)
   const [roleValue, setRoleValue] = useState('')
+  const [roleReason, setRoleReason] = useState('')
   const [historyModal, setHistoryModal] = useState<any | null>(null)
   const [historyData, setHistoryData] = useState<any | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -52,13 +53,15 @@ export default function AdminUsers() {
     } catch { setActionError('Failed to update user status') }
   }
 
-  const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleModal(u); setActionError('') }
+  const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleReason(''); setRoleModal(u); setActionError('') }
 
   const saveRole = async () => {
     if (!roleModal) return
+    const reason = roleReason.trim()
+    if (reason.length < 5) { setActionError('A reason of at least 5 characters is required'); return }
     setActionLoading(true); setActionError('')
     try {
-      const r = await adminApi.updateUserRole(roleModal.id, roleValue)
+      const r = await adminApi.updateUserRole(roleModal.id, roleValue, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to update role'); return }
       setRoleModal(null); load()
     } catch (err: any) {
@@ -218,6 +221,10 @@ export default function AdminUsers() {
                   <option value="Admin">Admin</option>
                   <option value="Admin,User">Admin + User</option>
                 </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Reason</label>
+                <textarea className="form-input" rows={3} value={roleReason} onChange={e => setRoleReason(e.target.value)} placeholder="Why is this role changing?" maxLength={500} />
               </div>
             </div>
             {actionError && <div className="alert alert-error" style={{ margin: '0.75rem 0' }}><i className="fas fa-exclamation-circle" /> {actionError}</div>}
