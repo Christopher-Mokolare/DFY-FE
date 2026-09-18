@@ -153,7 +153,7 @@ export interface ApiResponse<T> {
   total?: number
 }
 
-// Wallet types
+// Legacy wallet types retained only for backward-compatible API decoding; wallet UI/workflows are retired.
 export interface WalletTransaction {
   id: number
   userId: number
@@ -255,7 +255,6 @@ export interface DashboardStats {
     awaitingConfirmation: number
     completed: number
     totalEarnings: number
-    availableBalance: number
     pendingPayouts: number
     thisMonth: number
     completionRate: number
