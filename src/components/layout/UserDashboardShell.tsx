@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'\nimport '../../styles/user-workspace.css'
+import { useAuth } from '../../context/AuthContext'
+import '../../styles/user-workspace.css'
 
 interface UserDashboardShellProps { children: ReactNode }
 
@@ -45,7 +46,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
         <div className="user-dashboard-brand"><img src="/DFY.png" alt="DoForYou" /><div><strong>DoForYou<span>.</span></strong><small>{roleLabel}</small></div></div>
         <div className="user-dashboard-sidebar-label">Workspace</div>
         <nav className="user-dashboard-nav" aria-label="Dashboard navigation">
-          {navigation.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/dashboard'} className={({ isActive }) => `user-dashboard-nav-item ${isActive ? 'active' : ''}`}><i className={`fas ${item.icon}`} /><span>{item.label}</span></NavLink>)}
+          {navigation.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/dashboard'} className={({ isActive }) => `user-dashboard-nav-item ${isActive ? 'active' : ''`} `}><i className={`fas ${item.icon}`} /><span>{item.label}</span></NavLink>)}
         </nav>
         <div className="user-dashboard-sidebar-spacer" />
         <NavLink className="user-dashboard-post" to="/tasks/post"><i className="fas fa-plus" /><span>POST AN ERRAND</span></NavLink>
