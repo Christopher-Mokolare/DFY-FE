@@ -1,6 +1,10 @@
 import api from './client'
 import type { LoginModel, RegisterModel, AuthResponse } from '../types'
 
+export const publicApi = {
+  getStats: () => api.get('/public/stats'),
+}
+
 export const authApi = {
   login: (data: LoginModel) => api.post<AuthResponse>('/auth/login', data),
   register: (data: RegisterModel) => api.post<AuthResponse>('/auth/register', data),
