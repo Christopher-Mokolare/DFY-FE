@@ -128,16 +128,9 @@ export default function BankAccounts() {
 
   return (
     <div className="bank-accounts-page">
-      <div className="bank-accounts-header">
-        <div>
-          <div className="bank-accounts-eyebrow"><i className="fas fa-shield-alt" /> Secure payouts</div>
-          <h1>Bank Accounts</h1>
-          <p>Add and verify the bank account that will receive your direct Ozow runner payouts.</p>
-        </div>
-        <div className="bank-accounts-header-icon" aria-hidden="true"><i className="fas fa-university" /></div>
-      </div>
+      <div className="page-header"><div className="container"><h1><i className="fas fa-university" /> Bank Accounts</h1><p>Add and verify the bank account that will receive your direct Ozow runner payouts.</p></div></div>
 
-      <div className="bank-accounts-content">
+      <div className="container bank-accounts-content">
         {success && <div className="alert alert-success mb-4"><i className="fas fa-check-circle" /> {success}</div>}
         {error && <div className="alert alert-error mb-4"><i className="fas fa-exclamation-circle" /> {error}</div>}
 
