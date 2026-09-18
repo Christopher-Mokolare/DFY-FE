@@ -538,7 +538,7 @@
 .user-dashboard-content .bank-account-form-card,
 .user-dashboard-content .bank-account-list-card {
   overflow: hidden;
-  padding: 1.5rem;
+  padding: 2rem;
   border: 1px solid #e7ebf1;
   border-radius: 16px;
   background: #fff;
@@ -747,7 +747,7 @@
 
   .user-dashboard-content .bank-account-form-card,
   .user-dashboard-content .bank-account-list-card {
-    padding: 1.15rem;
+    padding: 1.5rem;
     border-radius: 14px;
   }
 
