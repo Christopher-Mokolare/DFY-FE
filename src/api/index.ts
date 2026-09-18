@@ -60,7 +60,7 @@ export const adminApi = {
   forceReleaseEscrow: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/force-release-escrow`, { reason }),
   getUsers: (params?: object) => api.get('/admin/users', { params }),
   updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
-  updateUserRole: (id: number, role: string) => api.patch(`/admin/users/${id}/role`, { role }),
+  updateUserRole: (id: number, role: string, reason: string) => api.patch(`/admin/users/${id}/role`, { role, reason }),
   getUserTaskHistory: (id: number) => api.get(`/admin/users/${id}/tasks`),
   getAuditLogs: (page = 1, pageSize = 20) => api.get(`/admin/audit-logs?page=${page}&pageSize=${pageSize}`),
   getBankAccounts: (unverifiedOnly?: boolean) => api.get('/admin/bank-accounts', { params: { unverifiedOnly } }),
