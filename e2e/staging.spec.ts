@@ -155,7 +155,7 @@ test('legacy wallet route redirects to the dashboard', async ({ page }) => {
   await login(page, email)
   await gotoWithRetry(page, '/wallet')
   await expect(page).toHaveURL(/dashboard/i, { timeout: 15_000 })
-  await expect(page.getByText('Dashboard', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /good (morning|afternoon|evening)/i })).toBeVisible({ timeout: 15_000 })
 })
 
 test('user can log out', async ({ page }) => {
