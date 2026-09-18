@@ -114,6 +114,7 @@ export interface Task {
 }
 
 export interface CreateTaskData {
+  taskName: string
   taskDescription: string
   category: string
   area: string
