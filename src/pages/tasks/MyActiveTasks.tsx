@@ -92,6 +92,7 @@ export default function MyActiveTasks() {
     taskName: t.taskName || t.name || '',
     area: t.location || t.area || '',
     budget: t.budget || 0,
+    payoutAmount: t.payoutAmount ?? 0,
     taskStatus: t.status || t.taskStatus || '',
     dateNeeded: t.dueDate || t.dateNeeded || '',
     userName: t.creatorName || t.userName || '',
@@ -125,8 +126,8 @@ export default function MyActiveTasks() {
                   <div className="task-card-header">
                     <span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>
                     <div className="task-budget">
-                      R{(t.budget * 0.85).toFixed(0)}
-                      <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>you earn</small>
+                      R{Number(t.payoutAmount).toFixed(0)}
+                      <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>payout</small>
                     </div>
                   </div>
                   <div className="task-card-body">
