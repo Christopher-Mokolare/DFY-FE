@@ -68,7 +68,7 @@ export default function Dashboard() {
           <h1>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {name}</h1>
           <p>{type === 'runner' ? 'Find tasks, manage active work and track your payouts.' : type === 'both' ? 'Manage your posted tasks and the work you are completing.' : 'Manage your posted tasks, payments and activity.'}</p>
           {isProfileIncomplete() && <div className="profile-alert">
-            <div><h6><i className="fas fa-user-circle" /> Profile {completion}% complete</h6><div className="progress-bar-wrap"><div className="progress-bar-fill" style={{ width: completion + '%' }} /></div><p>Complete your profile before posting or accepting tasks.</p></div>
+            <div><h6><i className="fas fa-user-circle" /> Profile {completion}% complete</h6><div className="progress-bar-wrap"><div className="progress-bar-fill" style={{ width: completion + '%' }} /></div><p>Complete your profile to unlock all account features, including posting and payout access.</p></div>
             <Link to="/user/profile" className="btn btn-secondary btn-sm">Complete Profile</Link>
           </div>}
         </div></div>
