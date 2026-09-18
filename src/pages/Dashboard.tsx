@@ -39,7 +39,7 @@ export default function Dashboard() {
     }
   }, [type, user?.id])
 
-  const statCards = type === 'creator'
+  const statCards: Array<[string, string | number, string]> = type === 'creator'
     ? [
         ['Posted tasks', stats?.postedTasks ?? 0, 'fa-tasks'],
         ['Awaiting action', (stats?.pendingPayment ?? 0) + (stats?.awaitingConfirmation ?? 0), 'fa-clock'],
