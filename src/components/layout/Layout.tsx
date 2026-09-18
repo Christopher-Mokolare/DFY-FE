@@ -4,6 +4,7 @@ import Footer from './Footer'
 import BackButton from '../shared/BackButton'
 import BottomNav from '../shared/BottomNav'
 import AdminShell from './AdminShell'
+import UserDashboardShell from './UserDashboardShell'
 
 const PUBLIC_ROUTES = ['/', '/about', '/contact', '/terms', '/payments/success', '/payments/cancelled']
 
@@ -16,6 +17,15 @@ export default function Layout() {
     return (
       <div className="page-wrapper admin-page-wrapper">
         <AdminShell />
+      </div>
+    )
+  }
+
+  if (pathname === '/dashboard') {
+    return (
+      <div className="page-wrapper user-dashboard-page-wrapper">
+        <Header />
+        <UserDashboardShell />
       </div>
     )
   }
