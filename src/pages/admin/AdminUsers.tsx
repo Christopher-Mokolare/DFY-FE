@@ -44,7 +44,7 @@ export default function AdminUsers() {
 
   const toggleVerify = async (id: number, current: boolean) => {
     try {
-      const r = await adminApi.updateUserStatus(id, !current)
+      const r = await adminApi.updateUserStatus(id, !current, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Action failed'); return }
       setActionError(''); load()
     } catch { setActionError('Failed to update user status') }
