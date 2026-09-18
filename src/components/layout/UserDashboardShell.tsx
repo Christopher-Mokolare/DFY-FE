@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'\nimport '../../styles/user-workspace.css'
+import { useAuth } from '../../context/AuthContext'
+import '../../styles/user-workspace.css'
 
 interface UserDashboardShellProps { children: ReactNode }
 
