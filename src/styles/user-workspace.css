@@ -441,3 +441,15 @@
     padding: 3rem 1rem;
   }
 }
+
+
+/* User workspace intentionally shares the admin operations shell. */
+.user-workspace-shell { min-height: 100vh; }
+.user-workspace-post {
+  margin: 0 0 .8rem;
+  color: #fff;
+  background: linear-gradient(90deg, rgba(255,138,0,.18), rgba(255,138,0,.06));
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.user-workspace-post:hover { color: #fff; background: rgba(255,255,255,.08); }
+.user-workspace-main .admin-content { width: 100%; }
