@@ -470,3 +470,332 @@
 .user-workspace-main .admin-content .section-card + .section-card {
   margin-top: 1.5rem;
 }
+
+
+/* Bank accounts — payout-focused workspace design */
+.user-dashboard-content .bank-accounts-page {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.bank-accounts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.75rem;
+  padding: .25rem 0;
+}
+
+.bank-accounts-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  margin-bottom: .55rem;
+  color: var(--primary);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.bank-accounts-header h1 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  line-height: 1.1;
+  letter-spacing: -.04em;
+}
+
+.bank-accounts-header p {
+  max-width: 650px;
+  margin: .55rem 0 0;
+  color: #718096;
+  font-size: .92rem;
+  line-height: 1.6;
+}
+
+.bank-accounts-header-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  border: 1px solid #e7ebf1;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--primary);
+  box-shadow: 0 8px 24px rgba(15,23,42,.05);
+  font-size: 1.35rem;
+}
+
+.bank-accounts-content {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.user-dashboard-content .bank-account-form-card,
+.user-dashboard-content .bank-account-list-card {
+  overflow: hidden;
+  padding: 1.5rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.045);
+}
+
+.bank-account-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: .85rem;
+  margin-bottom: 1.15rem;
+}
+
+.bank-account-card-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 11px;
+  background: rgba(255,138,0,.1);
+  color: var(--primary);
+}
+
+.bank-account-card-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.bank-account-card-header p {
+  margin: .3rem 0 0;
+  color: #718096;
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.bank-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  margin-bottom: 1.35rem;
+  padding: .8rem .9rem;
+  border: 1px solid #e9eef5;
+  border-radius: 11px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: .77rem;
+  line-height: 1.5;
+}
+
+.bank-security-note i {
+  margin-top: .1rem;
+  color: #64748b;
+}
+
+.bank-inline-error {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+  padding: .8rem .9rem;
+  border: 1px solid #f2d7a7;
+  border-radius: 11px;
+  background: #fffaf0;
+}
+
+.bank-inline-error-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+  background: #fff0d2;
+  color: #a16207;
+}
+
+.bank-inline-error-copy {
+  display: grid;
+  gap: .12rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.bank-inline-error-copy strong {
+  color: #713f12;
+  font-size: .78rem;
+}
+
+.bank-inline-error-copy span {
+  color: #92400e;
+  font-size: .76rem;
+  line-height: 1.4;
+}
+
+.bank-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bank-form-grid + .bank-form-grid {
+  margin-top: .1rem;
+}
+
+.user-dashboard-content .bank-account-form-card .form-group {
+  margin-bottom: 1rem;
+}
+
+.user-dashboard-content .bank-account-form-card .form-label {
+  margin-bottom: .45rem;
+  color: #344054;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.user-dashboard-content .bank-account-form-card .form-input {
+  min-height: 46px;
+  border-radius: 10px;
+}
+
+.bank-submit {
+  min-height: 44px;
+  margin-top: .15rem;
+  padding-left: 1.15rem;
+  padding-right: 1.15rem;
+}
+
+.bank-account-list-header {
+  margin-bottom: 1rem;
+}
+
+.bank-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 13px;
+  background: #fbfcfe;
+}
+
+.bank-account-row + .bank-account-row {
+  margin-top: .75rem;
+}
+
+.bank-account-row-main {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  min-width: 0;
+}
+
+.bank-account-row-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 11px;
+  background: #fff;
+  border: 1px solid #e7ebf1;
+  color: #64748b;
+}
+
+.bank-account-row-main strong {
+  display: block;
+  margin-bottom: .2rem;
+  color: #1e293b;
+  font-size: .86rem;
+}
+
+.bank-account-row-main .text-sm {
+  line-height: 1.45;
+}
+
+.bank-account-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .65rem;
+  flex-wrap: wrap;
+}
+
+.user-dashboard-content .bank-account-list-card > .empty-state {
+  margin-top: .25rem;
+  border: 0;
+  box-shadow: none;
+  background: #f8fafc;
+}
+
+@media (max-width: 700px) {
+  .bank-accounts-header {
+    align-items: flex-start;
+  }
+
+  .bank-accounts-header-icon {
+    width: 50px;
+    height: 50px;
+    flex-basis: 50px;
+    border-radius: 14px;
+  }
+
+  .user-dashboard-content .bank-account-form-card,
+  .user-dashboard-content .bank-account-list-card {
+    padding: 1.15rem;
+    border-radius: 14px;
+  }
+
+  .bank-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .bank-inline-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .bank-inline-error .btn {
+    width: 100%;
+  }
+
+  .bank-account-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bank-account-row-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .bank-accounts-header-icon {
+    display: none;
+  }
+
+  .bank-accounts-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .bank-account-card-header {
+    gap: .7rem;
+  }
+
+  .bank-account-card-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .bank-account-row {
+    padding: .85rem;
+  }
+}
