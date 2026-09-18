@@ -32,7 +32,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (type === 'runner' || type === 'both') {
       setRatingsLoading(true)
-      ratingsApi.getForUser(user?.id || '', 1, 3)
+      ratingsApi.getForUser(user?.id ?? 0, 1, 3)
         .then(r => setRatings(r.data?.data?.ratings || []))
         .catch(() => setRatings([]))
         .finally(() => setRatingsLoading(false))
