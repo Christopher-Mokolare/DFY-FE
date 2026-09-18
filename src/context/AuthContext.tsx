@@ -34,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(storedUser)
         setToken(storedToken)
         setUser(parsed)
-        // If stored user is missing idNumber/address, fetch full profile to self-heal
-        if (!parsed.idNumber || !parsed.address) {
+        // Refresh the authoritative profile so completion and permissions cannot drift from the backend.
+        if (parsed.id) {
           authApi.getProfile()
             .then(r => {
               const d = r.data?.data || r.data
@@ -114,9 +114,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isProfileComplete = useCallback(() => {
     if (!user) return false
+    if (user.profileCompletion === 100) return true
     const phone = user.contact || user.phoneNumber
-    return !!(user.firstName && user.lastName && user.email && phone
-      && user.userType && user.idNumber && user.address)
+    const id = (user.idNumber || '').replace(/\D/g, '')
+    const validId = id.length === 13 && id.split('').reduce((sum, char, i) => {
+      let d = Number(char)
+      if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9 }
+      return sum + d
+    }, 0) % 10 === 0
+    const validType = user.userType === 'creator' || user.userType === 'runner' || user.userType === 'both'
+    const validAddress = !!user.address && !['just around','near me','around','n/a','na','tbc','unknown','somewhere'].includes(user.address.trim().toLowerCase())
+    return !!(user.firstName?.trim() && user.lastName?.trim() && user.email?.includes('@') && phone?.trim()
+      && validType && validId && validAddress && user.dateOfBirth)
   }, [user])
 
   const isProfileIncomplete = useCallback(() => !isProfileComplete(), [isProfileComplete])
