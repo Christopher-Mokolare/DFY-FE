@@ -1,6 +1,10 @@
 import api from './client'
 import type { LoginModel, RegisterModel, AuthResponse } from '../types'
 
+export const publicApi = {
+  getStats: () => api.get('/public/stats'),
+}
+
 export const authApi = {
   login: (data: LoginModel) => api.post<AuthResponse>('/auth/login', data),
   register: (data: RegisterModel) => api.post<AuthResponse>('/auth/register', data),
@@ -21,7 +25,7 @@ export const tasksApi = {
   getById: (id: string) => api.get(`/tasks/${id}`),
   create: (data: object) => api.post('/tasks', data),
   update: (id: string, data: object) => api.put(`/tasks/${id}`, data),
-  claim: (id: string, helperName: string, helperContact: string) => api.post(`/tasks/${id}/claim`, { HelperName: helperName, HelperContact: helperContact }),
+  claim: (id: string, helperName: string, helperContact: string, termsAccepted = false) => api.post(`/tasks/${id}/claim`, { HelperName: helperName, HelperContact: helperContact, TermsAccepted: termsAccepted }),
   complete: (id: string) => api.post(`/tasks/${id}/complete`, {}),
   confirm: (id: string) => api.post(`/tasks/${id}/confirm`, {}),
   cancel: (id: string, reason: string) => api.post(`/tasks/${id}/cancel`, { reason }),
@@ -54,19 +58,19 @@ export const adminApi = {
   getDashboard: () => api.get('/admin/dashboard'),
   getPayments: () => api.get('/admin/payments'),
   getTasks: (params?: object) => api.get('/admin/tasks', { params }),
-  verifyPayment: (id: string) => api.patch(`/admin/tasks/${id}/verify`, {}),
-  unverifyPayment: (id: string) => api.patch(`/admin/tasks/${id}/unverify`, {}),
-  bulkVerify: (ids: string[]) => api.patch('/admin/tasks/bulk-verify', { taskIds: ids }),
-  forceReleaseEscrow: (id: string) => api.patch(`/admin/tasks/${id}/force-release-escrow`, {}),
+  verifyPayment: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/verify`, { reason }),
+  unverifyPayment: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/unverify`, { reason }),
+  bulkVerify: (ids: string[], reason: string) => api.patch('/admin/tasks/bulk-verify', { taskIds: ids, reason }),
+  forceReleaseEscrow: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/force-release-escrow`, { reason }),
   getUsers: (params?: object) => api.get('/admin/users', { params }),
-  updateUserStatus: (id: number, isVerified: boolean) => api.patch(`/admin/users/${id}/status`, { isVerified }),
-  updateUserRole: (id: number, role: string) => api.patch(`/admin/users/${id}/role`, { role }),
+  updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
+  updateUserRole: (id: number, role: string, reason: string) => api.patch(`/admin/users/${id}/role`, { role, reason }),
   getUserTaskHistory: (id: number) => api.get(`/admin/users/${id}/tasks`),
   getAuditLogs: (page = 1, pageSize = 20) => api.get(`/admin/audit-logs?page=${page}&pageSize=${pageSize}`),
   getBankAccounts: (unverifiedOnly?: boolean) => api.get('/admin/bank-accounts', { params: { unverifiedOnly } }),
   verifyBankAccount: (id: number) => api.patch(`/admin/bank-accounts/${id}/verify`, {}),
   getDisputes: (params?: object) => api.get('/disputes', { params }),
-  resolveDispute: (id: number, resolution: string, action: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action }),
+  resolveDispute: (id: number, resolution: string, action: string, reason: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action, reason }),
   deleteTask: (taskId: string) => api.delete(`/admin/tasks/${taskId}`),
   deleteUser: (userId: number) => api.delete(`/admin/users/${userId}`),
   getTaskMessages: (taskId: string) => api.get(`/admin/tasks/${taskId}/messages`),
@@ -86,8 +90,8 @@ export const ratingsApi = {
 export const categoryApi = { getAll: () => api.get('/categories') }
 
 export const userPreferencesApi = {
-  get: () => api.get('/UserPreferences'),
-  update: (data: object) => api.put('/UserPreferences', data),
+  get: () => api.get('/user/preferences'),
+  update: (data: object) => api.put('/user/preferences', data),
 }
 
 export const notificationsApi = {

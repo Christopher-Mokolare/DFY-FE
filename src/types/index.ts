@@ -29,6 +29,9 @@ export interface User {
   isVerified: boolean
   profileCompleted: boolean
   profileCompletion?: number
+  missingProfileFields?: string[]
+  canCreateTasks?: boolean
+  canAcceptTasks?: boolean
   rating: number
   completedTasks: number
   createdAt: string
@@ -37,6 +40,7 @@ export interface User {
   isAdmin?: boolean
   idNumber?: string
   address?: string
+  dateOfBirth?: string
 }
 
 export interface AuthResponse {
@@ -55,7 +59,7 @@ export interface ChangePasswordModel {
 }
 
 // Task types
-export type PaymentStatus = 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
+export type PaymentStatus = 'Pending' | 'EscrowHeld' | 'Completed' | 'DisputePending' | 'RefundPending' | 'Refunded' | 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
 export type TaskStatus =
   | 'draft'
   | 'posted'
@@ -66,6 +70,16 @@ export type TaskStatus =
   | 'runner_paid'
   | 'cancelled'
   | 'disputed'
+  | 'payout_pending'
+  | 'refund_pending'
+  | 'PendingPayment'
+  | 'Posted'
+  | 'Claimed'
+  | 'Completed'
+  | 'PayoutPending'
+  | 'RunnerPaid'
+  | 'Cancelled'
+  | 'RefundPending'
 export type Priority = 'standard' | 'urgent' | 'low'
 
 export interface Task {
@@ -95,7 +109,7 @@ export interface Task {
   commissionPercentage?: number
   commissionAmount?: number
   payoutAmount?: number
-  escrowStatus?: 'none' | 'pending' | 'held' | 'released' | 'refunded'
+  escrowStatus?: 'none' | 'pending' | 'held' | 'released' | 'refunded' | 'disputed' | 'refund_pending'
   escrowHoldUntil?: string
   // legacy aliases
   task_description?: string
@@ -110,6 +124,7 @@ export interface Task {
 }
 
 export interface CreateTaskData {
+  taskName: string
   taskDescription: string
   category: string
   area: string
@@ -138,7 +153,7 @@ export interface ApiResponse<T> {
   total?: number
 }
 
-// Wallet types
+// Legacy wallet types retained only for backward-compatible API decoding; wallet UI/workflows are retired.
 export interface WalletTransaction {
   id: number
   userId: number
@@ -240,7 +255,6 @@ export interface DashboardStats {
     awaitingConfirmation: number
     completed: number
     totalEarnings: number
-    availableBalance: number
     pendingPayouts: number
     thisMonth: number
     completionRate: number

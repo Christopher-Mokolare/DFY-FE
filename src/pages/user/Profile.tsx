@@ -40,13 +40,23 @@ export default function Profile() {
   const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false })
   const [prefSaving, setPrefSaving] = useState(false)
   const [prefSuccess, setPrefSuccess] = useState('')
+  const [completion, setCompletion] = useState(0)
+  const [missingProfileFields, setMissingProfileFields] = useState<string[]>([])
 
   useEffect(() => {
     authApi.getProfile().then(r => {
       const d = r.data?.data || r.data
-      if (d) setForm({ firstName: d.firstName || '', lastName: d.lastName || '', email: d.email || '', phoneNumber: d.phoneNumber || d.contact || '', userType: d.userType || '', idNumber: d.idNumber || '', address: d.address || '', dateOfBirth: d.dateOfBirth ? d.dateOfBirth.substring(0, 10) : '' })
+      if (d) {
+        setForm({ firstName: d.firstName || '', lastName: d.lastName || '', email: d.email || '', phoneNumber: d.phoneNumber || d.contact || '', userType: d.userType || '', idNumber: d.idNumber || '', address: d.address || '', dateOfBirth: d.dateOfBirth ? d.dateOfBirth.substring(0, 10) : '' })
+        setCompletion(d.profileCompletion ?? 0)
+        setMissingProfileFields(d.missingProfileFields ?? [])
+      }
     }).catch(() => {
-      if (user) setForm({ firstName: user.firstName || '', lastName: user.lastName || '', email: user.email || '', phoneNumber: user.phoneNumber || user.contact || '', userType: user.userType || '', idNumber: user.idNumber || '', address: user.address || '', dateOfBirth: '' })
+      if (user) {
+        setForm({ firstName: user.firstName || '', lastName: user.lastName || '', email: user.email || '', phoneNumber: user.phoneNumber || user.contact || '', userType: user.userType || '', idNumber: user.idNumber || '', address: user.address || '', dateOfBirth: '' })
+        setCompletion(user.profileCompletion ?? 0)
+        setMissingProfileFields((user as any).missingProfileFields ?? [])
+      }
     })
   }, [user])
 
@@ -69,12 +79,32 @@ export default function Profile() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError(''); setSuccess('')
+    if (!/^0(6|7|8)\d{8}$/.test(form.phoneNumber.replace(/\s/g, ''))) {
+      setError('Enter a valid South African mobile number, e.g. 0821234567.')
+      setLoading(false)
+      return
+    }
+    if (['just around', 'near me', 'around', 'n/a', 'na', 'tbc', 'unknown', 'somewhere'].includes(form.address.trim().toLowerCase())) {
+      setError('Please enter a real area or suburb.')
+      setLoading(false)
+      return
+    }
+    if (form.idNumber.length !== 13) {
+      setError('ID number must be 13 digits.')
+      setLoading(false)
+      return
+    }
     try {
       const res = await authApi.updateProfile(form)
       if (res.data?.success === false) { setError(res.data?.message || 'Failed to update profile.'); return }
       const r = await authApi.getProfile()
       const d = r.data?.data || r.data
-      if (d) { localStorage.setItem('currentUser', JSON.stringify(d)); refreshUser() }
+      if (d) {
+        localStorage.setItem('currentUser', JSON.stringify(d))
+        setCompletion(d.profileCompletion ?? 0)
+        setMissingProfileFields(d.missingProfileFields ?? [])
+        refreshUser()
+      }
       setSuccess('Profile updated successfully!')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update profile.')
@@ -83,6 +113,7 @@ export default function Profile() {
 
   const handlePwChange = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (pwForm.newPassword.length < 8) { setPwError('New password must be at least 8 characters.'); return }
     if (pwForm.newPassword !== pwForm.confirmPassword) { setPwError('Passwords do not match'); return }
     setPwLoading(true); setPwError(''); setPwSuccess('')
     try {
@@ -100,26 +131,26 @@ export default function Profile() {
     setPrefSaving(true); setPrefSuccess('')
     try {
       await userPreferencesApi.update({
+        userType: value,
         canCreateTasks: value === 'creator' || value === 'both',
         canAcceptTasks: value === 'runner' || value === 'both',
       })
-      // Update localStorage so canPostErrands/canAcceptTasks reflect the new type immediately
-      const stored = localStorage.getItem('currentUser')
-      if (stored) {
-        const updated = { ...JSON.parse(stored), userType: value }
-        localStorage.setItem('currentUser', JSON.stringify(updated))
-        localStorage.setItem('userPreferences', JSON.stringify({
-          canCreateTasks: value === 'creator' || value === 'both',
-          canAcceptTasks: value === 'runner' || value === 'both',
-        }))
-        refreshUser()
+      const profileResponse = await authApi.getProfile()
+      const profile = profileResponse.data?.data || profileResponse.data
+      if (profile) {
+        setForm(prev => ({ ...prev, userType: profile.userType || value }))
+        setCompletion(profile.profileCompletion ?? completion)
+        setMissingProfileFields(profile.missingProfileFields ?? [])
       }
+      refreshUser()
       setPrefSuccess('Preferences saved!')
       setTimeout(() => setPrefSuccess(''), 3000)
-    } catch { /* ignore */ } finally { setPrefSaving(false) }
+    } catch (err: any) {
+      setForm(prev => ({ ...prev, userType: user?.userType || '' }))
+      setPrefSuccess('')
+      setError(err.response?.data?.message || 'Could not save your account type.')
+    } finally { setPrefSaving(false) }
   }
-
-  const completion = user?.profileCompletion ?? 0
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -131,16 +162,19 @@ export default function Profile() {
             <h3>{form.firstName} {form.lastName}</h3>
             <p className="text-muted">{form.email}</p>
             <span className={`badge ${form.userType === 'creator' ? 'badge-posted' : form.userType === 'runner' ? 'badge-claimed' : 'badge-info'}`}>{form.userType || 'Not set'}</span>
-            {completion > 0 && (
-              <div className="completion-bar">
+            <div className="completion-bar">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '0.375rem' }}>
                   <span>Profile Completion</span><span>{completion}%</span>
                 </div>
                 <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px' }}>
                   <div style={{ height: '100%', width: `${completion}%`, background: 'var(--primary-gradient)', borderRadius: '3px' }} />
                 </div>
-              </div>
-            )}
+              {missingProfileFields.length > 0 && (
+                <p className="text-muted text-sm" style={{ margin: '.55rem 0 0', lineHeight: 1.4 }}>
+                  {missingProfileFields.map(field => field === 'idNumber' ? 'ID number needs verification' : field === 'phoneNumber' ? 'Valid phone number required' : field === 'dateOfBirth' ? 'Date of birth required' : field === 'userType' ? 'Choose an account type' : field === 'address' ? 'Address required' : field).join(' · ')}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -155,7 +189,7 @@ export default function Profile() {
                 <div className="form-group"><label className="form-label">Last Name</label><input className="form-input" value={form.lastName} onChange={set('lastName')} required /></div>
               </div>
               <div className="form-row-2">
-                <div className="form-group"><label className="form-label">Email</label><input type="email" className="form-input" value={form.email} onChange={set('email')} required /></div>
+                <div className="form-group"><label className="form-label">Email</label><input type="email" className="form-input" value={form.email} readOnly disabled title="Email changes require account verification support." /></div>
                 <div className="form-group"><label className="form-label">Phone Number</label><input type="tel" className="form-input" value={form.phoneNumber} onChange={set('phoneNumber')} /></div>
               </div>
               <div className="form-row-2">
@@ -211,7 +245,7 @@ export default function Profile() {
                 <div className="form-group">
                   <label className="form-label">New Password</label>
                   <div style={{ position: 'relative' }}>
-                    <input type={showPw.new ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.newPassword} onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))} required minLength={6} />
+                    <input type={showPw.new ? 'text' : 'password'} className="form-input" style={{ paddingRight: '2.5rem' }} value={pwForm.newPassword} onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))} required minLength={8} />
                     <button type="button" onClick={() => setShowPw(s => ({ ...s, new: !s.new }))} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #6b7280)', padding: 0 }} aria-label={showPw.new ? 'Hide password' : 'Show password'}><i className={`fas ${showPw.new ? 'fa-eye-slash' : 'fa-eye'}`} /></button>
                   </div>
                 </div>

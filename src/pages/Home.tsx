@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { publicApi } from '../api'
 import { usePostErrand } from '../hooks/usePostErrand'
 import './Home.css'
 
@@ -8,8 +10,41 @@ const features = [
   { image: new URL('../assets/images/image3.jpeg', import.meta.url).href, title: 'Get It Done', description: 'Your runner completes the task. Confirm completion and release payment securely.' },
 ]
 
+interface PublicStats {
+  tasksCompleted: number
+  activeRunners: number
+  averageRating: number
+}
+
+const formatCount = (value: number) => {
+  if (value >= 1000) {
+    const thousands = value / 1000
+    const formatted = thousands >= 10 ? Math.floor(thousands) : Math.round(thousands * 10) / 10
+    return formatted + 'k+'
+  }
+  return String(value)
+}
+
 export default function Home() {
   const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
+  const [stats, setStats] = useState<PublicStats | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    publicApi.getStats()
+      .then(response => {
+        const data = response.data?.data || response.data
+        if (mounted && data) {
+          setStats({
+            tasksCompleted: Number(data.tasksCompleted) || 0,
+            activeRunners: Number(data.activeRunners) || 0,
+            averageRating: Number(data.averageRating) || 0,
+          })
+        }
+      })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [])
 
   return (
     <>
@@ -26,9 +61,9 @@ export default function Home() {
               <button onClick={handlePostErrand} className="btn btn-primary btn-lg">Post An Errand</button>
             </div>
             <div className="hero-stats">
-              <div><strong>2k+</strong><span>Tasks completed</span></div>
-              <div><strong>1.4k+</strong><span>Active runners</span></div>
-              <div><strong>4.9/5</strong><span>Average rating</span></div>
+              <div><strong>{stats ? formatCount(stats.tasksCompleted) : '—'}</strong><span>Tasks completed</span></div>
+              <div><strong>{stats ? formatCount(stats.activeRunners) : '—'}</strong><span>Active runners</span></div>
+              <div><strong>{stats ? stats.averageRating.toFixed(1) + '/5' : '—'}</strong><span>Average rating</span></div>
             </div>
           </div>
         </div>

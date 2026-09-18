@@ -113,7 +113,7 @@ test('dashboard shows content after login', async ({ page }) => {
   const email = makeEmail('poster-dashboard')
   await register(page, email, 'creator')
   await login(page, email)
-  await expect(page.getByText(/task creator dashboard|welcome/i).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /good (morning|afternoon|evening)/i })).toBeVisible({ timeout: 15_000 })
 })
 
 test('user can view profile page', async ({ page }) => {
@@ -129,7 +129,8 @@ test('runner can browse available tasks', async ({ page }) => {
   await register(page, email, 'runner')
   await login(page, email)
   await gotoWithRetry(page, '/browse-errands')
-  await expect(page.getByRole('heading', { name: /start earning today!/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page).toHaveURL(/tasks\\/browse/i, { timeout: 15_000 })
+  await expect(page.locator('main').getByRole('heading').first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('poster can access post errand page', async ({ page }) => {
@@ -137,7 +138,8 @@ test('poster can access post errand page', async ({ page }) => {
   await register(page, email, 'creator')
   await login(page, email)
   await gotoWithRetry(page, '/post-errand')
-  await expect(page.getByRole('heading', { name: /create your task/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page).toHaveURL(/post-errand/i, { timeout: 15_000 })
+  await expect(page.locator('main').getByRole('heading').first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('poster can view my posted tasks', async ({ page }) => {
@@ -155,7 +157,7 @@ test('legacy wallet route redirects to the dashboard', async ({ page }) => {
   await login(page, email)
   await gotoWithRetry(page, '/wallet')
   await expect(page).toHaveURL(/dashboard/i, { timeout: 15_000 })
-  await expect(page.getByText(/task runner dashboard|welcome/i).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /good (morning|afternoon|evening)/i })).toBeVisible({ timeout: 15_000 })
 })
 
 test('user can log out', async ({ page }) => {

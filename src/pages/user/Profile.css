@@ -121,3 +121,45 @@
   .form-row-2 { grid-template-columns: 1fr; }
   .usertype-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Authenticated workspace form refinement */
+.user-dashboard-content .profile-grid .section-card {
+  padding: 1.5rem;
+}
+
+.user-dashboard-content .profile-grid .section-card form {
+  max-width: 780px;
+}
+
+.user-dashboard-content .profile-grid .section-card .form-input {
+  max-width: 720px;
+}
+
+.user-dashboard-content .profile-grid .section-card .form-row-2 .form-input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.user-dashboard-content .profile-grid .section-card:nth-child(3) form {
+  max-width: 700px;
+}
+
+.user-dashboard-content .profile-grid .section-card:nth-child(3) .form-input {
+  max-width: 640px;
+}
+
+.user-dashboard-content .profile-grid .usertype-grid {
+  padding-top: .25rem;
+}
+
+@media (max-width: 640px) {
+  .user-dashboard-content .profile-grid .section-card {
+    padding: 1.15rem;
+  }
+
+  .user-dashboard-content .profile-grid .section-card .form-input,
+  .user-dashboard-content .profile-grid .section-card:nth-child(3) .form-input {
+    max-width: 100%;
+  }
+}
