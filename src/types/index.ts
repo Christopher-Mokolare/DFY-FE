@@ -59,7 +59,7 @@ export interface ChangePasswordModel {
 }
 
 // Task types
-export type PaymentStatus = 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
+export type PaymentStatus = 'Pending' | 'EscrowHeld' | 'Completed' | 'DisputePending' | 'RefundPending' | 'Refunded' | 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
 export type TaskStatus =
   | 'draft'
   | 'posted'
@@ -70,6 +70,16 @@ export type TaskStatus =
   | 'runner_paid'
   | 'cancelled'
   | 'disputed'
+  | 'payout_pending'
+  | 'refund_pending'
+  | 'PendingPayment'
+  | 'Posted'
+  | 'Claimed'
+  | 'Completed'
+  | 'PayoutPending'
+  | 'RunnerPaid'
+  | 'Cancelled'
+  | 'RefundPending'
 export type Priority = 'standard' | 'urgent' | 'low'
 
 export interface Task {
@@ -99,7 +109,7 @@ export interface Task {
   commissionPercentage?: number
   commissionAmount?: number
   payoutAmount?: number
-  escrowStatus?: 'none' | 'pending' | 'held' | 'released' | 'refunded'
+  escrowStatus?: 'none' | 'pending' | 'held' | 'released' | 'refunded' | 'disputed' | 'refund_pending'
   escrowHoldUntil?: string
   // legacy aliases
   task_description?: string
