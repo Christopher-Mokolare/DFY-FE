@@ -280,6 +280,13 @@ export default function TaskChat() {
               return (
                 <div key={msg.id}>
                   {showDate && <div className="chat-date-separator"><span>{currentDate}</span></div>}
+                  {msg.isSystem ? (
+                    <div className="chat-inline-system">
+                      <i className="fas fa-circle-info" />
+                      <span>{msg.content}</span>
+                      <time>{formatTime(msg.timestamp)}</time>
+                    </div>
+                  ) : (
                   <div className={`msg-row ${msg.isCurrentUser ? 'mine' : 'theirs'}`}>
                     {!msg.isCurrentUser && <div className="msg-avatar">{initials(msg.senderName)}</div>}
                     <div className="msg-bubble-wrap">
@@ -291,6 +298,7 @@ export default function TaskChat() {
                     </div>
                     {msg.isCurrentUser && <div className="msg-avatar mine-avatar">{initials(msg.senderName)}</div>}
                   </div>
+                  )}
                 </div>
               )
             })}
