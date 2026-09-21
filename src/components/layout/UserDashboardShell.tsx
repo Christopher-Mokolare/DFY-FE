@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationContext'
 import '../../styles/user-workspace.css'
 
 interface UserDashboardShellProps { children: ReactNode }
@@ -14,15 +15,19 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const isCreator = type === 'creator' || type === 'both'
   const isRunner = type === 'runner' || type === 'both'
   const roleLabel = isRunner && isCreator ? 'Creator & Runner' : isRunner ? 'Runner' : 'Creator'
+  const { notifications } = useNotifications()
+  const unreadNotifications = notifications.filter(n => !n.isRead).length
+  const actionRequiredCount = isCreator ? notifications.filter(n => !n.isRead && ['task_completed', 'payment_pending'].includes(n.type)).length : 0
 
   const navigation = [
     { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true },
     { label: 'Browse Tasks', to: '/tasks/browse', icon: 'fa-search', show: true },
     { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator },
+    { label: 'Action Required', to: '/tasks/action-required', icon: 'fa-triangle-exclamation', show: isCreator, badge: actionRequiredCount },
     { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner },
     { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true },
     { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true },
-    { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true },
+    { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications },
     { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true },
   ].filter(item => item.show)
 
