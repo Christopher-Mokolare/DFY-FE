@@ -843,3 +843,34 @@
     max-width: 100%;
   }
 }
+
+/* Context-aware workspace navigation */
+.user-workspace-sidebar .admin-sidebar-section-label {
+  margin: 1.25rem 1rem .45rem;
+  color: rgba(255,255,255,.42);
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+.user-workspace-sidebar .admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+.user-workspace-sidebar .admin-nav-item > span:not(.admin-nav-badge) {
+  min-width: 0;
+}
+.user-workspace-sidebar .admin-nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 .4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 800;
+}
