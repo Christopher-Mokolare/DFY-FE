@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
+import { tasksApi } from '../../api'
 import '../../styles/user-workspace.css'
 
 interface UserDashboardShellProps { children: ReactNode }
@@ -10,6 +11,8 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [actionRequiredCount, setActionRequiredCount] = useState(0)
+  const [completedCount, setCompletedCount] = useState(0)
   const type = user?.userType || ''
   const displayName = user?.firstName || user?.name || 'User'
   const isCreator = type === 'creator' || type === 'both'
@@ -17,7 +20,20 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const roleLabel = isRunner && isCreator ? 'Creator & Runner' : isRunner ? 'Runner' : 'Creator'
   const { notifications } = useNotifications()
   const unreadNotifications = notifications.filter(n => !n.isRead).length
-  const actionRequiredCount = isCreator ? notifications.filter(n => !n.isRead && ['task_completed', 'payment_pending'].includes(n.type)).length : 0
+  useEffect(() => {
+    let active = true
+    if (isCreator) tasksApi.getMyPosted().then(res => {
+      if (!active) return
+      const raw = res.data?.data?.tasks || res.data?.data?.Tasks || []
+      setActionRequiredCount(raw.filter((t: any) => ['completed', 'pendingpayment'].includes(String(t.taskStatus || '').toLowerCase()) || String(t.paymentStatus || '').toLowerCase() === 'pending').length)
+    }).catch(() => {})
+    if (isRunner) tasksApi.getMyCompleted().then(res => {
+      if (!active) return
+      const raw = Array.isArray(res.data?.data) ? res.data.data : []
+      setCompletedCount(raw.length)
+    }).catch(() => {})
+    return () => { active = false }
+  }, [isCreator, isRunner])
 
   const navigation = [
     { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true },
@@ -25,7 +41,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator },
     { label: 'Action Required', to: '/tasks/action-required', icon: 'fa-triangle-exclamation', show: isCreator, badge: actionRequiredCount },
     { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner },
-    { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true },
+    { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true, badge: isRunner ? completedCount : 0 },
     { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true },
     { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications },
     { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true },
