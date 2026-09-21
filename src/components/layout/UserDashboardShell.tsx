@@ -25,7 +25,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     if (isCreator) tasksApi.getMyPosted().then(res => {
       if (!active) return
       const raw = res.data?.data?.tasks || res.data?.data?.Tasks || []
-      setActionRequiredCount(raw.filter((t: any) => ['completed', 'pendingpayment'].includes(String(t.taskStatus || '').toLowerCase()) || String(t.paymentStatus || '').toLowerCase() === 'pending').length)
+      setActionRequiredCount(raw.filter((t: any) => ['completed', 'pendingpayment'].includes(String(t.taskStatus || '').toLowerCase())).length)
     }).catch(() => {})
     if (isRunner) tasksApi.getMyCompleted().then(res => {
       if (!active) return
