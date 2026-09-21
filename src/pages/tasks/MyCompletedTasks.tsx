@@ -24,7 +24,7 @@ export default function MyCompletedTasks() {
   useEffect(() => {
     const target = searchParams.get('taskId')
     if (!target || loading) return
-    requestAnimationFrame(() => document.getElementById(`completed-task-\${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    requestAnimationFrame(() => document.getElementById(`completed-task-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }, [searchParams, loading])
 
   const handleRating = async () => {
@@ -45,10 +45,10 @@ export default function MyCompletedTasks() {
   const lifecycle = (t: any) => {
     const s = String(t.status || '').toLowerCase()
     const payout = String(t.payoutStatus || '').toLowerCase()
+    if (payout === 'failed' || payout === 'returned' || payout === 'cancelled') return { label: 'Payout Issue', tone: 'badge-cancelled', detail: payout === 'failed' ? 'The payout failed. Check your verified bank details and wait for retry or contact support.' : payout === 'returned' ? 'The payout was returned. Check your verified bank details and contact support if needed.' : 'The payout was cancelled. Check the task/payment status or contact support.' }
     if (s === 'runnerpaid' || payout === 'completed' || payout === 'paid') return { label: 'Paid', tone: 'badge-runner_paid', detail: t.payoutCompletedAt ? `Paid ${new Date(t.payoutCompletedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Payout completed' }
     if (s === 'payoutpending' || payout === 'processing' || payout === 'pending' || payout === 'initiated') return { label: 'Payout Processing', tone: 'badge-draft', detail: 'Creator confirmed. Your payout is being processed.' }
     if (s === 'completed') return { label: 'Awaiting Creator', tone: 'badge-completed', detail: 'You completed the task. The creator must confirm before payout is released.' }
-    if (payout === 'failed' || payout === 'returned' || payout === 'cancelled') return { label: 'Payout Issue', tone: 'badge-cancelled', detail: 'The payout needs attention. Check your bank details or contact support.' }
     return { label: t.status || 'Completed', tone: 'badge-completed', detail: 'Task completed.' }
   }
 
@@ -73,7 +73,7 @@ export default function MyCompletedTasks() {
         ) : (
           <div className="tasks-grid">
             {tasks.map((t: any) => (
-              <div id={`completed-task-\${t.taskId}`} key={t.taskId} className="task-card">
+              <div id={`completed-task-${t.taskId}`} key={t.taskId} className="task-card">
                 <div className="task-card-header">
                   {(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
                   <div className="task-budget">
