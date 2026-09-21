@@ -43,11 +43,14 @@ export default function ActionRequired() {
 
   useEffect(() => { load() }, [])
 
+  const filter = searchParams.get('filter') || 'all'
+
   const actionTasks = useMemo(() => tasks.filter(t => {
     const s = normStatus(t.taskStatus)
-    const payment = normStatus(t.paymentStatus)
+    if (filter === 'confirmation') return s === 'completed'
+    if (filter === 'payments') return s === 'pendingpayment'
     return s === 'completed' || s === 'pendingpayment'
-  }), [tasks])
+  }), [tasks, filter])
 
   useEffect(() => {
     const target = searchParams.get('taskId')
@@ -63,8 +66,8 @@ export default function ActionRequired() {
     <div style={{ paddingBottom: '3rem' }}>
       <div className="page-header">
         <div className="container">
-          <h1><i className="fas fa-triangle-exclamation" /> Action Required</h1>
-          <p>Tasks waiting for you to pay, confirm completion, or release the runner payout.</p>
+          <h1><i className={`fas ${filter === 'payments' ? 'fa-credit-card' : 'fa-triangle-exclamation'}`} /> {filter === 'confirmation' ? 'Await Confirmation' : filter === 'payments' ? 'Payments' : 'Action Required'}</h1>
+          <p>{filter === 'confirmation' ? 'Review completed tasks and confirm the runner payout.' : filter === 'payments' ? 'Complete creator payments for tasks waiting to go live.' : 'Tasks waiting for you to pay or confirm completion.'}</p>
         </div>
       </div>
       <div className="container">
