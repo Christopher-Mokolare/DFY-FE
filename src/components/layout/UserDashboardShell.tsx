@@ -50,7 +50,6 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true, section: 'ACCOUNT' },
     { label: 'Messages', to: '/messages', icon: 'fa-comments', show: true, badge: unreadMessages, section: 'COMMUNICATION' },
     { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'COMMUNICATION' },
-    { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true, section: 'ACCOUNT' },
   ].filter(item => item.show)
 
   const renderNavigation = (items: typeof navigation) => items.map(item => (
@@ -125,13 +124,13 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
         )}
 
         <div className="admin-sidebar-footer">
-          <div className="admin-profile-mini">
+          <NavLink to="/user/profile" className="admin-profile-mini admin-profile-link" onClick={() => setMobileOpen(false)} aria-label="Open my profile">
             <div className="admin-avatar">{displayName.charAt(0).toUpperCase()}</div>
             <div>
               <strong>{displayName}</strong>
               <span>{roleLabel}</span>
             </div>
-          </div>
+          </NavLink>
           <button type="button" className="admin-logout" onClick={logout} title="Sign out" aria-label="Sign out">
             <i className="fas fa-arrow-right-from-bracket" />
           </button>
