@@ -46,7 +46,7 @@ export default function ActionRequired() {
   const actionTasks = useMemo(() => tasks.filter(t => {
     const s = normStatus(t.taskStatus)
     const payment = normStatus(t.paymentStatus)
-    return s === 'completed' || s === 'pendingpayment' || payment === 'pending'
+    return s === 'completed' || s === 'pendingpayment'
   }), [tasks])
 
   useEffect(() => {
