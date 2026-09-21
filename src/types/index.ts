@@ -80,6 +80,12 @@ export type TaskStatus =
   | 'RunnerPaid'
   | 'Cancelled'
   | 'RefundPending'
+  | 'PayoutReturned'
+  | 'PayoutCancelled'
+  | 'PayoutFailed'
+  | 'Processing'
+  | 'AwaitingFunds'
+  | 'AwaitingBankDetails'
 export type Priority = 'standard' | 'urgent' | 'low'
 
 export interface Task {
