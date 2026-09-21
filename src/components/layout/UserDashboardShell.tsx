@@ -21,6 +21,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const roleLabel = isRunner && isCreator ? 'Creator & Runner' : isRunner ? 'Runner' : 'Creator'
   const { notifications } = useNotifications()
   const unreadNotifications = notifications.filter(n => !n.isRead).length
+  const unreadMessages = notifications.filter(n => !n.isRead && n.type === 'new_message').length
   useEffect(() => {
     let active = true
     if (isCreator) tasksApi.getMyPosted().then(res => {
@@ -42,12 +43,14 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true, section: 'WORKSPACE' },
     { label: 'Await Confirmation', to: '/tasks/action-required?filter=confirmation', icon: 'fa-triangle-exclamation', show: isCreator && awaitConfirmationCount > 0, badge: awaitConfirmationCount, section: 'ACTION REQUIRED' },
     { label: 'Payments', to: '/tasks/action-required?filter=payments', icon: 'fa-credit-card', show: isCreator && paymentRequiredCount > 0, badge: paymentRequiredCount, section: 'ACTION REQUIRED' },
+    { label: 'Messages', to: '/messages', icon: 'fa-comments', show: unreadMessages > 0, badge: unreadMessages, section: 'ACTION REQUIRED' },
     { label: 'Browse Tasks', to: '/tasks/browse', icon: 'fa-search', show: true, section: 'TASKS' },
     { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator, section: 'TASKS' },
     { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner, section: 'TASKS' },
     { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true, badge: isRunner ? completedCount : 0, section: 'TASKS' },
     { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true, section: 'ACCOUNT' },
-    { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'ACCOUNT' },
+    { label: 'Messages', to: '/messages', icon: 'fa-comments', show: true, badge: unreadMessages, section: 'COMMUNICATION' },
+    { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'COMMUNICATION' },
     { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true, section: 'ACCOUNT' },
   ].filter(item => item.show)
 
@@ -70,6 +73,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     '/tasks/my-completed': 'My Completed Tasks',
     '/user/bank-accounts': 'Bank Accounts',
     '/notifications': 'Notifications',
+    '/messages': 'Messages',
     '/user/profile': 'My Profile',
   }
 
@@ -106,6 +110,8 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
           {renderNavigation(navigation.filter(item => item.section === 'ACTION REQUIRED'))}
           <div className="admin-sidebar-section-label">TASKS</div>
           {renderNavigation(navigation.filter(item => item.section === 'TASKS'))}
+          <div className="admin-sidebar-section-label">COMMUNICATION</div>
+          {renderNavigation(navigation.filter(item => item.section === 'COMMUNICATION'))}
           <div className="admin-sidebar-section-label">ACCOUNT</div>
           {renderNavigation(navigation.filter(item => item.section === 'ACCOUNT'))}
         </nav>
