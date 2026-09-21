@@ -14,6 +14,10 @@ export const authApi = {
   validateId: (idNumber: string) => api.post('/user/validate-id', { idNumber }),
 }
 
+export const messagesApi = {
+  getConversations: () => api.get('/messages/conversations'),
+}
+
 export const tasksApi = {
   getAvailable: (page = 1, pageSize = 10, filters: Record<string, string> = {}) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...filters })
