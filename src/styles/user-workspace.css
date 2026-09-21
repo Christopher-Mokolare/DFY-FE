@@ -874,3 +874,77 @@
   font-size: .68rem;
   font-weight: 800;
 }
+
+
+/* Keep the user workspace navigation calm and make account actions permanently reachable. */
+.user-workspace-sidebar {
+  overflow: hidden;
+}
+
+.user-workspace-sidebar .admin-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: .15rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.16) transparent;
+}
+
+.user-workspace-sidebar .admin-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.user-workspace-sidebar .admin-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.user-workspace-sidebar .admin-nav::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.16);
+  border-radius: 999px;
+}
+
+.user-workspace-sidebar .admin-sidebar-section-label {
+  margin-top: .85rem;
+  margin-bottom: .3rem;
+}
+
+.user-workspace-sidebar .admin-nav-item {
+  min-height: 40px;
+  font-size: .8rem;
+  gap: .65rem;
+}
+
+.user-workspace-sidebar .admin-sidebar-spacer {
+  display: none;
+  flex: 0 0 0;
+}
+
+.user-workspace-sidebar .user-workspace-post {
+  flex: 0 0 auto;
+  margin: .65rem 0 .35rem;
+}
+
+.user-workspace-sidebar .admin-sidebar-footer {
+  flex: 0 0 auto;
+  background: #111827;
+}
+
+@media (max-height: 760px) and (min-width: 769px) {
+  .user-workspace-sidebar {
+    padding-top: .85rem;
+    padding-bottom: .65rem;
+  }
+
+  .user-workspace-sidebar .admin-brand {
+    padding-bottom: .8rem;
+  }
+
+  .user-workspace-sidebar .admin-sidebar-label {
+    padding-bottom: .35rem;
+  }
+
+  .user-workspace-sidebar .admin-sidebar-section-label {
+    margin-top: .55rem;
+  }
+}
