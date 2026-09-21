@@ -55,7 +55,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   ].filter(item => item.show)
 
   const renderNavigation = (items: typeof navigation) => items.map(item => (
-    <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)} end={item.to === '/dashboard'} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+    <NavLink key={item.section + item.to} to={item.to} onClick={() => setMobileOpen(false)} end={item.to === '/dashboard'} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
       <i className={`fas ${item.icon}`} />
       <span>{item.label}</span>
       {!!item.badge && <span className="admin-nav-badge">{item.badge}</span>}
