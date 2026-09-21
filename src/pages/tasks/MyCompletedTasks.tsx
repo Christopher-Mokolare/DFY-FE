@@ -24,7 +24,7 @@ export default function MyCompletedTasks() {
   useEffect(() => {
     const target = searchParams.get('taskId')
     if (!target || loading) return
-    requestAnimationFrame(() => document.getElementById(\`completed-task-\${target}\`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    requestAnimationFrame(() => document.getElementById(`completed-task-\${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }, [searchParams, loading])
 
   const handleRating = async () => {
@@ -73,7 +73,7 @@ export default function MyCompletedTasks() {
         ) : (
           <div className="tasks-grid">
             {tasks.map((t: any) => (
-              <div id={\`completed-task-\${t.taskId}\`} key={t.taskId} className="task-card">
+              <div id={`completed-task-\${t.taskId}`} key={t.taskId} className="task-card">
                 <div className="task-card-header">
                   {(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
                   <div className="task-budget">
