@@ -52,6 +52,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     '/tasks/post': 'Post an Errand',
     '/tasks/browse': 'Browse Errands',
     '/tasks/my-posted': 'My Posted Tasks',
+    '/tasks/action-required': 'Action Required',
     '/tasks/my-active': 'My Active Tasks',
     '/tasks/my-completed': 'My Completed Tasks',
     '/user/bank-accounts': 'Bank Accounts',
