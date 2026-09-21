@@ -178,23 +178,28 @@ export default function Notifications() {
         {!loading && filtered.length === 0 && <div className="empty-state"><i className="fas fa-bell-slash" /><h3>No {tab !== 'all' ? tab : ''} notifications</h3><p>You're all caught up!</p></div>}
 
         <div className="notif-list">
-          {filtered.map(({ n, count, hasUnread }) => (
-            <div key={n.id} className={`notif-item${hasUnread ? ' notif-item--unread' : ''}${(n.relatedTaskId || n.relatedTaskStringId) ? ' notif-item--clickable' : ''}`} onClick={() => handleClick(n)}>
-              <div className="notif-icon" style={{ background: getColor(n.type) + '18' }}>
-                <i className={`fas ${getIcon(n.type)}`} style={{ color: getColor(n.type) }} />
-                {count > 1 && <span className="notif-count-badge" style={{ background: getColor(n.type) }}>{count > 99 ? '99+' : count}</span>}
+          {filtered.map(({ n, count, hasUnread }) => {
+            const clickable = Boolean(n.relatedTaskId || n.relatedTaskStringId)
+            return (
+              <div key={n.id} className={`notif-item${hasUnread ? ' notif-item--unread' : ''}${clickable ? ' notif-item--clickable' : ''}`}>
+                <button type="button" className="notif-main-action" onClick={() => handleClick(n)} disabled={!clickable} aria-label={clickable ? `Open notification: ${n.title}` : n.title}>
+                  <div className="notif-icon" style={{ background: getColor(n.type) + '18' }}>
+                    <i className={`fas ${getIcon(n.type)}`} style={{ color: getColor(n.type) }} />
+                    {count > 1 && <span className="notif-count-badge" style={{ background: getColor(n.type) }}>{count > 99 ? '99+' : count}</span>}
+                  </div>
+                  <div className="notif-body">
+                    <div className="notif-title-row">
+                      <span className="notif-title">{n.title}{count > 1 && <span className="notif-count-label"> · {count}x</span>}</span>
+                      {hasUnread && <span className="notif-dot" />}
+                    </div>
+                    <p className="notif-message">{cleanMessage(n.message)}</p>
+                    <span className="notif-time">{timeAgo(n.updatedAt || n.createdAt)}</span>
+                  </div>
+                </button>
+                <button type="button" className="notif-delete" onClick={() => remove(n.id)} aria-label="Delete"><i className="fas fa-times" /></button>
               </div>
-              <div className="notif-body">
-                <div className="notif-title-row">
-                  <span className="notif-title">{n.title}{count > 1 && <span className="notif-count-label"> · {count}x</span>}</span>
-                  {hasUnread && <span className="notif-dot" />}
-                </div>
-                <p className="notif-message">{cleanMessage(n.message)}</p>
-                <span className="notif-time">{timeAgo(n.updatedAt || n.createdAt)}</span>
-              </div>
-              <button className="notif-delete" onClick={e => { e.stopPropagation(); remove(n.id) }} aria-label="Delete"><i className="fas fa-times" /></button>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {hasMore && tab === 'all' && (
