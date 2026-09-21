@@ -18,6 +18,7 @@ import MyActiveTasks from './pages/tasks/MyActiveTasks'
 import MyCompletedTasks from './pages/tasks/MyCompletedTasks'
 import ActionRequired from './pages/tasks/ActionRequired'
 import TaskChat from './pages/tasks/TaskChat'
+import Messages from './pages/Messages'
 import Notifications from './pages/Notifications'
 import Profile from './pages/user/Profile'
 import BankAccounts from './pages/user/BankAccounts'
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/tasks/my-active" element={<RequireRunnerAccess><MyActiveTasks /></RequireRunnerAccess>} />
               <Route path="/tasks/my-completed" element={<RequireAuth><MyCompletedTasks /></RequireAuth>} />
               <Route path="/tasks/:taskId/chat" element={<RequireAuth><TaskChat /></RequireAuth>} />
+              <Route path="/messages" element={<RequireAuth><Messages /></RequireAuth>} />
               <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
               <Route path="/user/profile" element={<RequireAuth><Profile /></RequireAuth>} />
               <Route path="/user/bank-accounts" element={<RequireAuth><BankAccounts /></RequireAuth>} />
