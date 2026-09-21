@@ -19,6 +19,11 @@ export default function Layout() {
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
 
+  // While auth is being restored after login/refresh, do not render the public header.
+  // Rendering Header here causes a brief Home/About/Browse/Contact flash before the
+  // authenticated workspace shell takes over.
+  if (isUserWorkspaceRoute && loading) return <div className="page-wrapper user-dashboard-page-wrapper" aria-busy="true" />
+
   if (isUserWorkspaceRoute && !loading && isAuthenticated() && user) return (
     <div className="page-wrapper user-dashboard-page-wrapper">
       <UserDashboardShell><Outlet /></UserDashboardShell>
