@@ -102,10 +102,10 @@ export default function ActionRequired() {
                   </div>
                   <div className="task-card-footer">
                     <div className="action-row">
-                      <button className="btn btn-outline btn-sm" onClick={() => navigate('/tasks/my-posted', { state: { focusTaskId: task.taskId } })}>
+                      <button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/my-posted?taskId=${encodeURIComponent(task.taskId)}`)}>
                         <i className="fas fa-list" /> Open Task
                       </button>
-                      {completed && <button className="btn btn-primary btn-sm" onClick={() => navigate('/tasks/my-posted', { state: { focusTaskId: task.taskId, openConfirm: true } })}>
+                      {completed && <button className="btn btn-primary btn-sm" onClick={() => navigate(`/tasks/my-posted?taskId=${encodeURIComponent(task.taskId)}&action=confirm`)}>
                         <i className="fas fa-check" /> Confirm & Pay Runner
                       </button>}
                       {task.helperContact && completed && <a className="btn btn-outline btn-sm" href={`tel:${task.helperContact}`}><i className="fas fa-phone" /> Call</a>}
