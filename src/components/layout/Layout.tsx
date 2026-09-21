@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Header from './Header'
 import Footer from './Footer'
@@ -18,6 +18,13 @@ export default function Layout() {
   const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
+
+  // Once login has succeeded, never render the public login page/header again.
+  // Auth state is updated before Login navigates, so this guard closes the tiny
+  // render window where /login could otherwise show the authenticated Header.
+  if ((pathname === '/login' || pathname === '/register') && !loading && isAuthenticated() && user) {
+    return <Navigate to={isAdminRoute ? '/admin/dashboard' : '/dashboard'} replace />
+  }
 
   // While auth is being restored after login/refresh, do not render the public header.
   // Rendering Header here causes a brief Home/About/Browse/Contact flash before the
