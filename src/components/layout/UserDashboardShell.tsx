@@ -11,7 +11,8 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [actionRequiredCount, setActionRequiredCount] = useState(0)
+  const [awaitConfirmationCount, setAwaitConfirmationCount] = useState(0)
+  const [paymentRequiredCount, setPaymentRequiredCount] = useState(0)
   const [completedCount, setCompletedCount] = useState(0)
   const type = user?.userType || ''
   const displayName = user?.firstName || user?.name || 'User'
@@ -25,7 +26,9 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     if (isCreator) tasksApi.getMyPosted().then(res => {
       if (!active) return
       const raw = res.data?.data?.tasks || res.data?.data?.Tasks || []
-      setActionRequiredCount(raw.filter((t: any) => ['completed', 'pendingpayment'].includes(String(t.taskStatus || '').toLowerCase())).length)
+      const normalized = raw.map((t: any) => String(t.taskStatus || '').toLowerCase())
+      setAwaitConfirmationCount(normalized.filter((status: string) => status === 'completed').length)
+      setPaymentRequiredCount(normalized.filter((status: string) => status === 'pendingpayment').length)
     }).catch(() => {})
     if (isRunner) tasksApi.getMyCompleted().then(res => {
       if (!active) return
@@ -36,16 +39,26 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   }, [isCreator, isRunner])
 
   const navigation = [
-    { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true },
-    { label: 'Browse Tasks', to: '/tasks/browse', icon: 'fa-search', show: true },
-    { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator },
-    { label: 'Action Required', to: '/tasks/action-required', icon: 'fa-triangle-exclamation', show: isCreator, badge: actionRequiredCount },
-    { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner },
-    { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true, badge: isRunner ? completedCount : 0 },
-    { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true },
-    { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications },
-    { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true },
+    { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true, section: 'WORKSPACE' },
+    { label: 'Await Confirmation', to: '/tasks/action-required?filter=confirmation', icon: 'fa-triangle-exclamation', show: isCreator && awaitConfirmationCount > 0, badge: awaitConfirmationCount, section: 'ACTION REQUIRED' },
+    { label: 'Payments', to: '/tasks/action-required?filter=payments', icon: 'fa-credit-card', show: isCreator && paymentRequiredCount > 0, badge: paymentRequiredCount, section: 'ACTION REQUIRED' },
+    { label: 'Browse Tasks', to: '/tasks/browse', icon: 'fa-search', show: true, section: 'TASKS' },
+    { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator, section: 'TASKS' },
+    { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner, section: 'TASKS' },
+    { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true, badge: isRunner ? completedCount : 0, section: 'TASKS' },
+    { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true, section: 'ACCOUNT' },
+    { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'ACCOUNT' },
+    { label: 'My Profile', to: '/user/profile', icon: 'fa-user', show: true, section: 'ACCOUNT' },
   ].filter(item => item.show)
+
+  const renderNavigation = (items: typeof navigation) => items.map(item => (
+    <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)} end={item.to === '/dashboard'} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+      <i className={`fas ${item.icon}`} />
+      <span>{item.label}</span>
+      {!!item.badge && <span className="admin-nav-badge">{item.badge}</span>}
+    </NavLink>
+  ))
+
 
   const pageTitles: Record<string, string> = {
     '/dashboard': 'Overview',
@@ -88,18 +101,13 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
 
         <div className="admin-sidebar-label">Workspace</div>
         <nav className="admin-nav" aria-label="User navigation">
-          {navigation.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => setMobileOpen(false)}
-              end={item.to === '/dashboard'}
-              className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            >
-              <i className={`fas ${item.icon}`} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+          {renderNavigation(navigation.filter(item => item.section === 'WORKSPACE'))}
+          {navigation.some(item => item.section === 'ACTION REQUIRED') && <div className="admin-sidebar-section-label">ACTION REQUIRED</div>}
+          {renderNavigation(navigation.filter(item => item.section === 'ACTION REQUIRED'))}
+          <div className="admin-sidebar-section-label">TASKS</div>
+          {renderNavigation(navigation.filter(item => item.section === 'TASKS'))}
+          <div className="admin-sidebar-section-label">ACCOUNT</div>
+          {renderNavigation(navigation.filter(item => item.section === 'ACCOUNT'))}
         </nav>
 
         <div className="admin-sidebar-spacer" />
