@@ -118,8 +118,39 @@
 .notif-item--clickable {
   cursor: pointer;
 }
+
+.notif-main-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  flex: 1;
+  min-width: 0;
+  margin: -0.875rem 0 -0.875rem -1rem;
+  padding: 0.875rem 0.5rem 0.875rem 1rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+}
+
+.notif-main-action:disabled {
+  cursor: default;
+}
+
 .notif-item--clickable:hover {
   box-shadow: var(--shadow-md);
+}
+
+.notif-item--clickable .notif-main-action:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.notif-main-action:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 
 /* ── Icon ─────────────────────────────────────── */
