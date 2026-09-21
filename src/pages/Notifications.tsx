@@ -103,7 +103,7 @@ export default function Notifications() {
       await markRead(n.id)
     }
 
-    const taskId = n.relatedTaskStringId
+    const taskId = n.relatedTaskStringId || (n.relatedTaskId != null ? String(n.relatedTaskId) : null)
 
     if (isAdmin) {
       if (n.type === 'dispute_raised') {
@@ -127,12 +127,14 @@ export default function Notifications() {
     if (!n.relatedTaskStringId && !n.relatedTaskId) return
     if (n.type === 'new_message') {
       if (taskId) navigate(`/tasks/${taskId}/chat`)
-    } else if (n.type === 'payout_completed') {
-      navigate('/tasks/my-completed')
-    } else if (n.type === 'payout_pending' || n.type === 'payment_received') {
-      navigate(taskId ? `/tasks/${taskId}` : '/dashboard')
+    } else if (n.type === 'task_completed' || n.type === 'payment_pending') {
+      navigate(taskId ? `/tasks/action-required?taskId=${encodeURIComponent(taskId)}` : '/tasks/action-required')
+    } else if (n.type === 'payout_completed' || n.type === 'payout_pending') {
+      navigate(taskId ? `/tasks/my-completed?taskId=${encodeURIComponent(taskId)}` : '/tasks/my-completed')
+    } else if (n.type === 'payment_received' || n.type === 'payment_verified' || n.type === 'task_claimed') {
+      navigate(taskId ? `/tasks/my-posted?taskId=${encodeURIComponent(taskId)}` : '/tasks/my-posted')
     } else {
-      navigate(taskId ? `/tasks/${taskId}` : '/tasks/my-posted')
+      navigate(taskId ? `/tasks/my-posted?taskId=${encodeURIComponent(taskId)}` : '/tasks/my-posted')
     }
   }
 
