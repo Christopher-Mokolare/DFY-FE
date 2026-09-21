@@ -10,14 +10,12 @@ export default function AdminUsers() {
   const [totalPages, setTotalPages] = useState(1)
   const [roleModal, setRoleModal] = useState<any | null>(null)
   const [roleValue, setRoleValue] = useState('')
+  const [roleReason, setRoleReason] = useState('')
   const [historyModal, setHistoryModal] = useState<any | null>(null)
   const [historyData, setHistoryData] = useState<any | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState('')
-  const [deleteModal, setDeleteModal] = useState<any | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [deleteError, setDeleteError] = useState('')
 
   const [totalCount, setTotalCount] = useState(0)
 
@@ -43,20 +41,27 @@ export default function AdminUsers() {
   const isAdmin = (u: any) => u.role?.includes('Admin')
 
   const toggleVerify = async (id: number, current: boolean) => {
+    const reason = window.prompt(`${current ? 'Unverify' : 'Verify'} user — enter a reason:`)?.trim() || ''
+    if (reason.length < 5) {
+      setActionError('A reason of at least 5 characters is required')
+      return
+    }
     try {
-      const r = await adminApi.updateUserStatus(id, !current)
+      const r = await adminApi.updateUserStatus(id, !current, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Action failed'); return }
       setActionError(''); load()
     } catch { setActionError('Failed to update user status') }
   }
 
-  const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleModal(u); setActionError('') }
+  const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleReason(''); setRoleModal(u); setActionError('') }
 
   const saveRole = async () => {
     if (!roleModal) return
+    const reason = roleReason.trim()
+    if (reason.length < 5) { setActionError('A reason of at least 5 characters is required'); return }
     setActionLoading(true); setActionError('')
     try {
-      const r = await adminApi.updateUserRole(roleModal.id, roleValue)
+      const r = await adminApi.updateUserRole(roleModal.id, roleValue, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to update role'); return }
       setRoleModal(null); load()
     } catch (err: any) {
@@ -75,20 +80,7 @@ export default function AdminUsers() {
     } catch { /* ignore */ } finally { setHistoryLoading(false) }
   }
 
-  const confirmDelete = async () => {
-    if (!deleteModal) return
-    setDeleteLoading(true)
-    setDeleteError('')
-    try {
-      const r = await adminApi.deleteUser(deleteModal.id)
-      if (r.data?.success === false) { setDeleteError(r.data?.message || 'Delete failed'); return }
-      setDeleteModal(null)
-      load()
-    } catch (e: any) {
-      setDeleteError(e?.response?.data?.message || 'Delete failed')
-    } finally { setDeleteLoading(false) }
-  }
-
+  /* User deletion is intentionally disabled by the API to preserve audit history. */
   const fetchAllUsers = async () => {
     const r = await adminApi.getUsers({ page: 1, pageSize: 10000 })
     return r.data?.data?.users || []
@@ -148,11 +140,6 @@ export default function AdminUsers() {
                             </button>
                             <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)}><i className="fas fa-user-tag" /></button>
                             <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)}><i className="fas fa-history" /></button>
-                            {!isAdmin(u) && (
-                              <button className="btn btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444', background: 'transparent' }} onClick={() => { setDeleteError(''); setDeleteModal(u) }}>
-                                <i className="fas fa-trash" />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -192,11 +179,6 @@ export default function AdminUsers() {
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)}><i className="fas fa-user-tag" /></button>
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)}><i className="fas fa-history" /></button>
-                        {!isAdmin(u) && (
-                          <button className="btn btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444', background: 'transparent' }} onClick={() => { setDeleteError(''); setDeleteModal(u) }}>
-                            <i className="fas fa-trash" />
-                          </button>
-                        )}
                         <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                           {u.isVerified ? 'Unverify' : 'Verify'}
                         </button>
@@ -240,6 +222,10 @@ export default function AdminUsers() {
                   <option value="Admin,User">Admin + User</option>
                 </select>
               </div>
+              <div className="form-group">
+                <label className="form-label">Reason</label>
+                <textarea className="form-input" rows={3} value={roleReason} onChange={e => setRoleReason(e.target.value)} placeholder="Why is this role changing?" maxLength={500} />
+              </div>
             </div>
             {actionError && <div className="alert alert-error" style={{ margin: '0.75rem 0' }}><i className="fas fa-exclamation-circle" /> {actionError}</div>}
             <div className="modal-footer">
@@ -265,10 +251,7 @@ export default function AdminUsers() {
               {historyData && (
                 <>
                   <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                    <div className="stat-card" style={{ flex: 1 }}>
-                      <div className="stat-icon bg-primary"><i className="fas fa-wallet" /></div>
-                      <div className="stat-content"><h3>R{historyData.user.walletBalance?.toFixed(2)}</h3><p>Wallet Balance</p></div>
-                    </div>
+
                     <div className="stat-card" style={{ flex: 1 }}>
                       <div className="stat-icon bg-warning"><i className="fas fa-star" /></div>
                       <div className="stat-content"><h3>{historyData.user.rating?.toFixed(1) || '0.0'}</h3><p>Rating</p></div>
@@ -336,30 +319,6 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* Delete User Modal */}
-      {deleteModal && (
-        <div className="modal-overlay" onClick={() => setDeleteModal(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><i className="fas fa-trash" style={{ color: '#EF4444' }} /> Delete User</h3>
-              <button className="btn-close" onClick={() => setDeleteModal(null)}><i className="fas fa-times" /></button>
-            </div>
-            <div className="modal-body">
-              <div className="alert alert-warning" style={{ marginBottom: '1rem' }}>
-                <i className="fas fa-exclamation-triangle" /> This is a soft delete — the user will be hidden from the platform but their data is preserved.
-              </div>
-              <p>Are you sure you want to delete <strong>{deleteModal.name}</strong> ({deleteModal.email})?</p>
-              {deleteError && <div className="alert alert-error" style={{ marginTop: '0.75rem' }}><i className="fas fa-times-circle" /> {deleteError}</div>}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setDeleteModal(null)}>Cancel</button>
-              <button className="btn" style={{ background: '#EF4444', color: '#fff' }} onClick={confirmDelete} disabled={deleteLoading}>
-                {deleteLoading ? <><span className="spinner spinner-sm" /> Deleting...</> : 'Delete User'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

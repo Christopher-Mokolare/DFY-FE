@@ -55,22 +55,28 @@ export default function AdminTasks() {
   useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, filter, search, true) }, 400); return () => clearTimeout(t) }, [search])
 
   const verify = async (id: string) => {
+    const reason = window.prompt('Reason for manually verifying this payment?')?.trim()
+    if (!reason) return
     try {
-      const r = await adminApi.verifyPayment(id)
+      const r = await adminApi.verifyPayment(id, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Verify failed'); return }
       setActionError(''); load()
     } catch { setActionError('Verify failed') }
   }
   const unverify = async (id: string) => {
+    const reason = window.prompt('Reason for reversing this payment verification?')?.trim()
+    if (!reason) return
     try {
-      const r = await adminApi.unverifyPayment(id)
+      const r = await adminApi.unverifyPayment(id, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Unverify failed'); return }
       setActionError(''); load()
     } catch { setActionError('Unverify failed') }
   }
   const bulkVerify = async () => {
+    const reason = window.prompt('Reason for manually verifying the selected payments?')?.trim()
+    if (!reason) return
     try {
-      const r = await adminApi.bulkVerify(selected)
+      const r = await adminApi.bulkVerify(selected, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Bulk verify failed'); return }
       setActionError(''); setSelected([]); load()
     } catch { setActionError('Bulk verify failed') }

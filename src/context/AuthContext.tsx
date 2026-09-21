@@ -34,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(storedUser)
         setToken(storedToken)
         setUser(parsed)
-        // If stored user is missing idNumber/address, fetch full profile to self-heal
-        if (!parsed.idNumber || !parsed.address) {
+        // Refresh the authoritative profile so completion and permissions cannot drift from the backend.
+        if (parsed.id) {
           authApi.getProfile()
             .then(r => {
               const d = r.data?.data || r.data
@@ -71,13 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileData) fullUser = { ...data.user, ...profileData }
     } catch { /* fall back to login user */ }
     localStorage.setItem('currentUser', JSON.stringify(fullUser))
-    if (!localStorage.getItem('userPreferences') && fullUser.userType) {
-      const prefs = {
-        canCreateTasks: fullUser.userType === 'creator' || fullUser.userType === 'both',
-        canAcceptTasks: fullUser.userType === 'runner' || fullUser.userType === 'both',
-      }
-      localStorage.setItem('userPreferences', JSON.stringify(prefs))
-    }
     setUser(fullUser)
     return fullUser
   }, [])
@@ -91,10 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const refreshUser = useCallback(() => {
-    const stored = localStorage.getItem('currentUser')
-    if (stored) {
-      try { setUser(JSON.parse(stored)) } catch { /* ignore */ }
-    }
+    authApi.getProfile()
+      .then(r => {
+        const d = r.data?.data || r.data
+        if (d) {
+          localStorage.setItem('currentUser', JSON.stringify(d))
+          setUser(d)
+        }
+      })
+      .catch(() => { /* retain current state on transient refresh failure */ })
   }, [])
 
   const isAuthenticated = useCallback(() => {
@@ -112,30 +110,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return user.userType === 'Admin'
   }, [user])
 
-  const isProfileComplete = useCallback(() => {
-    if (!user) return false
-    const phone = user.contact || user.phoneNumber
-    return !!(user.firstName && user.lastName && user.email && phone
-      && user.userType && user.idNumber && user.address)
-  }, [user])
+  // These values are presentation mirrors of backend policy. The FE never
+  // independently validates profile completeness or role capabilities.
+  const isProfileComplete = useCallback(() => user?.profileCompleted === true, [user])
 
   const isProfileIncomplete = useCallback(() => !isProfileComplete(), [isProfileComplete])
 
-  const canPostErrands = useCallback(() => {
-    if (!isAuthenticated() || isAdmin()) return false
-    const ut = user?.userType
-    if (ut) return ut === 'creator' || ut === 'both'
-    const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-    return prefs.canCreateTasks === true
-  }, [user, isAuthenticated, isAdmin])
+  const canPostErrands = useCallback(() => (
+    isAuthenticated() && !isAdmin() && user?.canCreateTasks === true
+  ), [user, isAuthenticated, isAdmin])
 
-  const canAcceptTasks = useCallback(() => {
-    if (!isAuthenticated() || isAdmin() || isProfileIncomplete()) return false
-    const ut = user?.userType
-    if (ut) return ut === 'runner' || ut === 'both'
-    const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}')
-    return prefs.canAcceptTasks === true
-  }, [user, isAuthenticated, isAdmin, isProfileIncomplete])
+  const canAcceptTasks = useCallback(() => (
+    isAuthenticated() && !isAdmin() && user?.canAcceptTasks === true
+  ), [user, isAuthenticated, isAdmin])
 
   const getProfileCompletion = useCallback(() => user?.profileCompletion ?? 0, [user])
 

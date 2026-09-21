@@ -3,7 +3,27 @@ import { test, expect, Page, request } from '@playwright/test'
 const PASSWORD = 'Test@1234'
 
 function makeEmail(prefix: string) {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}@test.dfy`
+  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '@test.dfy'
+}
+
+function makeIdentity() {
+  const sequence = String(Date.now() % 10000).padStart(4, '0')
+  const first12 = '900101' + sequence + '08'
+  const digits = first12.split('').map(Number)
+  let sum = 0
+  for (let i = 0; i < digits.length; i++) {
+    if (i % 2 === 0) sum += digits[i]
+    else {
+      const doubled = digits[i] * 2
+      sum += doubled > 9 ? doubled - 9 : doubled
+    }
+  }
+  const check = String((10 - (sum % 10)) % 10)
+  return first12 + check
+}
+
+function makePhone() {
+  return '082' + String(Date.now() % 10000000).padStart(7, '0')
 }
 
 test.beforeAll(async () => {
@@ -37,6 +57,8 @@ async function gotoWithRetry(page: Page, url: string) {
 }
 
 async function register(page: Page, email: string, userType: 'creator' | 'runner' | 'both') {
+  const phone = makePhone()
+  const idNumber = makeIdentity()
   await gotoWithRetry(page, '/register')
   await waitForAppReady(page)
 
@@ -48,11 +70,11 @@ async function register(page: Page, email: string, userType: 'creator' | 'runner
   await page.getByPlaceholder('First Name *').fill('Test')
   await page.getByPlaceholder('Last Name *').fill('User')
   await page.getByPlaceholder('Email Address *').fill(email)
-  await page.getByPlaceholder('Phone Number *').fill('0821234567')
+  await page.getByPlaceholder('Phone Number *').fill(phone)
   await page.getByRole('button', { name: /continue/i }).click()
 
   await page.locator(`label.role-card:has(input[value="${userType}"])`).click({ force: true })
-  await page.getByPlaceholder('ID Number *').fill('9001015009087')
+  await page.getByPlaceholder('ID Number *').fill(idNumber)
   await page.getByPlaceholder('Address *').fill('123 Test Street, Johannesburg')
   await page.getByRole('button', { name: /continue/i }).last().click()
 
@@ -113,7 +135,7 @@ test('dashboard shows content after login', async ({ page }) => {
   const email = makeEmail('poster-dashboard')
   await register(page, email, 'creator')
   await login(page, email)
-  await expect(page.getByText(/task creator dashboard|welcome/i).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('h1').filter({ hasText: /Good (morning|afternoon|evening)/i }).first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('user can view profile page', async ({ page }) => {
@@ -128,15 +150,15 @@ test('runner can browse available tasks', async ({ page }) => {
   const email = makeEmail('runner-browse')
   await register(page, email, 'runner')
   await login(page, email)
-  await gotoWithRetry(page, '/browse-errands')
-  await expect(page.getByRole('heading', { name: /start earning today!/i })).toBeVisible({ timeout: 15_000 })
+  await gotoWithRetry(page, '/tasks/browse')
+  await expect(page.getByRole('heading', { name: /find a task/i })).toBeVisible({ timeout: 15_000 })
 })
 
 test('poster can access post errand page', async ({ page }) => {
   const email = makeEmail('poster-post')
   await register(page, email, 'creator')
   await login(page, email)
-  await gotoWithRetry(page, '/post-errand')
+  await gotoWithRetry(page, '/tasks/post')
   await expect(page.getByRole('heading', { name: /create your task/i })).toBeVisible({ timeout: 15_000 })
 })
 
@@ -155,7 +177,7 @@ test('legacy wallet route redirects to the dashboard', async ({ page }) => {
   await login(page, email)
   await gotoWithRetry(page, '/wallet')
   await expect(page).toHaveURL(/dashboard/i, { timeout: 15_000 })
-  await expect(page.getByText(/task runner dashboard|welcome/i).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('h1').filter({ hasText: /Good (morning|afternoon|evening)/i }).first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('user can log out', async ({ page }) => {
@@ -163,7 +185,6 @@ test('user can log out', async ({ page }) => {
   await register(page, email, 'creator')
   await login(page, email)
 
-  await page.locator('.dropdown-trigger').first().click()
-  await page.locator('.dropdown-logout').first().click()
+  await page.locator('.admin-logout').first().click()
   await expect(page).toHaveURL(/login|\//, { timeout: 10_000 })
 })
