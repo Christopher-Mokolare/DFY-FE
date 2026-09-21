@@ -241,6 +241,7 @@ export interface ChatMessage {
   timestamp: string
   isRead: boolean
   isCurrentUser: boolean
+  isSystem?: boolean
 }
 
 export interface ChatConversation {
