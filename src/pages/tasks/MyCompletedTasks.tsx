@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi, ratingsApi } from '../../api'
 
 export default function MyCompletedTasks() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [ratingModal, setRatingModal] = useState<any | null>(null)
@@ -20,6 +21,12 @@ export default function MyCompletedTasks() {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    const target = searchParams.get('taskId')
+    if (!target || loading) return
+    requestAnimationFrame(() => document.getElementById(\`completed-task-\${target}\`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }, [searchParams, loading])
+
   const handleRating = async () => {
     if (!ratingModal) return
     setRatingLoading(true); setRatingError('')
@@ -35,6 +42,15 @@ export default function MyCompletedTasks() {
   }
 
   const fmt = (n: number) => `R${(n || 0).toFixed(2)}`
+  const lifecycle = (t: any) => {
+    const s = String(t.status || '').toLowerCase()
+    const payout = String(t.payoutStatus || '').toLowerCase()
+    if (s === 'runnerpaid' || payout === 'completed' || payout === 'paid') return { label: 'Paid', tone: 'badge-runner_paid', detail: t.payoutCompletedAt ? `Paid ${new Date(t.payoutCompletedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Payout completed' }
+    if (s === 'payoutpending' || payout === 'processing' || payout === 'pending' || payout === 'initiated') return { label: 'Payout Processing', tone: 'badge-draft', detail: 'Creator confirmed. Your payout is being processed.' }
+    if (s === 'completed') return { label: 'Awaiting Creator', tone: 'badge-completed', detail: 'You completed the task. The creator must confirm before payout is released.' }
+    if (payout === 'failed' || payout === 'returned' || payout === 'cancelled') return { label: 'Payout Issue', tone: 'badge-cancelled', detail: 'The payout needs attention. Check your bank details or contact support.' }
+    return { label: t.status || 'Completed', tone: 'badge-completed', detail: 'Task completed.' }
+  }
 
   if (loading) return <div className="loading-state"><div className="spinner" /><p>Loading completed tasks...</p></div>
 
@@ -57,11 +73,9 @@ export default function MyCompletedTasks() {
         ) : (
           <div className="tasks-grid">
             {tasks.map((t: any) => (
-              <div key={t.taskId} className="task-card">
+              <div id={\`completed-task-\${t.taskId}\`} key={t.taskId} className="task-card">
                 <div className="task-card-header">
-                  <span className={`badge ${t.status === 'runnerpaid' ? 'badge-runner_paid' : 'badge-completed'}`}>
-                    {t.status === 'runnerpaid' ? 'Paid' : 'Completed'}
-                  </span>
+                  {(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
                   <div className="task-budget">
                     {fmt(t.payoutAmount || t.budget * 0.85)}
                     <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>earned</small>
@@ -80,6 +94,7 @@ export default function MyCompletedTasks() {
                     )}
                     <div className="task-meta-item"><i className="fas fa-user" /><span>{t.creatorName}</span></div>
                   </div>
+                  <div className="alert alert-info mt-3"><i className="fas fa-route" /> {lifecycle(t).detail}</div>
                 </div>
                 <div className="task-card-footer">
                   {!ratedTaskIds.has(t.taskId) && (
