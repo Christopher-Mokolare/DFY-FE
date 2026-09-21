@@ -22,38 +22,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
+  // Restore the session synchronously from storage. This is important for routing:
+  // Layout must know that the user is authenticated on its first render, otherwise
+  // a protected route can briefly render the public Header before the sidebar mounts.
+  const [session] = useState(() => {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('currentUser')
-    if (storedToken && storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser)
-        setToken(storedToken)
-        setUser(parsed)
-        // Refresh the authoritative profile so completion and permissions cannot drift from the backend.
-        if (parsed.id) {
-          authApi.getProfile()
-            .then(r => {
-              const d = r.data?.data || r.data
-              if (d) {
-                const merged = { ...parsed, ...d }
-                localStorage.setItem('currentUser', JSON.stringify(merged))
-                setUser(merged)
-              }
-            })
-            .catch(() => { /* keep existing user */ })
-        }
-      } catch {
-        localStorage.removeItem('token')
-        localStorage.removeItem('currentUser')
-      }
+    if (!storedToken || !storedUser) return { token: null as string | null, user: null as User | null }
+    try {
+      return { token: storedToken, user: JSON.parse(storedUser) as User }
+    } catch {
+      localStorage.removeItem('token')
+      localStorage.removeItem('currentUser')
+      return { token: null as string | null, user: null as User | null }
     }
-    setLoading(false)
-  }, [])
+  })
+  const [user, setUser] = useState<User | null>(session.user)
+  const [token, setToken] = useState<string | null>(session.token)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    // Refresh the authoritative profile in the background without blocking the
+    // authenticated workspace from rendering.
+    if (!session.token || !session.user?.id) return
+    authApi.getProfile()
+      .then(r => {
+        const d = r.data?.data || r.data
+        if (d) {
+          const merged = { ...session.user, ...d }
+          localStorage.setItem('currentUser', JSON.stringify(merged))
+          setUser(merged)
+        }
+      })
+      .catch(() => { /* keep the synchronously restored user */ })
+  }, [session.token, session.user])
 
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     const res = await authApi.login({ email, password })
