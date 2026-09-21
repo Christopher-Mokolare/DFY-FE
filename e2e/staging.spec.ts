@@ -185,7 +185,6 @@ test('user can log out', async ({ page }) => {
   await register(page, email, 'creator')
   await login(page, email)
 
-  await page.locator('.dropdown-trigger').first().click()
-  await page.locator('.dropdown-logout').first().click()
+  await page.locator('.admin-logout').first().click()
   await expect(page).toHaveURL(/login|\//, { timeout: 10_000 })
 })
