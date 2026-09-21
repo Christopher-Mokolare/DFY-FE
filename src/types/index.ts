@@ -243,6 +243,21 @@ export interface ChatMessage {
   isCurrentUser: boolean
 }
 
+export interface ChatConversation {
+  id: number
+  taskId: string
+  title: string
+  description: string
+  taskStatus: string
+  chatClosed: boolean
+  completedAt?: string | null
+  participantName: string
+  participantId?: number | null
+  lastMessage?: string | null
+  lastMessageAt?: string | null
+  unreadCount: number
+}
+
 // Dashboard stats
 export interface DashboardStats {
   creatorStats: {
