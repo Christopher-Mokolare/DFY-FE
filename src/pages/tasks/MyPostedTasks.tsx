@@ -64,7 +64,7 @@ export default function MyPostedTasks() {
     const status = task.taskStatus?.toLowerCase() || ''
     const section: Section = status === 'completed' ? 'completed' : ['claimed', 'in_progress'].includes(status) ? 'claimed' : status === 'posted' ? 'posted' : 'pendingPayment'
     setExpanded(e => ({ ...e, [section]: true }))
-    requestAnimationFrame(() => document.getElementById(\`posted-task-\${target}\`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    requestAnimationFrame(() => document.getElementById(`posted-task-\${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
     if (searchParams.get('action') === 'confirm' && status === 'completed') setConfirmModal(task)
   }, [searchParams, loading, tasks])
 
@@ -139,7 +139,7 @@ export default function MyPostedTasks() {
             <div key={key} className="status-section">
               <button className="status-heading" onClick={() => toggle(key)}><span><i className={`fas ${icon}`} /> {label} ({grouped[key].length})</span><i className={`fas fa-chevron-${expanded[key] ? 'up' : 'down'}`} /></button>
               {expanded[key] && <div className="tasks-grid">{grouped[key].map(task => (
-                <div id={\`posted-task-\${task.taskId}\`} key={task.taskId || task.id} className="task-card">
+                <div id={`posted-task-\${task.taskId}`} key={task.taskId || task.id} className="task-card">
                   <div className="task-card-header"><span className={getStatusBadge(task.taskStatus)}>{task.taskStatus}</span><div className="task-budget">R{task.budget}</div></div>
                   <div className="task-card-body">
                     <h3 className="task-title">{task.taskName || task.taskDescription}</h3>
