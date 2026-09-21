@@ -11,6 +11,40 @@ import './TaskChat.css'
 
 const POLL_INTERVAL = 5000
 
+const normalizeStatus = (value: unknown) => String(value || '').replace(/_/g, '').replace(/\s/g, '').toLowerCase()
+
+const statusMeta = (status: string) => {
+  switch (normalizeStatus(status)) {
+    case 'completed': return { label: 'Awaiting confirmation', tone: 'warning' }
+    case 'runnerpaid': return { label: 'Completed & closed', tone: 'closed' }
+    case 'cancelled': return { label: 'Cancelled', tone: 'closed' }
+    case 'claimed':
+    case 'inprogress': return { label: 'Active', tone: 'active' }
+    default: return { label: status || 'Task conversation', tone: 'neutral' }
+  }
+}
+
+const formatTime = (ts: string) => {
+  const date = new Date(ts)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffMins < 24 * 60) return date.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
+  if (diffMins < 48 * 60) return `Yesterday · ${date.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}`
+  return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) + ' · ' + date.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
+}
+
+const dateLabel = (ts: string) => new Date(ts).toLocaleDateString('en-ZA', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+})
+
+const initials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  return (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : name.slice(0, 2)).toUpperCase() || '?'
+}
+
 export default function TaskChat() {
   const { taskId } = useParams<{ taskId: string }>()
   const [searchParams] = useSearchParams()
@@ -18,14 +52,21 @@ export default function TaskChat() {
   const { user } = useAuth()
   const { notifications, markTaskNotificationsRead } = useNotifications()
 
-  const taskTitle = searchParams.get('title') || 'Task Chat'
-
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [connected, setConnected] = useState(false)
+  const [taskInfo, setTaskInfo] = useState<any>(null)
+
+  const taskTitle = taskInfo?.taskName || taskInfo?.taskDescription || searchParams.get('title') || 'Task conversation'
+  const taskStatus = taskInfo?.taskStatus || ''
+  const meta = statusMeta(taskStatus)
+  const chatClosed = normalizeStatus(taskStatus) === 'runnerpaid' || normalizeStatus(taskStatus) === 'cancelled'
+  const participantName = taskInfo?.runnerName && taskInfo?.createdByUserId === user?.id
+    ? taskInfo.runnerName
+    : taskInfo?.creatorName || taskInfo?.runnerName || 'Task participant'
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -35,20 +76,24 @@ export default function TaskChat() {
   const knownIdsRef = useRef<Set<string | number>>(new Set())
 
   const scrollToBottom = useCallback((smooth = false) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' })
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
   }, [])
 
   const mergeMessages = useCallback((incoming: ChatMessage[]) => {
     const toAdd = incoming.filter(msg => !knownIdsRef.current.has(String(msg.id)))
-    if (toAdd.length === 0) return
+    if (!toAdd.length) return
     toAdd.forEach(msg => knownIdsRef.current.add(String(msg.id)))
     const normalized = toAdd.map(msg => ({ ...msg, id: String(msg.id) }))
-    setMessages(prev =>
-      [...prev, ...normalized].sort(
-        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      )
-    )
+    setMessages(prev => [...prev, ...normalized].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()))
   }, [])
+
+  const fetchTask = useCallback(async () => {
+    if (!taskId) return
+    try {
+      const res = await tasksApi.getById(taskId)
+      if (res.data?.success) setTaskInfo(res.data.data)
+    } catch { /* chat can still load */ }
+  }, [taskId])
 
   const fetchMessages = useCallback(async () => {
     if (!taskId) return
@@ -62,74 +107,59 @@ export default function TaskChat() {
           senderName: DOMPurify.sanitize(m.senderName, { ALLOWED_TAGS: [] }),
         }))
         mergeMessages(sanitized)
-        // Mark unread messages as read
-        if (sanitized.some(m => !m.isCurrentUser && !m.isRead)) {
-          tasksApi.markMessagesRead(taskId).catch(() => {})
-        }
+        if (sanitized.some(m => !m.isCurrentUser && !m.isRead)) tasksApi.markMessagesRead(taskId).catch(() => {})
       }
     } catch {
-      // silent — polling will retry
+      // polling retries
     } finally {
       setLoading(false)
     }
   }, [taskId, mergeMessages])
 
-  // SignalR setup
+  useEffect(() => {
+    fetchTask()
+  }, [fetchTask])
+
   useEffect(() => {
     if (!taskId) return
     const token = localStorage.getItem('token')
     if (!token) return
 
     const hubUrl = `${env.apiUrl.replace('/api/v1', '')}/api/v1/hubs/chat`
-
     const hub = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => token,
-        skipNegotiation: true,
-        transport: signalR.HttpTransportType.WebSockets,
-      })
+      .withUrl(hubUrl, { accessTokenFactory: () => token, skipNegotiation: true, transport: signalR.HttpTransportType.WebSockets })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Warning)
       .build()
 
     hub.on('ReceiveMessage', (msg: ChatMessage) => {
-      const sanitized = {
+      mergeMessages([{
         ...msg,
         content: DOMPurify.sanitize(msg.content, { ALLOWED_TAGS: [] }),
         senderName: DOMPurify.sanitize(msg.senderName, { ALLOWED_TAGS: [] }),
         isCurrentUser: msg.senderId === user?.id,
-      }
-      mergeMessages([sanitized])
+      }])
     })
 
     hub.onreconnected(() => {
       setConnected(true)
-      // Stop polling — SignalR is back
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     })
 
     hub.onclose(() => {
       setConnected(false)
-      // Start polling as fallback
-      if (!pollRef.current) {
-        pollRef.current = setInterval(fetchMessages, POLL_INTERVAL)
-      }
+      if (!pollRef.current) pollRef.current = setInterval(fetchMessages, POLL_INTERVAL)
     })
 
     hub.start()
       .then(async () => {
         setConnected(true)
-        // Connected — stop polling
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
         await hub.invoke('JoinTaskChat', parseInt(taskId.replace(/\D/g, '') || '0'))
       })
-      .catch(() => {
-        setConnected(false)
-        // SignalR failed — keep polling
-      })
+      .catch(() => setConnected(false))
 
     hubRef.current = hub
-
     return () => {
       hub.invoke('LeaveTaskChat', parseInt(taskId.replace(/\D/g, '') || '0')).catch(() => {})
       hub.stop()
@@ -137,22 +167,18 @@ export default function TaskChat() {
     }
   }, [taskId, user?.id, mergeMessages, fetchMessages])
 
-  // Initial fetch + polling (polling stops if SignalR connects)
   useEffect(() => {
     fetchMessages()
-    // Start polling — will be cleared if SignalR connects
     pollRef.current = setInterval(fetchMessages, POLL_INTERVAL)
     return () => {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }
   }, [fetchMessages])
 
-  // Mark all unread message notifications for this task as read on mount and when notifications update
   useEffect(() => {
     if (taskId) markTaskNotificationsRead(taskId)
   }, [notifications, taskId, markTaskNotificationsRead])
 
-  // Scroll to bottom when messages load or new ones arrive
   useEffect(() => {
     if (isAtBottomRef.current) scrollToBottom()
   }, [messages, scrollToBottom])
@@ -163,21 +189,17 @@ export default function TaskChat() {
     isAtBottomRef.current = el.scrollHeight - el.scrollTop <= el.clientHeight + 60
   }
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     const text = newMessage.trim()
-    if (!text || sending || !taskId) return
+    if (!text || sending || !taskId || chatClosed) return
 
     const tempId = `temp-${Date.now()}`
     const optimistic: ChatMessage = {
-      id: tempId,
-      taskId,
-      senderId: user?.id ?? 0,
+      id: tempId, taskId, senderId: user?.id ?? 0,
       senderName: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.name : 'You',
       content: DOMPurify.sanitize(text, { ALLOWED_TAGS: [] }),
-      timestamp: new Date().toISOString(),
-      isRead: false,
-      isCurrentUser: true,
+      timestamp: new Date().toISOString(), isRead: false, isCurrentUser: true,
     }
 
     knownIdsRef.current.add(tempId)
@@ -188,144 +210,140 @@ export default function TaskChat() {
     scrollToBottom(true)
 
     try {
-      await tasksApi.sendMessage(taskId, text)
-      // Fetch real messages and replace the optimistic one
-      const res = await tasksApi.getMessages(taskId)
-      if (res.data?.success) {
-        const incoming: ChatMessage[] = (res.data.data || []).map((m: ChatMessage) => ({
-          ...m,
-          id: String(m.id),
-          content: DOMPurify.sanitize(m.content, { ALLOWED_TAGS: [] }),
-          senderName: DOMPurify.sanitize(m.senderName, { ALLOWED_TAGS: [] }),
-        }))
-        // Add any ids we don't know yet
-        incoming.forEach(m => knownIdsRef.current.add(String(m.id)))
-        // Replace optimistic with full server list (removes temp)
-        setMessages(incoming.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()))
-        knownIdsRef.current.delete(tempId)
-      }
-    } catch {
-      // Roll back optimistic message on failure
+      const res = await tasksApi.sendMessage(taskId, text)
+      if (res.data?.success === false) throw new Error(res.data.message || 'Unable to send message')
+      await fetchMessages()
+    } catch (err: any) {
       setMessages(prev => prev.filter(m => String(m.id) !== tempId))
       knownIdsRef.current.delete(tempId)
-      setError('Failed to send message. Please try again.')
-      setTimeout(() => setError(''), 3000)
+      setError(err?.message || 'Failed to send message. Please try again.')
+      setTimeout(() => setError(''), 3500)
     } finally {
       setSending(false)
     }
   }
 
-  const formatTime = (ts: string) => {
-    const date = new Date(ts)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    const diffHours = Math.floor(diffMs / 3600000)
-    if (diffHours < 24) return date.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
-    if (diffHours < 48) return `Yesterday ${date.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}`
-    return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-  }
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ').filter(Boolean)
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    return name.substring(0, 2).toUpperCase() || '?'
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSend(e as unknown as React.FormEvent)
+      handleSend()
     }
   }
 
+  let lastDate = ''
   return (
     <div className="chat-page">
-      <div className="chat-header">
-        <button className="chat-back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+      <header className="chat-header">
+        <button className="chat-back-btn" onClick={() => navigate('/messages')} aria-label="Back to messages">
           <i className="fas fa-arrow-left" />
         </button>
+        <div className="chat-header-avatar">{initials(participantName)}</div>
         <div className="chat-header-info">
-          <h2 className="chat-title">{taskTitle.length > 50 ? taskTitle.substring(0, 50) + '…' : taskTitle}</h2>
-          <span className={`chat-status ${connected ? 'online' : 'offline'}`}>
-            <span className="status-dot" />
-            {connected ? 'Live' : 'Polling'}
-          </span>
+          <div className="chat-kicker">TASK CONVERSATION</div>
+          <h1 className="chat-title">{taskTitle.length > 64 ? taskTitle.slice(0, 64) + '…' : taskTitle}</h1>
+          <div className="chat-header-meta">
+            <span>{participantName}</span>
+            <span className={`chat-status-pill ${meta.tone}`}><span />{meta.label}</span>
+            <span className="chat-live"><i className="fas fa-circle" /> {connected ? 'Live' : 'Syncing'}</span>
+          </div>
         </div>
+        <button className="chat-task-btn" onClick={() => navigate(`/tasks/my-posted?taskId=${encodeURIComponent(taskId || '')}`)} title="Open task">
+          <i className="fas fa-arrow-up-right-from-square" />
+          <span>Task</span>
+        </button>
+      </header>
+
+      <div className="chat-context">
+        <div><i className="fas fa-shield-halved" /><span>Keep communication on DoForYou</span></div>
+        <span className="chat-context-id">{taskId}</span>
       </div>
 
       <div className="chat-body" ref={messagesContainerRef} onScroll={handleScroll}>
         {loading && (
-          <div className="chat-loading">
-            <span className="spinner spinner-sm" />
-            <p>Loading messages…</p>
-          </div>
+          <div className="chat-loading"><span className="spinner spinner-sm" /><p>Loading conversation…</p></div>
         )}
 
         {!loading && messages.length === 0 && (
           <div className="chat-empty">
-            <span className="chat-empty-icon">💬</span>
-            <p>No messages yet. Start the conversation!</p>
+            <div className="chat-empty-icon"><i className="fas fa-comments" /></div>
+            <h2>Start the conversation</h2>
+            <p>Coordinate the task here. Keep important details, timing and updates in this conversation.</p>
           </div>
         )}
 
-        {messages.map(msg => (
-          <div key={msg.id} className={`msg-row ${msg.isCurrentUser ? 'mine' : 'theirs'}`}>
-            {!msg.isCurrentUser && (
-              <div className="msg-avatar">{getInitials(msg.senderName)}</div>
-            )}
-            <div className="msg-bubble-wrap">
-              {!msg.isCurrentUser && (
-                <span className="msg-sender">{msg.senderName}</span>
-              )}
-              <div className={`msg-bubble ${msg.isCurrentUser ? 'bubble-mine' : 'bubble-theirs'} ${String(msg.id).startsWith('temp-') ? 'bubble-sending' : ''}`}>
-                <span className="msg-text">{msg.content}</span>
-                <span className="msg-time">{formatTime(msg.timestamp)}</span>
-                {msg.isCurrentUser && (
-                  <i className={`fas ${msg.isRead ? 'fa-check-double msg-read' : 'fa-check'} msg-tick`} />
-                )}
-              </div>
-            </div>
-            {msg.isCurrentUser && (
-              <div className="msg-avatar mine-avatar">{getInitials(msg.senderName)}</div>
-            )}
+        {!loading && messages.length > 0 && (
+          <div className="chat-message-stack">
+            {messages.map(msg => {
+              const currentDate = dateLabel(msg.timestamp)
+              const showDate = currentDate !== lastDate
+              lastDate = currentDate
+              return (
+                <div key={msg.id}>
+                  {showDate && <div className="chat-date-separator"><span>{currentDate}</span></div>}
+                  <div className={`msg-row ${msg.isCurrentUser ? 'mine' : 'theirs'}`}>
+                    {!msg.isCurrentUser && <div className="msg-avatar">{initials(msg.senderName)}</div>}
+                    <div className="msg-bubble-wrap">
+                      {!msg.isCurrentUser && <span className="msg-sender">{msg.senderName}</span>}
+                      <div className={`msg-bubble ${msg.isCurrentUser ? 'bubble-mine' : 'bubble-theirs'} ${String(msg.id).startsWith('temp-') ? 'bubble-sending' : ''}`}>
+                        <div className="msg-text">{msg.content}</div>
+                        <div className="msg-meta"><span>{formatTime(msg.timestamp)}</span>{msg.isCurrentUser && <i className={`fas ${msg.isRead ? 'fa-check-double msg-read' : 'fa-check'}`} />}</div>
+                      </div>
+                    </div>
+                    {msg.isCurrentUser && <div className="msg-avatar mine-avatar">{initials(msg.senderName)}</div>}
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        ))}
+        )}
+
+        {taskStatus && (
+          <div className={`chat-system-card ${meta.tone}`}>
+            <div className="chat-system-icon"><i className={`fas ${chatClosed ? 'fa-lock' : 'fa-circle-check'}`} /></div>
+            <div>
+              <strong>{chatClosed ? 'Conversation closed' : meta.label}</strong>
+              <p>
+                {chatClosed
+                  ? 'The task has been completed and paid. This conversation is read-only, but its history remains available.'
+                  : normalizeStatus(taskStatus) === 'completed'
+                    ? 'The runner marked the task complete. Review the work and confirm the task to release the payout.'
+                    : 'This conversation is available for task coordination and updates.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {error && (
-        <div className="chat-error">
-          <i className="fas fa-exclamation-circle" /> {error}
-        </div>
-      )}
+      {error && <div className="chat-error"><i className="fas fa-circle-exclamation" /> {error}</div>}
 
-      <form className="chat-footer" onSubmit={handleSend}>
-        <input
-          className="chat-input"
-          type="text"
-          placeholder="Type a message…"
-          value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={sending}
-          autoComplete="off"
-          maxLength={1000}
-        />
-        <button
-          type="submit"
-          className="chat-send-btn"
-          disabled={!newMessage.trim() || sending}
-          aria-label="Send message"
-        >
-          {sending
-            ? <span className="spinner spinner-sm" />
-            : <i className="fas fa-paper-plane" />}
-        </button>
-      </form>
+      {chatClosed ? (
+        <div className="chat-closed-footer">
+          <i className="fas fa-lock" />
+          <div><strong>Conversation closed</strong><span>You can still view the full history, but new messages are disabled.</span></div>
+        </div>
+      ) : (
+        <form className="chat-footer" onSubmit={handleSend}>
+          <div className="chat-input-wrap">
+            <textarea
+              className="chat-input"
+              placeholder="Write a message…"
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={sending}
+              maxLength={1000}
+              rows={1}
+              aria-label="Message"
+            />
+            <span className="chat-input-hint">Enter to send · Shift + Enter for a new line</span>
+          </div>
+          <button type="submit" className="chat-send-btn" disabled={!newMessage.trim() || sending} aria-label="Send message">
+            {sending ? <span className="spinner spinner-sm" /> : <i className="fas fa-paper-plane" />}
+          </button>
+        </form>
+      )}
     </div>
   )
 }
