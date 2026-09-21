@@ -247,7 +247,7 @@ export default function TaskChat() {
             <span className="chat-live"><i className="fas fa-circle" /> {connected ? 'Live' : 'Syncing'}</span>
           </div>
         </div>
-        <button className="chat-task-btn" onClick={() => navigate(`/tasks/my-posted?taskId=${encodeURIComponent(taskId || '')}`)} title="Open task">
+        <button className="chat-task-btn" onClick={() => navigate(`${taskInfo?.createdByUserId === user?.id ? '/tasks/my-posted' : '/tasks/my-completed'}?taskId=${encodeURIComponent(taskId || '')}`)} title="Open task">
           <i className="fas fa-arrow-up-right-from-square" />
           <span>Task</span>
         </button>
