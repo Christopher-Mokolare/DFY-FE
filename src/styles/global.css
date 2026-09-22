@@ -1549,12 +1549,13 @@ html, body, #root {
   width: 42px;
   height: 42px;
   flex: 0 0 42px;
+  padding: 4px;
   object-fit: contain;
   object-position: center;
   display: block;
   border-radius: 11px;
-  background: transparent;
-  box-shadow: none;
+  background: var(--primary-gradient);
+  box-shadow: 0 8px 24px rgba(255,138,0,.25);
 }
 .admin-nav-sections {
   gap: 1rem;
