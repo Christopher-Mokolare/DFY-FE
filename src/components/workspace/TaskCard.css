@@ -111,3 +111,98 @@
     font-size: .57rem !important;
   }
 }
+
+
+/* ==========================================================================
+   Task card width + fluid actions
+   Keep the content column compact. Actions consume available footer space
+   without creating oversized buttons; when the row is full they wrap cleanly.
+   ========================================================================== */
+
+.user-workspace-shell .task-card {
+  width: min(100%, 560px);
+  max-width: 560px;
+}
+
+.user-workspace-shell .task-card__title {
+  max-width: 46ch;
+  min-height: 0;
+  margin-bottom: .2rem;
+}
+
+.user-workspace-shell .task-card__description {
+  max-width: 58ch;
+  min-height: 0;
+  margin-bottom: .3rem;
+}
+
+.user-workspace-shell .task-card__meta {
+  margin-top: .1rem;
+}
+
+.user-workspace-shell .task-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .3rem !important;
+}
+
+.user-workspace-shell .task-card__actions .action-row,
+.user-workspace-shell .task-card__actions .action-col,
+.user-workspace-shell .task-card__actions .active-task-actions,
+.user-workspace-shell .task-card__actions .active-task-contact-actions {
+  display: contents !important;
+}
+
+.user-workspace-shell .task-card__actions .btn,
+.user-workspace-shell .task-card__actions a.btn,
+.user-workspace-shell .task-card__actions button {
+  flex: 1 1 max-content;
+  width: auto !important;
+  min-width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.user-workspace-shell .task-card__actions .btn-block {
+  width: auto !important;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .task-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .user-workspace-shell .task-card__title {
+    max-width: 100%;
+    font-size: .74rem;
+    line-height: 1.25;
+  }
+
+  .user-workspace-shell .task-card__description {
+    max-width: 100%;
+    font-size: .62rem;
+    line-height: 1.3;
+  }
+
+  .user-workspace-shell .task-card__actions {
+    gap: .25rem !important;
+  }
+
+  .user-workspace-shell .task-card__actions .btn,
+  .user-workspace-shell .task-card__actions a.btn,
+  .user-workspace-shell .task-card__actions button {
+    flex: 1 1 max-content;
+    min-width: max-content;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .task-card__actions .btn,
+  .user-workspace-shell .task-card__actions a.btn,
+  .user-workspace-shell .task-card__actions button {
+    flex: 1 1 calc(50% - .25rem);
+    min-width: 0;
+  }
+}
