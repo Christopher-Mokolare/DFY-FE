@@ -23,7 +23,11 @@ export default function Layout() {
   // AuthContext keeps this flag active until the navigation to the authenticated
   // workspace has been committed, eliminating the authenticated-header flash.
   if ((pathname === '/login' || pathname === '/register') && loginTransitioning) {
-    return <div className="page-wrapper user-dashboard-page-wrapper" aria-busy="true" />
+    return (
+      <div className="page-wrapper user-dashboard-page-wrapper" aria-busy="true">
+        <div className="loading-screen"><div className="spinner" /></div>
+      </div>
+    )
   }
 
   // Once login has succeeded, never render the public login page/header again.
