@@ -58,6 +58,10 @@
   font-weight: 600;
 }
 
+.user-workspace-shell .task-card__status .task-category i {
+  font-size: .6rem;
+}
+
 .user-workspace-shell .task-card__amount {
   color: var(--primary);
   font-size: .84rem;
