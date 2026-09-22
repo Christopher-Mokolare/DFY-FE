@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi, ratingsApi } from '../../api'
+import TaskCard from '../../components/workspace/TaskCard'
 
 export default function MyCompletedTasks() {
   const navigate = useNavigate()
@@ -91,7 +92,7 @@ export default function MyCompletedTasks() {
                 actions={!ratedTaskIds.has(t.taskId)
                   ? <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(t); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate Creator</button>
                   : <span className="task-card__rated"><i className="fas fa-check" /> Rated</span>}
-              />              </div>
+              />
             ))}
           </div>
         )}
