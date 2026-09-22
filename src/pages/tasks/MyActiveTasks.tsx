@@ -102,9 +102,9 @@ export default function MyActiveTasks() {
   if (loading) return <div className="loading-state"><div className="spinner" /><p>Loading your active tasks...</p></div>
 
   return (
-    <div style={{ paddingBottom: '3rem' }}>
+    <div className="my-active-page active-tasks-page">
       <div className="page-header">
-        <div className="container">
+        <div className="container active-tasks-content">
           <h1><i className="fas fa-tasks" /> My Active Tasks</h1>
           <p>Tasks you are currently working on</p>
         </div>
@@ -122,7 +122,7 @@ export default function MyActiveTasks() {
             {tasks.map(raw => {
               const t = norm(raw)
               return (
-                <div key={t.taskId} className="task-card">
+                <div key={t.taskId} className="task-card active-task-card">
                   <div className="task-card-header">
                     <span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>
                     <div className="task-budget">
@@ -141,10 +141,10 @@ export default function MyActiveTasks() {
                     </div>
                   </div>
                   <div className="task-card-footer">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => navigate(`/tasks/${t.taskId}/chat?title=${encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>
-                        {t.userContact && <a href={`tel:${t.userContact}`} className="btn btn-outline btn-sm" style={{ flex: 1 }}><i className="fas fa-phone" /> Call</a>}
+                    <div className="active-task-actions">
+                      <div className="active-task-contact-actions">
+                        <button className="btn btn-outline btn-sm" className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate(`/tasks/${t.taskId}/chat?title=${encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>
+                        {t.userContact && <a href={`tel:${t.userContact}`} className="btn btn-outline btn-sm active-task-contact-btn"><i className="fas fa-phone" /> Call</a>}
                       </div>
                       {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
                         <button className="btn btn-primary btn-block btn-sm" onClick={() => setCompleteModal(raw)}>
