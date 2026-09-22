@@ -31,7 +31,14 @@ export default function Header() {
   }, [menuOpen])
 
   const close = () => { setDropdownOpen(false); setMenuOpen(false) }
-  const handleLogout = () => { logout(); navigate('/'); close() }
+  const handleLogout = () => {
+    // Mark this as an explicit logout so the next login always starts at the
+    // user's dashboard instead of replaying a previously protected URL.
+    sessionStorage.setItem('dfy:loggedOut', '1')
+    logout()
+    navigate('/', { replace: true })
+    close()
+  }
   const displayName = user ? (user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.name ?? '') : ''
   const canViewActiveTasks = user?.userType === 'runner' || user?.userType === 'both'
 
