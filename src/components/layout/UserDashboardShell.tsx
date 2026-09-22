@@ -41,6 +41,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
 
   const navigation = [
     { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true, section: 'WORKSPACE' },
+    { label: 'Activity', to: '/activity', icon: 'fa-history', show: true, section: 'WORKSPACE' },
     { label: 'Await Confirmation', to: '/tasks/action-required?filter=confirmation', icon: 'fa-triangle-exclamation', show: isCreator && awaitConfirmationCount > 0, badge: awaitConfirmationCount, section: 'ACTION REQUIRED' },
     { label: 'Payments', to: '/tasks/action-required?filter=payments', icon: 'fa-credit-card', show: isCreator && paymentRequiredCount > 0, badge: paymentRequiredCount, section: 'ACTION REQUIRED' },
     { label: 'Browse Tasks', to: '/tasks/browse', icon: 'fa-search', show: true, section: 'TASKS' },
@@ -63,6 +64,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
 
   const pageTitles: Record<string, string> = {
     '/dashboard': 'Overview',
+    '/activity': 'Activity',
     '/tasks/post': 'Post an Errand',
     '/tasks/browse': 'Browse Errands',
     '/tasks/my-posted': 'My Posted Tasks',
