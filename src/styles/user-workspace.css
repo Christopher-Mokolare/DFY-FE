@@ -3461,3 +3461,189 @@
     padding: .9rem 1rem;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   Authenticated workspace page system
+   Keep page titles inside the page content. The shell topbar is contextual,
+   so every screen has one clear heading and one consistent content surface.
+   -------------------------------------------------------------------------- */
+
+.user-workspace-shell .user-workspace-topbar-context {
+  display: flex;
+  flex-direction: column;
+  gap: .18rem;
+}
+
+.user-workspace-shell .user-workspace-topbar-context strong {
+  font-size: .88rem;
+  font-weight: 650;
+  color: var(--text, #111827);
+}
+
+.user-workspace-shell .admin-breadcrumb {
+  color: var(--text-muted, #6b7280);
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* Legacy page headers now follow the same restrained hierarchy as Bank Accounts. */
+.user-workspace-shell .page-header,
+.user-workspace-shell .dashboard-header {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2rem 0 1.15rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.user-workspace-shell .page-header .container,
+.user-workspace-shell .dashboard-header .container {
+  max-width: none;
+  padding: 0;
+}
+
+.user-workspace-shell .page-header h1,
+.user-workspace-shell .dashboard-header h1 {
+  margin: 0;
+  color: var(--text, #111827);
+  font-size: clamp(1.65rem, 2.3vw, 2.15rem);
+  line-height: 1.15;
+  letter-spacing: -.025em;
+  font-weight: 760;
+}
+
+.user-workspace-shell .page-header h1 i,
+.user-workspace-shell .dashboard-header h1 i {
+  display: none;
+}
+
+.user-workspace-shell .page-header p,
+.user-workspace-shell .dashboard-header p {
+  max-width: 700px;
+  margin: .55rem 0 0;
+  color: var(--text-muted, #667085);
+  font-size: .94rem;
+  line-height: 1.6;
+}
+
+.user-workspace-shell .page-header h1::before,
+.user-workspace-shell .dashboard-header h1::before {
+  content: "DOFOR YOU / WORKSPACE";
+  display: block;
+  margin-bottom: .55rem;
+  color: var(--primary, #2563eb);
+  font-size: .68rem;
+  line-height: 1;
+  letter-spacing: .12em;
+  font-weight: 800;
+}
+
+/* Give all legacy pages the same content width/rhythm. */
+.user-workspace-shell .browse-content,
+.user-workspace-shell .page-header + .container,
+.user-workspace-shell .dashboard-header + .container,
+.user-workspace-shell .activity-page,
+.user-workspace-shell .notifications-page,
+.user-workspace-shell .profile-page {
+  max-width: 1320px;
+}
+
+.user-workspace-shell .section-card,
+.user-workspace-shell .filters-card,
+.user-workspace-shell .notifications-card,
+.user-workspace-shell .profile-card,
+.user-workspace-shell .task-card,
+.user-workspace-shell .messages-panel,
+.user-workspace-shell .chat-panel {
+  border-radius: 14px;
+  border: 1px solid var(--border, #e5e7eb);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .045);
+}
+
+.user-workspace-shell .section-header {
+  min-height: 48px;
+}
+
+.user-workspace-shell .section-header h2 {
+  color: var(--text, #111827);
+  font-size: 1rem;
+  font-weight: 720;
+}
+
+.user-workspace-shell .browse-toolbar,
+.user-workspace-shell .filters-card {
+  margin-bottom: 1rem;
+}
+
+.user-workspace-shell .messages-hero {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2rem 0 1.15rem;
+  background: transparent;
+  color: var(--text, #111827);
+  border: 0;
+  box-shadow: none;
+}
+
+.user-workspace-shell .messages-hero h1 {
+  margin: 0;
+  color: var(--text, #111827);
+  font-size: clamp(1.65rem, 2.3vw, 2.15rem);
+  letter-spacing: -.025em;
+}
+
+.user-workspace-shell .messages-hero h1::before {
+  content: "DOFOR YOU / WORKSPACE";
+  display: block;
+  margin-bottom: .55rem;
+  color: var(--primary, #2563eb);
+  font-size: .68rem;
+  letter-spacing: .12em;
+  font-weight: 800;
+}
+
+.user-workspace-shell .messages-hero p {
+  color: var(--text-muted, #667085);
+}
+
+.user-workspace-shell .messages-hero-stat {
+  background: #fff;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .user-workspace-shell .page-header,
+  .user-workspace-shell .dashboard-header,
+  .user-workspace-shell .messages-hero {
+    padding: 1.35rem 0 .9rem;
+  }
+
+  .user-workspace-shell .page-header h1,
+  .user-workspace-shell .dashboard-header h1,
+  .user-workspace-shell .messages-hero h1 {
+    font-size: 1.55rem;
+  }
+
+  .user-workspace-shell .page-header p,
+  .user-workspace-shell .dashboard-header p,
+  .user-workspace-shell .messages-hero p {
+    font-size: .88rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-workspace-shell .user-workspace-topbar-context strong {
+    display: none;
+  }
+
+  .user-workspace-shell .page-header,
+  .user-workspace-shell .dashboard-header,
+  .user-workspace-shell .messages-hero {
+    padding: 1rem 0 .75rem;
+  }
+}
