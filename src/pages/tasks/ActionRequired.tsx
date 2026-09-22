@@ -85,25 +85,22 @@ export default function ActionRequired() {
               const completed = normStatus(task.taskStatus) === 'completed'
               const pendingPayment = normStatus(task.taskStatus) === 'pendingpayment' || normStatus(task.paymentStatus) === 'pending'
               return (
-                <div id={`action-task-${task.taskId}`} key={task.taskId} className="task-card" style={{ border: '1px solid var(--border)' }}>
-                  <div className="task-card-header">
-                    <span className={`badge ${completed ? 'badge-completed' : 'badge-draft'}`}>
-                      {completed ? 'Awaiting Your Confirmation' : 'Payment Required'}
-                    </span>
-                    <div className="task-budget">{money(task.budget)}</div>
-                  </div>
-                  <div className="task-card-body">
-                    <h3 className="task-title">{task.taskName || task.taskDescription}</h3>
-                    <p style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>{task.taskDescription}</p>
-                    <div className="task-meta">
-                      <div className="task-meta-item"><i className="fas fa-tag" /><span>{task.category || 'General'}</span></div>
-                      <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{task.area}</span></div>
-                      {task.helperName && <div className="task-meta-item"><i className="fas fa-user" /><span>{task.helperName}</span></div>}
-                    </div>
-                    {completed && <div className="alert alert-info mt-3"><i className="fas fa-lock" /> The runner marked this task complete. Review it and release the payout when satisfied.</div>}
-                    {pendingPayment && <div className="alert alert-warning mt-3"><i className="fas fa-credit-card" /> This task is waiting for its creator payment before it can go live.</div>}
-                  </div>
-                  <div className="task-card-footer">
+                <TaskCard
+                  id={`action-task-${task.taskId}`}
+                  key={task.taskId}
+                  variant="action-required"
+                  status={<span className={`badge ${completed ? 'badge-completed' : 'badge-draft'}`}>{completed ? 'Awaiting Your Confirmation' : 'Payment Required'}</span>}
+                  amount={money(task.budget)}
+                  title={task.taskName || task.taskDescription}
+                  description={task.taskDescription}
+                  meta={<><span><i className="fas fa-tag" /> {task.category || 'General'}</span><span><i className="fas fa-map-marker-alt" /> {task.area}</span>{task.helperName && <span><i className="fas fa-user" /> {task.helperName}</span>}</>}
+                  extra={
+                    <>
+                      {completed && <div className="alert alert-info"><i className="fas fa-lock" /> The runner marked this task complete. Review it and release the payout when satisfied.</div>}
+                      {pendingPayment && <div className="alert alert-warning"><i className="fas fa-credit-card" /> This task is waiting for its creator payment before it can go live.</div>}
+                    </>
+                  }
+                  actions={
                     <div className="action-row">
                       <button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/my-posted?taskId=${encodeURIComponent(task.taskId)}`)}>
                         <i className="fas fa-list" /> Open Task
@@ -113,9 +110,8 @@ export default function ActionRequired() {
                       </button>}
                       {task.helperContact && completed && <a className="btn btn-outline btn-sm" href={`tel:${task.helperContact}`}><i className="fas fa-phone" /> Call</a>}
                     </div>
-                  </div>
-                </div>
-              )
+                  }
+                />
             })}
           </div>
         )}
