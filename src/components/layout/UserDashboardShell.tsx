@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
-import { tasksApi } from '../../api'
+import { messagesApi, tasksApi } from '../../api'
 import '../../styles/user-workspace.css'
 
 interface UserDashboardShellProps { children: ReactNode }
@@ -14,6 +14,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const [awaitConfirmationCount, setAwaitConfirmationCount] = useState(0)
   const [paymentRequiredCount, setPaymentRequiredCount] = useState(0)
   const [completedCount, setCompletedCount] = useState(0)
+  const [conversationUnreadCount, setConversationUnreadCount] = useState(0)
   const type = user?.userType || ''
   const displayName = user?.firstName || user?.name || 'User'
   const isCreator = type === 'creator' || type === 'both'
@@ -21,9 +22,14 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const roleLabel = isRunner && isCreator ? 'Creator & Runner' : isRunner ? 'Runner' : 'Creator'
   const { notifications } = useNotifications()
   const unreadNotifications = notifications.filter(n => !n.isRead).length
-  const unreadMessages = notifications.filter(n => !n.isRead && n.type === 'new_message').length
+  const unreadMessages = conversationUnreadCount
   useEffect(() => {
     let active = true
+    messagesApi.getConversations().then(res => {
+      if (!active) return
+      const conversations = Array.isArray(res.data?.data) ? res.data.data : []
+      setConversationUnreadCount(conversations.reduce((sum: number, conversation: any) => sum + Number(conversation.unreadCount || 0), 0))
+    }).catch(() => {})
     if (isCreator) tasksApi.getMyPosted().then(res => {
       if (!active) return
       const raw = res.data?.data?.tasks || res.data?.data?.Tasks || []
