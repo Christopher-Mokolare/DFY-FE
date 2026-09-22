@@ -4061,3 +4061,372 @@
     grid-column: auto;
   }
 }
+
+
+/* Mobile-first compact task workspace
+   The authenticated task views stay dense on phones as well as desktop. */
+.user-workspace-shell .my-posted-page,
+.user-workspace-shell .active-tasks-page,
+.user-workspace-shell .my-completed-page,
+.user-workspace-shell .browse-page {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.user-workspace-shell .my-posted-page > .container,
+.user-workspace-shell .active-tasks-page > .container,
+.user-workspace-shell .my-completed-page > .container,
+.user-workspace-shell .browse-page .browse-content {
+  width: 100%;
+  max-width: 1320px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.user-workspace-shell .my-posted-page .tasks-grid,
+.user-workspace-shell .active-tasks-page .tasks-grid,
+.user-workspace-shell .my-completed-page .tasks-grid,
+.user-workspace-shell .browse-page .tasks-grid {
+  gap: .65rem;
+}
+
+.user-workspace-shell .my-posted-page .task-card,
+.user-workspace-shell .active-tasks-page .task-card,
+.user-workspace-shell .my-completed-page .task-card,
+.user-workspace-shell .browse-page .task-card {
+  margin: 0;
+}
+
+.user-workspace-shell .my-posted-page .task-card-body p[style],
+.user-workspace-shell .active-tasks-page .task-card-body p[style] {
+  margin-bottom: .35rem !important;
+  font-size: .72rem !important;
+  line-height: 1.35 !important;
+  min-height: 0 !important;
+}
+
+.user-workspace-shell .my-posted-page .task-meta,
+.user-workspace-shell .active-tasks-page .task-meta,
+.user-workspace-shell .my-completed-page .task-meta {
+  gap: .3rem .7rem;
+}
+
+.user-workspace-shell .my-posted-page .task-meta-item,
+.user-workspace-shell .active-tasks-page .task-meta-item,
+.user-workspace-shell .my-completed-page .task-meta-item {
+  min-height: 18px;
+}
+
+.user-workspace-shell .my-posted-page .task-card-footer,
+.user-workspace-shell .active-tasks-page .task-card-footer,
+.user-workspace-shell .my-completed-page .task-card-footer,
+.user-workspace-shell .browse-page .task-card-footer {
+  display: flex;
+  gap: .35rem;
+  align-items: center;
+}
+
+.user-workspace-shell .my-posted-page .task-card-footer .btn,
+.user-workspace-shell .my-completed-page .task-card-footer .btn,
+.user-workspace-shell .browse-page .task-card-footer .btn {
+  min-height: 32px;
+  padding: .38rem .55rem;
+}
+
+.user-workspace-shell .my-posted-page .task-card-footer .action-row,
+.user-workspace-shell .my-posted-page .task-card-footer .action-col {
+  gap: .35rem;
+}
+
+.user-workspace-shell .my-completed-page .alert {
+  margin-top: .55rem !important;
+  margin-bottom: 0 !important;
+  padding: .48rem .6rem;
+  font-size: .68rem;
+  line-height: 1.35;
+}
+
+.user-workspace-shell .browse-page .task-earnings {
+  padding-top: .4rem;
+}
+
+.user-workspace-shell .browse-page .task-protection {
+  margin-top: .35rem;
+}
+
+.user-workspace-shell .browse-page .task-card-footer {
+  justify-content: stretch;
+}
+
+.user-workspace-shell .browse-page .task-card-footer .btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .my-posted-page > .container,
+  .user-workspace-shell .active-tasks-page > .container,
+  .user-workspace-shell .my-completed-page > .container,
+  .user-workspace-shell .browse-page .browse-content {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .user-workspace-shell .my-posted-page .page-header,
+  .user-workspace-shell .active-tasks-page .page-header,
+  .user-workspace-shell .my-completed-page .page-header,
+  .user-workspace-shell .browse-page .page-header {
+    padding: .55rem 0 .6rem;
+    margin-bottom: .45rem;
+  }
+
+  .user-workspace-shell .my-posted-page .page-header h1,
+  .user-workspace-shell .active-tasks-page .page-header h1,
+  .user-workspace-shell .my-completed-page .page-header h1,
+  .user-workspace-shell .browse-page .page-header h1 {
+    font-size: 1.25rem;
+    line-height: 1.15;
+  }
+
+  .user-workspace-shell .my-posted-page .page-header p,
+  .user-workspace-shell .active-tasks-page .page-header p,
+  .user-workspace-shell .my-completed-page .page-header p,
+  .user-workspace-shell .browse-page .page-header p {
+    margin-top: .22rem;
+    font-size: .72rem;
+    line-height: 1.35;
+  }
+
+  .user-workspace-shell .status-section {
+    margin-bottom: .5rem;
+    border-radius: 9px;
+  }
+
+  .user-workspace-shell .status-heading {
+    min-height: 36px;
+    margin-bottom: 0;
+    padding: .45rem .6rem;
+    border-radius: 9px 9px 0 0;
+    font-size: .7rem;
+  }
+
+  .user-workspace-shell .status-section .tasks-grid {
+    padding: .45rem;
+    gap: .45rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-card-header,
+  .user-workspace-shell .active-tasks-page .task-card-header,
+  .user-workspace-shell .my-completed-page .task-card-header,
+  .user-workspace-shell .browse-page .task-card-header {
+    padding: .5rem .6rem;
+    min-height: 38px;
+  }
+
+  .user-workspace-shell .my-posted-page .task-card-body,
+  .user-workspace-shell .active-tasks-page .task-card-body,
+  .user-workspace-shell .my-completed-page .task-card-body,
+  .user-workspace-shell .browse-page .task-card-body {
+    padding: .55rem .6rem;
+    gap: .3rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-title,
+  .user-workspace-shell .active-tasks-page .task-title,
+  .user-workspace-shell .my-completed-page .task-title,
+  .user-workspace-shell .browse-page .task-title {
+    margin-bottom: .25rem;
+    font-size: .82rem;
+    line-height: 1.25;
+  }
+
+  .user-workspace-shell .my-posted-page .task-meta,
+  .user-workspace-shell .active-tasks-page .task-meta,
+  .user-workspace-shell .my-completed-page .task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .2rem .55rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-meta-item,
+  .user-workspace-shell .active-tasks-page .task-meta-item,
+  .user-workspace-shell .my-completed-page .task-meta-item {
+    font-size: .62rem;
+    line-height: 1.25;
+  }
+
+  .user-workspace-shell .my-posted-page .task-budget,
+  .user-workspace-shell .active-tasks-page .task-budget,
+  .user-workspace-shell .my-completed-page .task-budget,
+  .user-workspace-shell .browse-page .task-earnings strong {
+    font-size: .98rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-card-footer,
+  .user-workspace-shell .active-tasks-page .task-card-footer,
+  .user-workspace-shell .my-completed-page .task-card-footer,
+  .user-workspace-shell .browse-page .task-card-footer {
+    padding: .45rem .6rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-card-footer .btn,
+  .user-workspace-shell .active-tasks-page .task-card-footer .btn,
+  .user-workspace-shell .my-completed-page .task-card-footer .btn,
+  .user-workspace-shell .browse-page .task-card-footer .btn {
+    min-height: 30px;
+    padding: .34rem .45rem;
+    border-radius: 6px;
+    font-size: .62rem;
+  }
+
+  .user-workspace-shell .active-tasks-page .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .active-task-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: .3rem;
+  }
+
+  .user-workspace-shell .active-task-contact-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .3rem;
+  }
+
+  .user-workspace-shell .active-task-actions > .btn,
+  .user-workspace-shell .active-task-contact-btn {
+    min-height: 30px;
+  }
+
+  .user-workspace-shell .browse-page .filters-card {
+    padding: .5rem;
+    margin-bottom: .5rem;
+  }
+
+  .user-workspace-shell .browse-page .filters-row {
+    gap: .35rem;
+  }
+
+  .user-workspace-shell .browse-page .form-input,
+  .user-workspace-shell .browse-page .form-select {
+    min-height: 36px;
+    font-size: .72rem;
+  }
+
+  .user-workspace-shell .browse-page .browse-toolbar {
+    min-height: 40px;
+    padding: .45rem .6rem;
+    margin-bottom: .45rem;
+  }
+
+  .user-workspace-shell .browse-page .browse-toolbar-stat strong {
+    font-size: 1rem;
+  }
+
+  .user-workspace-shell .browse-page .browse-toolbar-stat span {
+    font-size: .64rem;
+  }
+
+  .user-workspace-shell .dashboard-page .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .4rem;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-card {
+    min-height: 64px;
+    padding: .5rem .55rem;
+    gap: .45rem;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-icon {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+    border-radius: 7px;
+    font-size: .68rem;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-content h3 {
+    font-size: .9rem;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-content p {
+    font-size: .58rem;
+  }
+
+  .user-workspace-shell .dashboard-page .section-header {
+    min-height: 38px;
+    padding: .55rem .65rem;
+  }
+
+  .user-workspace-shell .dashboard-page .section-header h2 {
+    font-size: .72rem;
+  }
+
+  .user-workspace-shell .dashboard-page .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: .55rem .65rem;
+    gap: .35rem;
+  }
+
+  .user-workspace-shell .dashboard-page .quick-actions .btn {
+    min-height: 32px;
+    padding: .4rem .45rem;
+    font-size: .62rem;
+  }
+
+  .user-workspace-shell .dashboard-page .activity-item {
+    padding: .5rem 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .my-posted-page .page-header h1,
+  .user-workspace-shell .active-tasks-page .page-header h1,
+  .user-workspace-shell .my-completed-page .page-header h1,
+  .user-workspace-shell .browse-page .page-header h1 {
+    font-size: 1.12rem;
+  }
+
+  .user-workspace-shell .my-posted-page .page-header p,
+  .user-workspace-shell .active-tasks-page .page-header p,
+  .user-workspace-shell .my-completed-page .page-header p,
+  .user-workspace-shell .browse-page .page-header p {
+    font-size: .67rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-card-body,
+  .user-workspace-shell .active-tasks-page .task-card-body,
+  .user-workspace-shell .my-completed-page .task-card-body,
+  .user-workspace-shell .browse-page .task-card-body {
+    padding: .5rem .55rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-card-footer,
+  .user-workspace-shell .active-tasks-page .task-card-footer,
+  .user-workspace-shell .my-completed-page .task-card-footer,
+  .user-workspace-shell .browse-page .task-card-footer {
+    padding: .4rem .55rem;
+  }
+
+  .user-workspace-shell .my-posted-page .task-meta-item,
+  .user-workspace-shell .active-tasks-page .task-meta-item,
+  .user-workspace-shell .my-completed-page .task-meta-item {
+    font-size: .58rem;
+  }
+
+  .user-workspace-shell .active-task-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .active-task-contact-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .user-workspace-shell .browse-page .task-card-footer {
+    gap: .25rem;
+  }
+}
