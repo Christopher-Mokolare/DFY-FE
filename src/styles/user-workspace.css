@@ -5698,3 +5698,130 @@
     font-size: .58rem;
   }
 }
+
+
+/* ==========================================================================
+   Final compact task-card pass
+   Keep cards dense and actions small on desktop AND mobile.
+   ========================================================================== */
+
+.user-workspace-shell .task-card,
+.user-workspace-shell .browse-page .task-card {
+  min-height: 0 !important;
+  height: auto;
+}
+
+.user-workspace-shell .task-card-footer {
+  display: flex;
+  align-items: center;
+  min-height: 0 !important;
+}
+
+.user-workspace-shell .task-card-footer .action-row,
+.user-workspace-shell .task-card-footer .action-col,
+.user-workspace-shell .active-task-actions {
+  margin: 0 !important;
+}
+
+.user-workspace-shell .task-card-footer .btn,
+.user-workspace-shell .task-card-footer a.btn,
+.user-workspace-shell .task-card-footer .action-col > a,
+.user-workspace-shell .task-card-footer .action-col > button {
+  min-height: 30px !important;
+  height: 30px !important;
+  max-height: 30px;
+  padding: .28rem .55rem !important;
+  border-radius: 7px !important;
+  font-size: .63rem !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+.user-workspace-shell .task-card-footer .btn i {
+  font-size: .56rem !important;
+}
+
+.user-workspace-shell .task-card-footer .action-row {
+  gap: .3rem !important;
+}
+
+.user-workspace-shell .task-card-footer .action-col {
+  gap: .3rem !important;
+}
+
+.user-workspace-shell .task-card-footer .btn-block {
+  width: auto !important;
+}
+
+.user-workspace-shell .task-card-footer .action-col .btn-block,
+.user-workspace-shell .task-card-footer .action-col > a {
+  width: 100% !important;
+}
+
+.user-workspace-shell .task-card .task-card-body > p[style] {
+  min-height: 0 !important;
+  margin-bottom: .35rem !important;
+  font-size: .64rem !important;
+  line-height: 1.3 !important;
+}
+
+.user-workspace-shell .task-card .task-meta {
+  margin-bottom: 0 !important;
+}
+
+.user-workspace-shell .task-card .task-earnings,
+.user-workspace-shell .task-card .task-protection {
+  margin-bottom: 0 !important;
+}
+
+.user-workspace-shell .task-card .runner-info {
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .task-card-footer .btn,
+  .user-workspace-shell .task-card-footer a.btn,
+  .user-workspace-shell .task-card-footer .action-col > a,
+  .user-workspace-shell .task-card-footer .action-col > button {
+    min-height: 28px !important;
+    height: 28px !important;
+    max-height: 28px;
+    padding: .23rem .42rem !important;
+    border-radius: 6px !important;
+    font-size: .58rem !important;
+  }
+
+  .user-workspace-shell .task-card-footer .btn i {
+    font-size: .52rem !important;
+  }
+
+  .user-workspace-shell .task-card-footer {
+    padding: .38rem .55rem !important;
+  }
+
+  .user-workspace-shell .task-card-footer .action-row,
+  .user-workspace-shell .task-card-footer .action-col {
+    gap: .28rem !important;
+  }
+
+  .user-workspace-shell .task-card .task-budget {
+    font-size: .82rem !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .task-card-footer .btn,
+  .user-workspace-shell .task-card-footer a.btn,
+  .user-workspace-shell .task-card-footer .action-col > a,
+  .user-workspace-shell .task-card-footer .action-col > button {
+    min-height: 27px !important;
+    height: 27px !important;
+    max-height: 27px;
+    padding: .2rem .38rem !important;
+    font-size: .56rem !important;
+  }
+
+  .user-workspace-shell .task-card-footer {
+    padding: .34rem .5rem !important;
+  }
+}
