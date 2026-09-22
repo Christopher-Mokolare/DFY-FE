@@ -74,6 +74,8 @@ export default function MyCompletedTasks() {
           <div className="tasks-grid">
             {tasks.map((t: any) => (
               <TaskCard
+                key={t.taskId}
+                id={"completed-task-" + t.taskId}
                 variant="completed"
                 className="completed-task-card"
                 status={(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
