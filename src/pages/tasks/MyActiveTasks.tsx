@@ -128,7 +128,7 @@ export default function MyActiveTasks() {
                   variant="active"
                   className="active-task-card"
                   status={<span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>}
-                  amount={<><span>R{Number(t.payoutAmount).toFixed(0)}</span><small className="task-card__amount-label">payout</small></>}
+                  amount={<>R{Number(t.budget).toFixed(0)}</>}
                   title={t.taskName || t.taskDescription}
                   description={t.taskName ? t.taskDescription : undefined}
                   meta={<><span><i className="fas fa-map-marker-alt" /> {t.area}</span>{t.dateNeeded && <span><i className="fas fa-calendar" /> {new Date(t.dateNeeded).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}<span><i className="fas fa-user" /> {t.userName}</span>{t.userContact && <span><i className="fas fa-phone" /> {t.userContact}</span>}</>}
