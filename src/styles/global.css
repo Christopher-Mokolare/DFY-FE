@@ -1303,3 +1303,234 @@ img { max-width: 100%; height: auto; }
   .user-dashboard-content .quick-actions { padding:.85rem; }
   .user-dashboard-content .activity-feed { padding:.85rem; }
 }
+
+
+/* =========================================================
+   Global mobile polish — public + admin surfaces
+   ========================================================= */
+html, body, #root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@media (max-width: 900px) {
+  .container {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .admin-content {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .admin-welcome {
+    align-items: flex-start;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-attention-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-left: .75rem;
+    padding-right: .75rem;
+  }
+
+  .main-content {
+    padding-top: 64px;
+  }
+
+  .btn {
+    min-height: 42px;
+  }
+
+  .btn-lg {
+    width: 100%;
+  }
+
+  .page-header {
+    padding: 1.5rem 0;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .card {
+    padding: 1rem;
+    border-radius: 13px;
+  }
+
+  .section-card {
+    padding: 1rem;
+    border-radius: 13px;
+  }
+
+  .section-header {
+    gap: .65rem;
+    flex-wrap: wrap;
+  }
+
+  .form-row,
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-box {
+    width: 100%;
+    max-width: none;
+    max-height: 94dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .modal-footer {
+    padding: .85rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-card {
+    min-width: 0;
+    padding: .9rem;
+  }
+
+  .stat-content h3 {
+    font-size: 1.15rem;
+  }
+
+  .tasks-grid {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+  }
+
+  .task-card-header {
+    flex-wrap: wrap;
+  }
+
+  .task-card-footer,
+  .task-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .task-card-footer .btn,
+  .task-action-row > button {
+    width: 100%;
+  }
+
+  .pagination {
+    gap: .35rem;
+    padding: 1rem 0;
+  }
+
+  .page-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hero-section {
+    min-height: auto;
+    padding: 4rem 0 3rem;
+  }
+
+  .hero-text h1 {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+  }
+
+  .hero-text p {
+    font-size: .95rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .hero-stats div {
+    min-width: 0;
+  }
+
+  .features-section,
+  .video-section,
+  .runner-section,
+  .testimonials-section {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .features-grid,
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .feature-card {
+    padding: 1.25rem;
+  }
+
+  .feature-card img {
+    height: 180px;
+  }
+
+  .runner-image img {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-kpi-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-content {
+    padding-left: .75rem;
+    padding-right: .75rem;
+  }
+
+  .hero-stats {
+    grid-template-columns: 1fr;
+  }
+}
