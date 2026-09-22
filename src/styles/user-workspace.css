@@ -5827,32 +5827,27 @@
 }
 
 
-/* Active tasks use the same compact card width as the other task pages. */
+/* Active tasks use the same three-column workspace grid as the dashboard task cards. */
 .user-workspace-shell .active-tasks-page .tasks-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(320px, 1fr));
-  gap: .75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .9rem;
   align-items: start;
-  justify-content: start;
 }
 
 .user-workspace-shell .active-tasks-page .task-card {
   width: 100%;
-  max-width: 560px;
+  max-width: none;
 }
 
 @media (max-width: 900px) {
   .user-workspace-shell .active-tasks-page .tasks-grid {
-    grid-template-columns: minmax(320px, 560px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 560px) {
   .user-workspace-shell .active-tasks-page .tasks-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .user-workspace-shell .active-tasks-page .task-card {
-    max-width: none;
   }
 }
