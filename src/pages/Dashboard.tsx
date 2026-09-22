@@ -115,7 +115,7 @@ export default function Dashboard() {
                   </div>
                   {r.review && <p className="rating-card-review">“{r.review}”</p>}
                 </div>)}
-              {ratings.length > 3 && <Link to="/tasks/my-completed" className="section-link ratings-view-all">View all reviews <i className="fas fa-arrow-right" /></Link>}}
+              {ratings.length > 3 && <Link to="/tasks/my-completed" className="section-link ratings-view-all">View all reviews <i className="fas fa-arrow-right" /></Link>}
             </div>}
           </>}
         </div>
