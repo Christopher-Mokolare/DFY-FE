@@ -21,7 +21,7 @@ export default function Dashboard() {
   useEffect(() => {
     Promise.all([
       tasksApi.getDashboardStats().catch(() => ({ data: null })),
-      tasksApi.getRecentActivity(5).catch(() => ({ data: null })),
+      tasksApi.getRecentActivity(6).catch(() => ({ data: null })),
     ]).then(([s, a]) => {
       setStats(s.data?.data || null)
       const items = a.data?.data
@@ -90,13 +90,32 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {activity.length > 0 && <div className="section-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent activity</h2></div><div className="activity-feed">
-              {activity.map((a, i) => <div key={a.id || i} className="activity-item"><div className="activity-icon"><i className={'fas ' + (a.type === 'created' ? 'fa-plus-circle' : 'fa-handshake')} /></div><div className="activity-content"><p>{a.description || a.message || 'Task updated'}</p><span className="text-xs text-muted">{a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''} · {a.status || 'Updated'}</span></div></div>)}
+            {activity.length > 0 && <div className="section-card dashboard-feed-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent activity</h2><Link to="/tasks/my-completed" className="section-link">View all <i className="fas fa-arrow-right" /></Link></div><div className="activity-feed">
+              {activity.slice(0, 6).map((a, i) => {
+                const title = a.taskName || a.title || a.name || a.description || a.message || 'Task updated'
+                const description = a.taskName || a.title || a.name ? (a.description || a.message || '') : ''
+                const status = String(a.status || 'Updated').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ')
+                return <div key={a.id || i} className="activity-item">
+                  <div className="activity-icon"><i className={'fas ' + (a.type === 'created' ? 'fa-plus-circle' : 'fa-handshake')} /></div>
+                  <div className="activity-content">
+                    <strong className="activity-title">{title}</strong>
+                    {description && <p>{description}</p>}
+                    <span className="activity-meta">{status} <span aria-hidden="true">·</span> {a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''}</span>
+                  </div>
+                </div>
+              })}
             </div></div>}
 
             {(type === 'runner' || type === 'both') && <div className="section-card"><div className="section-header"><h2><i className="fas fa-star" /> Recent reviews</h2></div>
               {ratingsLoading ? <div className="loading-state"><div className="spinner" /></div> : ratings.length === 0 ? <p className="text-muted">No reviews yet. Complete tasks to build your reputation.</p> :
-                ratings.map(r => <div className="rating-card" key={r.id}><div className="rating-card-header"><span className="rating-card-title">{r.taskName || 'Completed task'}</span><span className="rating-card-stars">{'★'.repeat(r.ratingValue)}{'☆'.repeat(5 - r.ratingValue)}</span></div>{r.review && <p className="rating-card-review">"{r.review}"</p>}</div>)}
+                ratings.slice(0, 3).map(r => <div className="rating-card" key={r.id}>
+                  <div className="rating-card-header">
+                    <div><span className="rating-card-title">{r.taskName || 'Completed task'}</span><div className="rating-card-stars" aria-label={String(r.ratingValue) + ' out of 5 stars'}>{'★'.repeat(r.ratingValue)}{'☆'.repeat(5 - r.ratingValue)}</div></div>
+                    {r.createdAt && <span className="rating-card-date">{new Date(r.createdAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>}
+                  </div>
+                  {r.review && <p className="rating-card-review">“{r.review}”</p>}
+                </div>)}
+              {ratings.length > 3 && <Link to="/tasks/my-completed" className="section-link ratings-view-all">View all reviews <i className="fas fa-arrow-right" /></Link>}}
             </div>}
           </>}
         </div>
