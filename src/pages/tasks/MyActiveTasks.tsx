@@ -124,6 +124,7 @@ export default function MyActiveTasks() {
               const t = norm(raw)
               return (
                 <TaskCard
+                  key={t.taskId}
                   variant="active"
                   className="active-task-card"
                   status={<span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>}
