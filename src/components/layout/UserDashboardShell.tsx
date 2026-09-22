@@ -153,9 +153,9 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
             <button type="button" className="admin-mobile-menu" onClick={() => setMobileOpen(v => !v)} aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}>
               <i className={`fas ${mobileOpen ? 'fa-times' : 'fa-bars'}`} />
             </button>
-            <div>
-              <span className="admin-breadcrumb">DoForYou /</span>
-              <strong>{pageTitle}</strong>
+            <div className="user-workspace-topbar-context">
+              <span className="admin-breadcrumb">DoForYou / Workspace</span>
+              <strong>Account workspace</strong>
             </div>
           </div>
           <div className="admin-topbar-right">
