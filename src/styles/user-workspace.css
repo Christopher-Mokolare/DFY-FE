@@ -2058,3 +2058,190 @@
     width: 100%;
   }
 }
+
+
+/* Final workspace card/action polish */
+.user-workspace-shell .task-card-footer .action-row,
+.user-workspace-shell .task-card-footer .action-col,
+.user-workspace-shell .bank-account-row-actions {
+  min-width: 0;
+}
+
+.user-workspace-shell .task-card-footer .action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: .5rem;
+}
+
+.user-workspace-shell .task-card-footer .action-row > .btn,
+.user-workspace-shell .task-card-footer .action-row > a {
+  flex: 1 1 140px;
+  width: auto;
+  min-width: 0;
+  min-height: 40px;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+}
+
+.user-workspace-shell .task-card-footer .action-col > .action-row {
+  width: 100%;
+}
+
+.user-workspace-shell .bank-accounts-content {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.user-workspace-shell .bank-account-form-card,
+.user-workspace-shell .bank-account-list-card {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.user-workspace-shell .bank-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-workspace-shell .bank-form-grid .form-group {
+  min-width: 0;
+}
+
+.user-workspace-shell .bank-account-form-card .form-input,
+.user-workspace-shell .bank-account-form-card select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.user-workspace-shell .bank-submit {
+  max-width: 100%;
+}
+
+.user-workspace-shell .bank-inline-error {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+  margin: 1rem 0;
+  padding: .85rem 1rem;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+}
+
+.user-workspace-shell .bank-inline-error-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.user-workspace-shell .bank-inline-error-copy span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.user-workspace-shell .bank-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.user-workspace-shell .bank-account-row-main {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.user-workspace-shell .bank-account-row-main > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.user-workspace-shell .bank-account-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.user-workspace-shell .admin-brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .user-workspace-shell .task-card-footer .action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .task-card-footer .action-row > .btn,
+  .user-workspace-shell .task-card-footer .action-row > a {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    flex: none;
+  }
+
+  .user-workspace-shell .task-card-footer .action-col {
+    width: 100%;
+  }
+
+  .user-workspace-shell .bank-accounts-content {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .user-workspace-shell .bank-form-grid {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+  }
+
+  .user-workspace-shell .bank-inline-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .user-workspace-shell .bank-inline-error button {
+    width: 100%;
+  }
+
+  .user-workspace-shell .bank-account-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .8rem;
+    padding: .9rem;
+  }
+
+  .user-workspace-shell .bank-account-row-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .user-workspace-shell .bank-account-row-actions .btn {
+    width: 100%;
+  }
+}
