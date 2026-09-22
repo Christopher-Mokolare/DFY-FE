@@ -83,6 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // between the auth state update and the destination navigation.
       setTimeout(() => setLoginTransitioning(false), 0)
       return fullUser
+    } catch (error) {
+      setLoginTransitioning(false)
+      throw error
     }
   }, [])
 
