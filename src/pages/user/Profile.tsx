@@ -153,7 +153,7 @@ export default function Profile() {
   }
 
   return (
-    <div style={{ paddingBottom: '3rem' }}>
+    <div className="profile-page" style={{ paddingBottom: '3rem' }}>
       <div className="page-header"><div className="container"><h1><i className="fas fa-user" /> My Profile</h1><p>Manage your personal information</p></div></div>
       <div className="container profile-grid">
         <div>
