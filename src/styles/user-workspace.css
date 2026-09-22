@@ -989,3 +989,488 @@
   font-weight: 800;
   line-height: 1;
 }
+
+
+/* =========================================================
+   Mobile workspace system — final responsive pass
+   ========================================================= */
+
+.user-workspace-shell,
+.user-workspace-shell .admin-main,
+.user-workspace-shell .admin-content {
+  min-width: 0;
+}
+
+.user-workspace-main .admin-content {
+  overflow-x: clip;
+}
+
+.user-workspace-content,
+.user-dashboard-content {
+  overflow-x: clip;
+}
+
+.user-dashboard-content table {
+  width: 100%;
+  max-width: 100%;
+}
+
+.user-dashboard-content input,
+.user-dashboard-content select,
+.user-dashboard-content textarea,
+.user-dashboard-content button,
+.user-dashboard-content .btn {
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .user-workspace-main .admin-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .user-dashboard-content .admin-kpi-grid,
+  .user-dashboard-content .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .user-dashboard-content .admin-dashboard-grid,
+  .user-dashboard-content .admin-attention-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .admin-recent-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .user-dashboard-content .admin-recent-row time {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .user-workspace-shell .admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(290px, 86vw);
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    transform: translateX(-105%);
+    transition: transform 220ms ease;
+    box-shadow: 18px 0 45px rgba(15,23,42,.2);
+    z-index: 1200;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .user-workspace-shell .admin-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1150;
+    border: 0;
+    background: rgba(15,23,42,.45);
+    backdrop-filter: blur(2px);
+  }
+
+  .user-workspace-shell .admin-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .user-workspace-shell .admin-mobile-menu {
+    display: grid;
+    place-items: center;
+    flex: 0 0 36px;
+  }
+
+  .user-workspace-shell .admin-topbar {
+    min-height: 64px;
+    height: 64px;
+    padding: 0 1.25rem;
+  }
+
+  .user-workspace-main .admin-content {
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+
+  .user-workspace-main .admin-content .page-header {
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-workspace-shell .admin-topbar {
+    padding: 0 .75rem;
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .admin-topbar-left {
+    min-width: 0;
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .admin-topbar-left > div {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .user-workspace-shell .admin-breadcrumb {
+    display: none;
+  }
+
+  .user-workspace-shell .admin-topbar-left strong {
+    display: block;
+    max-width: 48vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .78rem;
+  }
+
+  .user-workspace-shell .admin-topbar-right {
+    gap: .4rem;
+    flex: 0 0 auto;
+  }
+
+  .user-workspace-shell .admin-live-status {
+    display: none;
+  }
+
+  .user-workspace-shell .admin-icon-button,
+  .user-workspace-shell .admin-mobile-menu {
+    width: 38px;
+    height: 38px;
+  }
+
+  .user-workspace-main .admin-content {
+    padding: 1rem .75rem 2rem;
+  }
+
+  .user-dashboard-content .page-header h1 {
+    font-size: 1.35rem;
+    line-height: 1.25;
+  }
+
+  .user-dashboard-content .page-header p {
+    font-size: .8rem;
+  }
+
+  .user-dashboard-content .admin-kpi-grid,
+  .user-dashboard-content .stats-grid,
+  .user-dashboard-content .admin-dashboard-grid,
+  .user-dashboard-content .admin-attention-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .admin-welcome {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .user-dashboard-content .admin-date {
+    margin-top: .65rem;
+    white-space: normal;
+  }
+
+  .user-dashboard-content .section-card,
+  .user-dashboard-content .status-section,
+  .user-dashboard-content .filters-card,
+  .user-dashboard-content .empty-state {
+    border-radius: 12px;
+  }
+
+  .user-dashboard-content .section-card {
+    margin-bottom: .9rem;
+  }
+
+  .user-dashboard-content .section-header {
+    gap: .65rem;
+    margin-bottom: .9rem;
+  }
+
+  .user-dashboard-content .section-header h2 {
+    min-width: 0;
+    font-size: .92rem;
+  }
+
+  .user-dashboard-content .section-link {
+    flex: 0 0 auto;
+    font-size: .72rem;
+  }
+
+  .user-dashboard-content .task-card {
+    border-radius: 13px;
+  }
+
+  .user-dashboard-content .task-card-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+
+  .user-dashboard-content .task-card-header > * {
+    min-width: 0;
+  }
+
+  .user-dashboard-content .task-title {
+    font-size: .92rem;
+  }
+
+  .user-dashboard-content .task-meta-item {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .user-dashboard-content .task-card-footer .action-row,
+  .user-dashboard-content .task-action-row {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .user-dashboard-content .task-card-footer .action-row > *,
+  .user-dashboard-content .task-action-row > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .user-dashboard-content .filters-row {
+    gap: .6rem;
+  }
+
+  .user-dashboard-content .filters-card {
+    padding: .85rem;
+  }
+
+  .user-dashboard-content .profile-grid {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+  }
+
+  .user-dashboard-content .profile-card {
+    position: static;
+    padding: 1.15rem;
+  }
+
+  .user-dashboard-content .profile-grid .section-card {
+    padding: 1rem;
+  }
+
+  .user-dashboard-content .usertype-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .modal-overlay {
+    padding: 0;
+  }
+
+  .user-dashboard-content .modal-box {
+    width: 100%;
+    max-width: none;
+    max-height: 94dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .user-dashboard-content .modal-header,
+  .user-dashboard-content .modal-body {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .user-dashboard-content .modal-footer {
+    padding: .85rem 1rem;
+  }
+
+  .user-dashboard-content .modal-footer .btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .user-dashboard-content .admin-panel-header {
+    padding: 1rem;
+  }
+
+  .user-dashboard-content .admin-recent-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .55rem;
+    padding: .8rem 1rem;
+  }
+
+  .user-dashboard-content .admin-recent-value {
+    min-width: 64px;
+  }
+
+  .user-dashboard-content .admin-action-list a {
+    padding: .7rem .85rem;
+  }
+
+  .user-dashboard-content .bank-accounts-header {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .user-dashboard-content .bank-accounts-header > * + * {
+    margin-top: .8rem;
+  }
+
+  .user-dashboard-content .notif-actions {
+    width: 100%;
+  }
+
+  .user-dashboard-content .notif-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .user-dashboard-content .notif-item {
+    align-items: flex-start;
+  }
+
+  .user-dashboard-content .messages-hero {
+    gap: .8rem;
+  }
+
+  .user-dashboard-content .messages-hero h1 {
+    font-size: 1.4rem;
+  }
+
+  .user-dashboard-content .messages-hero p {
+    font-size: .78rem;
+  }
+
+  .user-dashboard-content .messages-hero-stat {
+    min-width: 68px;
+    padding: .65rem .5rem;
+  }
+
+  .user-dashboard-content .messages-hero-stat strong {
+    font-size: 1.3rem;
+  }
+
+  .user-dashboard-content .conversation-card {
+    gap: .65rem;
+  }
+
+  .user-dashboard-content .conversation-main {
+    min-width: 0;
+  }
+
+  .user-dashboard-content .conversation-top strong,
+  .user-dashboard-content .conversation-main p {
+    max-width: 100%;
+  }
+
+  .user-dashboard-content .chat-header {
+    padding: .7rem;
+    gap: .55rem;
+  }
+
+  .user-dashboard-content .chat-header-info {
+    min-width: 0;
+  }
+
+  .user-dashboard-content .chat-title {
+    max-width: 48vw;
+    font-size: .9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .user-dashboard-content .chat-header-meta {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: .3rem .5rem;
+  }
+
+  .user-dashboard-content .chat-context {
+    padding-left: .7rem;
+    padding-right: .7rem;
+  }
+
+  .user-dashboard-content .chat-body {
+    padding: .65rem;
+  }
+
+  .user-dashboard-content .msg-bubble-wrap {
+    max-width: 86%;
+  }
+
+  .user-dashboard-content .chat-footer {
+    padding: .55rem;
+    gap: .45rem;
+    padding-bottom: max(.55rem, env(safe-area-inset-bottom));
+  }
+
+  .user-dashboard-content .chat-input {
+    min-height: 46px;
+    padding: .7rem .8rem;
+  }
+
+  .user-dashboard-content .chat-send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .user-dashboard-content .chat-system-card,
+  .user-dashboard-content .chat-inline-system {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .admin-sidebar {
+    width: min(280px, 90vw);
+  }
+
+  .user-workspace-shell .admin-topbar-left strong {
+    max-width: 42vw;
+  }
+
+  .user-dashboard-content .task-card-footer .action-row,
+  .user-dashboard-content .task-action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-content .admin-kpi {
+    min-height: 120px;
+    padding: 1rem;
+  }
+
+  .user-dashboard-content .admin-kpi strong {
+    font-size: 1.35rem;
+  }
+
+  .user-dashboard-content .notif-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  .user-dashboard-content .messages-hero {
+    display: block;
+  }
+
+  .user-dashboard-content .messages-hero-stat {
+    display: inline-block;
+    margin-top: .8rem;
+  }
+
+  .user-dashboard-content .chat-task-btn {
+    min-width: 38px;
+    width: 38px;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-workspace-shell .admin-sidebar {
+    transition: none;
+  }
+}
