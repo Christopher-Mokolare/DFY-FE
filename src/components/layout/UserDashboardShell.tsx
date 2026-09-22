@@ -68,23 +68,6 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   ))
 
 
-  const pageTitles: Record<string, string> = {
-    '/dashboard': 'Overview',
-    '/activity': 'Activity',
-    '/tasks/post': 'Post an Errand',
-    '/tasks/browse': 'Browse Errands',
-    '/tasks/my-posted': 'My Posted Tasks',
-    '/tasks/action-required': 'Action Required',
-    '/tasks/my-active': 'My Active Tasks',
-    '/tasks/my-completed': 'My Completed Tasks',
-    '/user/bank-accounts': 'Bank Accounts',
-    '/notifications': 'Notifications',
-    '/messages': 'Messages',
-    '/user/profile': 'My Profile',
-  }
-
-  const pageTitle = pageTitles[pathname] || (pathname.includes('/chat') ? 'Task Chat' : 'Overview')
-
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
   useEffect(() => {
