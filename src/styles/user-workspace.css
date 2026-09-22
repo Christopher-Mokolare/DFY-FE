@@ -5825,3 +5825,33 @@
     padding: .34rem .5rem !important;
   }
 }
+
+
+/* Active task cards: two-column workspace on desktop, one column on narrow mobile. */
+.user-workspace-shell .active-tasks-content .tasks-grid,
+.user-workspace-shell .active-tasks-page .tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  align-items: start;
+}
+
+.user-workspace-shell .active-tasks-content .task-card,
+.user-workspace-shell .active-tasks-page .task-card {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .active-tasks-content .tasks-grid,
+  .user-workspace-shell .active-tasks-page .tasks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .user-workspace-shell .active-tasks-content .tasks-grid,
+  .user-workspace-shell .active-tasks-page .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+}
