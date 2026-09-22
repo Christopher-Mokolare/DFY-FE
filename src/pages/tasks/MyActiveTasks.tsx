@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import TaskCard from '../../components/workspace/TaskCard'
 import { tasksApi, disputesApi, ratingsApi } from '../../api'
 
 function getStatusBadge(status: string) {
@@ -122,48 +123,24 @@ export default function MyActiveTasks() {
             {tasks.map(raw => {
               const t = norm(raw)
               return (
-                <div key={t.taskId} className="task-card active-task-card">
-                  <div className="task-card-header">
-                    <span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>
-                    <div className="task-budget">
-                      R{Number(t.payoutAmount).toFixed(0)}
-                      <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>payout</small>
+                <TaskCard
+                  variant="active"
+                  className="active-task-card"
+                  status={<span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>}
+                  amount={<><span>R{Number(t.payoutAmount).toFixed(0)}</span><small className="task-card__amount-label">payout</small></>}
+                  title={t.taskName || t.taskDescription}
+                  description={t.taskName ? t.taskDescription : undefined}
+                  meta={<><span><i className="fas fa-map-marker-alt" /> {t.area}</span>{t.dateNeeded && <span><i className="fas fa-calendar" /> {new Date(t.dateNeeded).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}<span><i className="fas fa-user" /> {t.userName}</span>{t.userContact && <span><i className="fas fa-phone" /> {t.userContact}</span>}</>}
+                  actions={<div className="active-task-actions">
+                    <div className="active-task-contact-actions">
+                      <button className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate('/tasks/' + t.taskId + '/chat?title=' + encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat'))}><i className="fas fa-comment" /> Chat</button>
+                      {t.userContact && <a href={'tel:' + t.userContact} className="btn btn-outline btn-sm active-task-contact-btn"><i className="fas fa-phone" /> Call</a>}
                     </div>
-                  </div>
-                  <div className="task-card-body">
-                    <h3 className="task-title">{t.taskName || t.taskDescription}</h3>
-                    {t.taskName && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.taskDescription}</p>}
-                    <div className="task-meta">
-                      <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{t.area}</span></div>
-                      {t.dateNeeded && <div className="task-meta-item"><i className="fas fa-calendar" /><span>{new Date(t.dateNeeded).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
-                      <div className="task-meta-item"><i className="fas fa-user" /><span>{t.userName}</span></div>
-                      {t.userContact && <div className="task-meta-item"><i className="fas fa-phone" /><span>{t.userContact}</span></div>}
-                    </div>
-                  </div>
-                  <div className="task-card-footer">
-                    <div className="active-task-actions">
-                      <div className="active-task-contact-actions">
-                        <button className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate(`/tasks/${t.taskId}/chat?title=${encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>
-                        {t.userContact && <a href={`tel:${t.userContact}`} className="btn btn-outline btn-sm active-task-contact-btn"><i className="fas fa-phone" /> Call</a>}
-                      </div>
-                      {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
-                        <button className="btn btn-primary btn-block btn-sm" onClick={() => setCompleteModal(raw)}>
-                          <i className="fas fa-check" /> Mark as Complete
-                        </button>
-                      )}
-                      {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
-                        <button className="btn btn-outline btn-block btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={() => setDisputeModal(raw)}>
-                          <i className="fas fa-exclamation-triangle" /> Raise Dispute
-                        </button>
-                      )}
-                      {['runnerpaid', 'runner_paid', 'completed'].includes(t.taskStatus?.toLowerCase()) && !ratedTaskIds.has(t.taskId) && (
-                        <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(raw); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
-                          <i className="fas fa-star" /> Rate Creator
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                    {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && <button className="btn btn-primary btn-block btn-sm" onClick={() => setCompleteModal(raw)}><i className="fas fa-check" /> Mark as Complete</button>}
+                    {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && <button className="btn btn-outline btn-block btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={() => setDisputeModal(raw)}><i className="fas fa-exclamation-triangle" /> Raise Dispute</button>}
+                    {['runnerpaid', 'runner_paid', 'completed'].includes(t.taskStatus?.toLowerCase()) && !ratedTaskIds.has(t.taskId) && <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(raw); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate Creator</button>}
+                  </div>}
+                />
               )
             })}
           </div>
