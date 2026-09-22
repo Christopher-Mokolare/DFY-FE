@@ -113,6 +113,7 @@ export default function ActionRequired() {
                     </div>
                   }
                 />
+              )
             })}
           </div>
         )}
