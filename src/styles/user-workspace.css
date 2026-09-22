@@ -4430,3 +4430,204 @@
     gap: .25rem;
   }
 }
+
+/* User overview — same operations layout language as admin dashboard */
+.user-workspace-shell .user-overview-page {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.user-workspace-shell .user-overview-profile-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: .85rem 1rem;
+  background: #fff;
+  border: 1px solid #e7ebf1;
+  border-radius: 13px;
+}
+
+.user-workspace-shell .user-overview-profile-alert > div {
+  min-width: 0;
+}
+
+.user-workspace-shell .user-overview-profile-alert strong {
+  display: block;
+  margin-top: .18rem;
+  color: #334155;
+  font-size: .78rem;
+}
+
+.user-workspace-shell .user-overview-profile-alert p {
+  margin: .18rem 0 0;
+  color: #8a96a6;
+  font-size: .66rem;
+}
+
+.user-workspace-shell .user-overview-profile-alert .btn {
+  flex: 0 0 auto;
+}
+
+.user-workspace-shell .user-overview-actions {
+  margin-bottom: 1rem;
+}
+
+.user-workspace-shell .user-overview-grid {
+  margin-bottom: 1rem;
+}
+
+.user-workspace-shell .user-overview-health {
+  margin-bottom: 1rem;
+}
+
+.user-workspace-shell .user-overview-reviews {
+  overflow: hidden;
+}
+
+.user-workspace-shell .user-overview-review-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.user-workspace-shell .user-overview-review {
+  min-width: 0;
+  padding: .9rem 1rem;
+  border-right: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .user-overview-review:last-child {
+  border-right: 0;
+}
+
+.user-workspace-shell .user-overview-review strong {
+  display: block;
+  color: #334155;
+  font-size: .72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-workspace-shell .user-overview-stars {
+  display: block;
+  margin-top: .2rem;
+  color: #f59e0b;
+  font-size: .7rem;
+  letter-spacing: .04em;
+}
+
+.user-workspace-shell .user-overview-review p {
+  margin: .35rem 0 0;
+  color: #8a96a6;
+  font-size: .66rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .user-overview-page {
+    max-width: none;
+  }
+
+  .user-workspace-shell .user-overview-profile-alert {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .6rem;
+    padding: .7rem .75rem;
+  }
+
+  .user-workspace-shell .user-overview-profile-alert .btn {
+    width: 100%;
+  }
+
+  .user-workspace-shell .user-overview-actions {
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .user-overview-grid {
+    gap: .65rem;
+  }
+
+  .user-workspace-shell .user-overview-health {
+    margin-top: 0;
+  }
+
+  .user-workspace-shell .user-overview-health .admin-health-metrics {
+    gap: .35rem;
+  }
+
+  .user-workspace-shell .user-overview-reviews {
+    margin-top: 0;
+  }
+
+  .user-workspace-shell .user-overview-review-list {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .user-overview-review {
+    border-right: 0;
+    border-bottom: 1px solid #edf0f4;
+    padding: .7rem .8rem;
+  }
+
+  .user-workspace-shell .user-overview-review:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .user-workspace-shell .user-overview-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-kpi-grid {
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-kpi {
+    min-height: 92px;
+    padding: .75rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-kpi strong {
+    font-size: 1.05rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-kpi-top span {
+    font-size: .62rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-kpi small {
+    font-size: .58rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-attention-card {
+    min-height: 72px;
+    padding: .7rem .75rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-attention-card strong {
+    font-size: .7rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-attention-card small {
+    font-size: .58rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-panel-header {
+    padding: .8rem .75rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-recent-row {
+    padding: .65rem .75rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-action-list a {
+    padding: .6rem .7rem;
+  }
+
+  .user-workspace-shell .user-overview-page .admin-health-panel {
+    padding: .85rem .8rem;
+  }
+}
