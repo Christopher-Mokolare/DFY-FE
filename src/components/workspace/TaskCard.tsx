@@ -14,11 +14,13 @@ interface TaskCardProps {
   extra?: ReactNode
   actions?: ReactNode
   className?: string
+  id?: string
 }
 
-export default function TaskCard({ variant, status, amount, title, description, meta, extra, actions, className = '' }: TaskCardProps) {
+export default function TaskCard({ variant, status, amount, title, description, meta, extra, actions, className = '', id }: TaskCardProps) {
   return (
     <WorkspaceCard
+      id={id}
       className={`task-card task-card--${variant} ${className}`.trim()}
       header={
         <>
