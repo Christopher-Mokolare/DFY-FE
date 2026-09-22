@@ -12,12 +12,18 @@ const USER_WORKSPACE_ROUTES = ['/dashboard', '/tasks/post', '/tasks/browse', '/t
 
 export default function Layout() {
   const { pathname } = useLocation()
-  const { user, loading, loginTransitioning, isAuthenticated } = useAuth()
+  const { user, loading, loginTransitioning, isAuthenticated, isAdmin } = useAuth()
   const showFooter = PUBLIC_ROUTES.includes(pathname)
   const isAdminRoute = pathname.startsWith('/admin')
   const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
+
+  // Admin accounts always use the dedicated operations workspace. Never expose
+  // creator/runner capabilities when an admin lands on a user dashboard route.
+  if (isUserWorkspaceRoute && !loading && isAuthenticated() && user && isAdmin()) {
+    return <Navigate to="/admin/dashboard" replace />
+  }
 
   // During credential submission, keep the public Header completely out of the tree.
   // AuthContext keeps this flag active until the navigation to the authenticated
@@ -34,7 +40,7 @@ export default function Layout() {
   // Auth state is updated before Login navigates, so this guard closes the tiny
   // render window where /login could otherwise show the authenticated Header.
   if ((pathname === '/login' || pathname === '/register') && !loading && isAuthenticated() && user) {
-    return <Navigate to={isAdminRoute ? '/admin/dashboard' : '/dashboard'} replace />
+    return <Navigate to={isAdmin() ? '/admin/dashboard' : '/dashboard'} replace />
   }
 
   // While auth is being restored after login/refresh, do not render the public header.
