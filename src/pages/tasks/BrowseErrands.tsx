@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { tasksApi } from '../../api'
+import TaskCard from '../../components/workspace/TaskCard'
 import { useAuth } from '../../context/AuthContext'
 import type { Task } from '../../types'
 import './BrowseErrands.css'
@@ -129,23 +130,15 @@ export default function BrowseErrands() {
         {loading ? <div className="loading-state"><div className="spinner" /><p>Loading available tasks...</p></div> :
           tasks.length === 0 ? <div className="empty-state"><i className="fas fa-search" /><h3>No Tasks Found</h3><p>{search || category ? 'Try adjusting your filters.' : 'No tasks are available right now.'}</p></div> :
           <div className="tasks-grid">{tasks.map(task => (
-            <article key={task.taskId || task.id} className="task-card">
-              <div className="task-card-header"><span className="task-category"><i className="fas fa-tag" /> {task.category || 'General'}</span></div>
-              <div className="task-card-body">
-                <h3 className="task-title">{title(task)}</h3>
-                <p className="task-subtitle">{description(task).slice(0, 140)}{description(task).length > 140 ? '…' : ''}</p>
-                <div className="task-meta task-meta-grid">
-                  <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{location(task)}</span></div>
-                  <div className="task-meta-item"><i className="fas fa-calendar-alt" /><span>{date(task)}</span></div>
-                </div>
-                <div className="task-earnings"><span className="task-earnings-label">You earn</span><strong>R{payout(task).toFixed(0)}</strong></div>
-                <div className="task-protection"><i className="fas fa-shield-alt" /><span>Protected payment · Direct bank payout</span></div>
-              </div>
-              <div className="task-card-footer">
-                <button className="btn btn-outline btn-sm" onClick={() => setDetailModal(task)}><i className="fas fa-eye" /> View task</button>
-                <button className="btn btn-primary btn-sm" disabled={isAuthenticated() && !canAcceptTasks()} onClick={() => openAccept(task)}>{buttonText()} <i className="fas fa-arrow-right" /></button>
-              </div>
-            </article>
+            <TaskCard
+              variant="browse"
+              status={<span className="task-category"><i className="fas fa-tag" /> {task.category || 'General'}</span>}
+              title={title(task)}
+              description={<>{description(task).slice(0, 140)}{description(task).length > 140 ? '…' : ''}</>}
+              meta={<><span><i className="fas fa-map-marker-alt" /> {location(task)}</span><span><i className="fas fa-calendar-alt" /> {date(task)}</span></>}
+              extra={<><div className="task-earnings"><span className="task-earnings-label">You earn</span><strong>R{payout(task).toFixed(0)}</strong></div><div className="task-protection"><i className="fas fa-shield-alt" /><span>Protected payment · Direct bank payout</span></div></>}
+              actions={<div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => setDetailModal(task)}><i className="fas fa-eye" /> View task</button><button className="btn btn-primary btn-sm" disabled={isAuthenticated() && !canAcceptTasks()} onClick={() => openAccept(task)}>{buttonText()} <i className="fas fa-arrow-right" /></button></div>}
+            />
           ))}</div>}
 
         {!loading && totalPages > 1 && <div className="pagination">
