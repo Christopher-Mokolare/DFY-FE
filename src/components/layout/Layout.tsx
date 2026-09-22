@@ -12,12 +12,19 @@ const USER_WORKSPACE_ROUTES = ['/dashboard', '/tasks/post', '/tasks/browse', '/t
 
 export default function Layout() {
   const { pathname } = useLocation()
-  const { user, loading, isAuthenticated } = useAuth()
+  const { user, loading, loginTransitioning, isAuthenticated } = useAuth()
   const showFooter = PUBLIC_ROUTES.includes(pathname)
   const isAdminRoute = pathname.startsWith('/admin')
   const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
+
+  // During credential submission, keep the public Header completely out of the tree.
+  // AuthContext keeps this flag active until the navigation to the authenticated
+  // workspace has been committed, eliminating the authenticated-header flash.
+  if ((pathname === '/login' || pathname === '/register') && loginTransitioning) {
+    return <div className="page-wrapper user-dashboard-page-wrapper" aria-busy="true" />
+  }
 
   // Once login has succeeded, never render the public login page/header again.
   // Auth state is updated before Login navigates, so this guard closes the tiny
