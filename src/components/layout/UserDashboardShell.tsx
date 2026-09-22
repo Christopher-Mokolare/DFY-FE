@@ -153,8 +153,9 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
             </div>
           </div>
           <div className="admin-topbar-right">
-            <NavLink to="/notifications" className="admin-icon-button" title="Notifications" aria-label="Notifications">
+            <NavLink to="/notifications" className="admin-icon-button admin-notification-button" title="Notifications" aria-label={unreadNotifications > 0 ? 'Notifications, ' + unreadNotifications + ' unread' : 'Notifications'}>
               <i className="fas fa-bell" />
+              {unreadNotifications > 0 && <span className="admin-topbar-badge" aria-label={unreadNotifications + ' unread notifications'}>{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
             </NavLink>
             <div className="admin-live-status">
               <span />
