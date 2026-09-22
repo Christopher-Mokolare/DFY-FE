@@ -1,102 +1,91 @@
 .user-workspace-shell .task-card {
   width: 100%;
   min-width: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
   background: #fff;
   border: 1px solid #e2e7ef;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, .055);
+  border-radius: 12px;
+  box-shadow: 0 3px 14px rgba(15, 23, 42, .045);
   overflow: hidden;
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  transition: box-shadow 160ms ease, border-color 160ms ease;
 }
 
 .user-workspace-shell .task-card:hover {
-  transform: translateY(-2px);
-  border-color: #d4dbe6;
-  box-shadow: 0 9px 26px rgba(15, 23, 42, .09);
+  border-color: #d7dee8;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .07);
 }
 
 .user-workspace-shell .task-card .workspace-card__header {
-  min-height: 0;
-  flex: 0 0 auto;
-  padding: .85rem 1rem 0;
+  padding: .7rem .85rem 0;
   border: 0;
   background: transparent;
 }
 
 .user-workspace-shell .task-card .workspace-card__body {
   min-width: 0;
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: .62rem;
-  padding: .7rem 1rem 1rem;
+  gap: .45rem;
+  padding: .55rem .85rem .8rem;
 }
 
 .user-workspace-shell .task-card .workspace-card__footer {
-  min-width: 0;
-  flex: 0 0 auto;
-  margin-top: auto;
-  padding: .75rem 1rem 1rem;
+  padding: .6rem .85rem .75rem;
   border-top: 1px solid #edf0f4;
   background: #fcfdff;
 }
 
 .user-workspace-shell .task-card__status {
-  min-width: 0;
   display: flex;
   align-items: center;
-  gap: .4rem;
+  justify-content: space-between;
+  gap: .5rem;
   color: #64748b;
-  font-size: .72rem;
-  font-weight: 650;
-}
-
-.user-workspace-shell .task-card__status > * {
-  min-width: 0;
+  font-size: .68rem;
 }
 
 .user-workspace-shell .task-card__status .task-category {
   display: inline-flex;
   align-items: center;
-  gap: .42rem;
-  padding: .35rem .62rem;
+  gap: .35rem;
+  padding: .28rem .5rem;
   border: 1px solid #e7ebf0;
   border-radius: 999px;
-  background: #f4f6f9;
+  background: #f5f7f9;
   color: var(--text-muted);
-  font-size: .72rem;
-  font-weight: 650;
-}
-
-.user-workspace-shell .task-card__status .task-category i {
-  font-size: .65rem;
+  font-size: .68rem;
+  font-weight: 600;
 }
 
 .user-workspace-shell .task-card__amount {
-  flex: 0 0 auto;
   color: var(--primary);
-  font-size: .92rem;
-  font-weight: 800;
+  font-size: .84rem;
+  font-weight: 750;
   line-height: 1.1;
 }
 
 .user-workspace-shell .task-card__title {
   margin: 0;
   color: var(--text);
-  font-size: 1.05rem;
-  line-height: 1.35;
-  font-weight: 720;
-  letter-spacing: -.01em;
+  font-size: .94rem;
+  line-height: 1.3;
+  font-weight: 400;
+  letter-spacing: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(1.3em * 2);
+  max-height: calc(1.3em * 2);
 }
 
 .user-workspace-shell .task-card__description {
   margin: 0;
   color: var(--text-muted);
-  font-size: .82rem;
-  line-height: 1.5;
+  font-size: .75rem;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -105,22 +94,20 @@
 }
 
 .user-workspace-shell .task-card__meta {
-  min-width: 0;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: .45rem .75rem;
+  gap: .3rem .65rem;
   margin: 0;
   color: var(--text-muted);
-  font-size: .74rem;
-  line-height: 1.35;
+  font-size: .68rem;
+  line-height: 1.3;
 }
 
 .user-workspace-shell .task-card__meta > * {
-  min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: .3rem;
+  gap: .25rem;
 }
 
 .user-workspace-shell .task-card__meta i {
@@ -128,44 +115,40 @@
 }
 
 .user-workspace-shell .task-card__extra {
-  min-width: 0;
-  margin: .15rem 0 0;
-  padding: .7rem 0 0;
+  margin-top: .1rem;
+  padding-top: .55rem;
   border-top: 1px solid #edf0f4;
 }
 
 .user-workspace-shell .task-card__extra .task-earnings {
   display: flex;
   align-items: baseline;
-  gap: .55rem;
-  margin: 0 0 .65rem;
-  padding: 0;
+  gap: .45rem;
+  margin: 0 0 .45rem;
 }
 
 .user-workspace-shell .task-card__extra .task-earnings-label {
   color: var(--text-muted);
-  font-size: .74rem;
-  font-weight: 600;
+  font-size: .68rem;
 }
 
 .user-workspace-shell .task-card__extra .task-earnings strong {
   color: var(--primary);
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   line-height: 1;
-  font-weight: 800;
-  letter-spacing: -.025em;
+  font-weight: 750;
 }
 
 .user-workspace-shell .task-card__extra .task-protection {
   display: flex;
   align-items: flex-start;
-  gap: .45rem;
-  padding: .55rem .65rem;
-  border-radius: 8px;
+  gap: .35rem;
+  padding: .4rem .5rem;
+  border-radius: 7px;
   background: #f7faf8;
   color: #35715a;
-  font-size: .69rem;
-  line-height: 1.35;
+  font-size: .63rem;
+  line-height: 1.3;
 }
 
 .user-workspace-shell .task-card__actions {
@@ -173,11 +156,9 @@
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .55rem;
-  align-items: stretch;
+  gap: .45rem;
 }
 
-/* Page-specific wrappers are presentation-neutral; TaskCard owns the layout. */
 .user-workspace-shell .task-card__actions .action-row,
 .user-workspace-shell .task-card__actions .action-col,
 .user-workspace-shell .task-card__actions .active-task-actions,
@@ -191,22 +172,16 @@
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
-  height: 34px !important;
-  min-height: 34px !important;
+  height: 32px !important;
+  min-height: 32px !important;
   margin: 0 !important;
-  padding: .35rem .65rem !important;
-  border-radius: 8px !important;
-  font-size: .68rem !important;
+  padding: .3rem .55rem !important;
+  border-radius: 7px !important;
+  font-size: .64rem !important;
   line-height: 1 !important;
   justify-content: center;
   white-space: nowrap;
   box-shadow: none !important;
-}
-
-.user-workspace-shell .task-card__actions .btn i,
-.user-workspace-shell .task-card__actions a.btn i,
-.user-workspace-shell .task-card__actions button i {
-  font-size: .62rem;
 }
 
 .user-workspace-shell .task-card__actions > :only-child {
@@ -220,68 +195,17 @@
 }
 
 @media (max-width: 768px) {
-  .user-workspace-shell .task-card {
-    border-radius: 12px;
-  }
-
   .user-workspace-shell .task-card .workspace-card__header {
-    padding: .7rem .8rem 0;
+    padding: .6rem .7rem 0;
   }
 
   .user-workspace-shell .task-card .workspace-card__body {
-    gap: .5rem;
-    padding: .62rem .8rem .8rem;
-  }
-
-  .user-workspace-shell .task-card .workspace-card__footer {
-    padding: .62rem .8rem .8rem;
-  }
-
-  .user-workspace-shell .task-card__title {
-    font-size: .96rem;
-    line-height: 1.3;
-  }
-
-  .user-workspace-shell .task-card__description {
-    font-size: .74rem;
-    line-height: 1.4;
-  }
-
-  .user-workspace-shell .task-card__meta {
-    font-size: .67rem;
-    gap: .35rem .55rem;
-  }
-
-  .user-workspace-shell .task-card__extra .task-earnings strong {
-    font-size: 1.2rem;
-  }
-
-  .user-workspace-shell .task-card__actions {
     gap: .4rem;
-  }
-
-  .user-workspace-shell .task-card__actions .btn,
-  .user-workspace-shell .task-card__actions a.btn,
-  .user-workspace-shell .task-card__actions button {
-    height: 32px !important;
-    min-height: 32px !important;
-    padding: .3rem .45rem !important;
-    border-radius: 7px !important;
-    font-size: .62rem !important;
-  }
-}
-
-@media (max-width: 420px) {
-  .user-workspace-shell .task-card .workspace-card__header {
-    padding: .62rem .68rem 0;
-  }
-
-  .user-workspace-shell .task-card .workspace-card__body {
-    padding: .55rem .68rem .7rem;
+    padding: .45rem .7rem .65rem;
   }
 
   .user-workspace-shell .task-card .workspace-card__footer {
-    padding: .55rem .68rem .7rem;
+    padding: .5rem .7rem .65rem;
   }
 
   .user-workspace-shell .task-card__title {
@@ -289,23 +213,10 @@
   }
 
   .user-workspace-shell .task-card__description {
-    font-size: .7rem;
+    font-size: .71rem;
   }
 
   .user-workspace-shell .task-card__meta {
-    font-size: .63rem;
-  }
-
-  .user-workspace-shell .task-card__actions {
-    gap: .3rem;
-  }
-
-  .user-workspace-shell .task-card__actions .btn,
-  .user-workspace-shell .task-card__actions a.btn,
-  .user-workspace-shell .task-card__actions button {
-    height: 31px !important;
-    min-height: 31px !important;
-    padding: .28rem .35rem !important;
-    font-size: .59rem !important;
+    font-size: .64rem;
   }
 }
