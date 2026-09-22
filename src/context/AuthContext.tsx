@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null
   token: string | null
   loading: boolean
+  loginTransitioning: boolean
   login: (email: string, password: string) => Promise<User>
   logout: () => void
   refreshUser: () => void
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(session.user)
   const [token, setToken] = useState<string | null>(session.token)
   const [loading, setLoading] = useState(false)
+  const [loginTransitioning, setLoginTransitioning] = useState(false)
 
   useEffect(() => {
     // Refresh the authoritative profile in the background without blocking the
@@ -58,23 +60,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session.token, session.user])
 
   const login = useCallback(async (email: string, password: string): Promise<User> => {
-    const res = await authApi.login({ email, password })
-    const data = res.data
-    if (!data.success || !data.token || !data.user) {
-      throw new Error(data.message || 'Login failed')
-    }
-    localStorage.setItem('token', data.token)
-    setToken(data.token)
-    // Fetch full profile so idNumber/address are available for isProfileComplete
-    let fullUser = data.user
+    setLoginTransitioning(true)
     try {
-      const profileRes = await authApi.getProfile()
-      const profileData = profileRes.data?.data || profileRes.data
-      if (profileData) fullUser = { ...data.user, ...profileData }
-    } catch { /* fall back to login user */ }
-    localStorage.setItem('currentUser', JSON.stringify(fullUser))
-    setUser(fullUser)
-    return fullUser
+      const res = await authApi.login({ email, password })
+      const data = res.data
+      if (!data.success || !data.token || !data.user) {
+        throw new Error(data.message || 'Login failed')
+      }
+      localStorage.setItem('token', data.token)
+      setToken(data.token)
+    // Fetch full profile so idNumber/address are available for isProfileComplete
+      let fullUser = data.user
+      try {
+        const profileRes = await authApi.getProfile()
+        const profileData = profileRes.data?.data || profileRes.data
+        if (profileData) fullUser = { ...data.user, ...profileData }
+      } catch { /* fall back to login user */ }
+      localStorage.setItem('currentUser', JSON.stringify(fullUser))
+      setUser(fullUser)
+      return fullUser
+    } finally {
+      // Keep the transition flag active until Login has handed control to the
+      // destination route. Layout uses it to suppress Header during this window.
+      setLoginTransitioning(false)
+    }
   }, [])
 
   const logout = useCallback(() => {
@@ -130,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{
-      user, token, loading,
+      user, token, loading, loginTransitioning,
       login, logout, refreshUser,
       isAuthenticated, isAdmin,
       isProfileComplete, isProfileIncomplete,
