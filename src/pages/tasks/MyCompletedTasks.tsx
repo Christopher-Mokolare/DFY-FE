@@ -73,40 +73,23 @@ export default function MyCompletedTasks() {
         ) : (
           <div className="tasks-grid">
             {tasks.map((t: any) => (
-              <div id={`completed-task-${t.taskId}`} key={t.taskId} className="task-card">
-                <div className="task-card-header">
-                  {(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
-                  <div className="task-budget">
-                    {fmt(t.payoutAmount || t.budget * 0.85)}
-                    <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>earned</small>
-                  </div>
-                </div>
-                <div className="task-card-body">
-                  <h3 className="task-title">{t.title || t.taskDescription}</h3>
-                  <div className="task-meta">
-                    <div className="task-meta-item"><i className="fas fa-tag" /><span>{t.category}</span></div>
-                    <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{t.location || t.area}</span></div>
-                    {t.completedAt && (
-                      <div className="task-meta-item">
-                        <i className="fas fa-check-circle" />
-                        <span>{new Date(t.completedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                      </div>
-                    )}
-                    <div className="task-meta-item"><i className="fas fa-user" /><span>{t.creatorName}</span></div>
-                  </div>
-                  <div className="alert alert-info mt-3"><i className="fas fa-route" /> {lifecycle(t).detail}</div>
-                </div>
-                <div className="task-card-footer">
-                  {!ratedTaskIds.has(t.taskId) && (
-                    <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(t); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
-                      <i className="fas fa-star" /> Rate Creator
-                    </button>
-                  )}
-                  {ratedTaskIds.has(t.taskId) && (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}><i className="fas fa-check" /> Rated</span>
-                  )}
-                </div>
-              </div>
+              <TaskCard
+                variant="completed"
+                className="completed-task-card"
+                status={(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
+                amount={<><span>{fmt(t.payoutAmount || t.budget * 0.85)}</span><small className="task-card__amount-label">earned</small></>}
+                title={t.title || t.taskDescription}
+                meta={<>
+                  <span><i className="fas fa-tag" /> {t.category}</span>
+                  <span><i className="fas fa-map-marker-alt" /> {t.location || t.area}</span>
+                  {t.completedAt && <span><i className="fas fa-check-circle" /> {new Date(t.completedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                  <span><i className="fas fa-user" /> {t.creatorName}</span>
+                </>}
+                extra={<div className="alert alert-info"><i className="fas fa-route" /> {lifecycle(t).detail}</div>}
+                actions={!ratedTaskIds.has(t.taskId)
+                  ? <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(t); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate Creator</button>
+                  : <span className="task-card__rated"><i className="fas fa-check" /> Rated</span>}
+              />              </div>
             ))}
           </div>
         )}
