@@ -143,7 +143,7 @@ export default function MyActiveTasks() {
                   <div className="task-card-footer">
                     <div className="active-task-actions">
                       <div className="active-task-contact-actions">
-                        <button className="btn btn-outline btn-sm" className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate(`/tasks/${t.taskId}/chat?title=${encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>
+                        <button className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate(`/tasks/${t.taskId}/chat?title=${encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>
                         {t.userContact && <a href={`tel:${t.userContact}`} className="btn btn-outline btn-sm active-task-contact-btn"><i className="fas fa-phone" /> Call</a>}
                       </div>
                       {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
