@@ -3018,3 +3018,446 @@
     width: 100%;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   Unified clean page surfaces
+   All authenticated creator/runner pages use the same calm operations rhythm
+   as Bank Accounts: one clear heading, restrained surfaces, compact metadata,
+   consistent borders, and deliberate whitespace.
+   -------------------------------------------------------------------------- */
+
+.user-workspace-main .admin-content {
+  background: #f7f8fa;
+}
+
+.user-workspace-main .admin-content > .container,
+.user-workspace-main .admin-content > .dashboard-page,
+.user-workspace-main .admin-content > .activity-page,
+.user-workspace-main .admin-content > .browse-page,
+.user-workspace-main .admin-content > .post-page,
+.user-workspace-main .admin-content > .my-posted-page,
+.user-workspace-main .admin-content > .my-active-page,
+.user-workspace-main .admin-content > .my-completed-page,
+.user-workspace-main .admin-content > .notifications-page,
+.user-workspace-main .admin-content > .messages-hub,
+.user-workspace-main .admin-content > .profile-page,
+.user-workspace-main .admin-content > .bank-accounts-page {
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Shared page heading */
+.user-workspace-main .page-header,
+.user-workspace-main .dashboard-header {
+  background: transparent;
+  color: #172033;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  border: 0;
+}
+
+.user-workspace-main .page-header .container,
+.user-workspace-main .dashboard-header .container {
+  max-width: none;
+  padding: 0;
+}
+
+.user-workspace-main .page-header h1,
+.user-workspace-main .dashboard-header h1 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.55rem, 2.8vw, 2.05rem);
+  line-height: 1.15;
+  letter-spacing: -.04em;
+}
+
+.user-workspace-main .page-header h1 i {
+  color: var(--primary);
+  margin-right: .45rem;
+}
+
+.user-workspace-main .page-header p,
+.user-workspace-main .dashboard-header p {
+  max-width: 720px;
+  margin: .45rem 0 0;
+  color: #718096;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+.user-workspace-main .dashboard-role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  margin-bottom: .7rem;
+  padding: .35rem .65rem;
+  border: 1px solid #e5e9f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.user-workspace-main .dashboard-role-pill i {
+  color: var(--primary);
+}
+
+/* Dashboard */
+.user-workspace-main .dashboard-page {
+  width: 100%;
+}
+
+.user-workspace-main .dashboard-body {
+  max-width: none;
+  padding: 0;
+}
+
+.user-workspace-main .stats-grid {
+  gap: .9rem;
+  margin-bottom: 1.25rem;
+}
+
+.user-workspace-main .stat-card {
+  min-height: 112px;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-main .stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(15,23,42,.055);
+}
+
+.user-workspace-main .stat-icon {
+  border-radius: 11px;
+}
+
+.user-workspace-main .section-card {
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+  margin-bottom: 1rem;
+}
+
+.user-workspace-main .section-header {
+  min-height: 58px;
+  padding: .95rem 1.15rem;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-main .section-header h2 {
+  color: #334155;
+  font-size: .92rem;
+  letter-spacing: -.01em;
+}
+
+.user-workspace-main .quick-actions {
+  padding: 1rem 1.15rem 1.15rem;
+  gap: .55rem;
+}
+
+.user-workspace-main .activity-feed,
+.user-workspace-main .rating-card {
+  border-color: #edf0f4;
+}
+
+.user-workspace-main .profile-alert {
+  margin-top: 1rem;
+  border: 1px solid #e8edf3;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15,23,42,.035);
+}
+
+/* Task listing / browse / status pages */
+.user-workspace-main .browse-page,
+.user-workspace-main .post-page,
+.user-workspace-main .my-posted-page,
+.user-workspace-main .my-active-page,
+.user-workspace-main .my-completed-page {
+  width: 100%;
+}
+
+.user-workspace-main .browse-content,
+.user-workspace-main .post-page > .container,
+.user-workspace-main .my-posted-page > .container,
+.user-workspace-main .my-active-page > .container,
+.user-workspace-main .my-completed-page > .container {
+  max-width: none;
+  padding: 0;
+}
+
+.user-workspace-main .browse-toolbar {
+  min-height: 58px;
+  padding: .8rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-main .filters-card,
+.user-workspace-main .post-form-card,
+.user-workspace-main .payment-info-card {
+  background: #fff;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-main .filters-card {
+  padding: 1rem;
+}
+
+.user-workspace-main .form-section {
+  padding: 1.15rem 0;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-main .form-section:last-child {
+  border-bottom: 0;
+}
+
+.user-workspace-main .form-label {
+  color: #475569;
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+.user-workspace-main .form-input,
+.user-workspace-main .form-select,
+.user-workspace-main .form-textarea {
+  border-color: #dfe5ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.user-workspace-main .form-input:focus,
+.user-workspace-main .form-select:focus,
+.user-workspace-main .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255,138,0,.1);
+}
+
+.user-workspace-main .tasks-grid {
+  gap: .9rem;
+}
+
+.user-workspace-main .task-card {
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-main .task-card-header {
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-main .task-card-footer {
+  border-top: 1px solid #edf0f4;
+}
+
+.user-workspace-main .status-section {
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+/* Activity / notifications */
+.user-workspace-main .activity-page,
+.user-workspace-main .notifications-page {
+  width: 100%;
+}
+
+.user-workspace-main .activity-container {
+  max-width: none;
+  padding: 0;
+}
+
+.user-workspace-main .activity-list,
+.user-workspace-main .notif-list {
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+  overflow: hidden;
+}
+
+.user-workspace-main .activity-row {
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-main .activity-row:last-child {
+  border-bottom: 0;
+}
+
+.user-workspace-main .notif-tabs {
+  margin-bottom: .9rem;
+}
+
+.user-workspace-main .notif-item {
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-main .notif-item:last-child {
+  border-bottom: 0;
+}
+
+/* Messages */
+.user-workspace-main .messages-hub {
+  width: 100%;
+}
+
+.user-workspace-main .messages-hero {
+  margin: 0 0 1rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-main .messages-toolbar {
+  margin-bottom: .9rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.025);
+}
+
+.user-workspace-main .conversation-list {
+  display: grid;
+  gap: .65rem;
+}
+
+.user-workspace-main .conversation-card {
+  border: 1px solid #e7ebf1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 22px rgba(15,23,42,.03);
+}
+
+/* Profile */
+.user-workspace-main .profile-grid {
+  max-width: none;
+}
+
+.user-workspace-main .profile-card,
+.user-workspace-main .profile-grid > div:last-child > .section-card {
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+/* Alerts / empty / loading */
+.user-workspace-main .alert {
+  border-radius: 11px;
+}
+
+.user-workspace-main .empty-state {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-main .loading-state {
+  min-height: 220px;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+}
+
+/* Consistent buttons */
+.user-workspace-main .btn {
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-main .admin-content {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .user-workspace-main .page-header,
+  .user-workspace-main .dashboard-header {
+    margin-bottom: 1rem;
+  }
+
+  .user-workspace-main .dashboard-body,
+  .user-workspace-main .browse-content,
+  .user-workspace-main .post-page > .container,
+  .user-workspace-main .activity-container {
+    padding: 0;
+  }
+
+  .user-workspace-main .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .user-workspace-main .browse-toolbar {
+    align-items: flex-start;
+    gap: .65rem;
+  }
+
+  .user-workspace-main .messages-hero,
+  .user-workspace-main .messages-toolbar,
+  .user-workspace-main .activity-list,
+  .user-workspace-main .notif-list,
+  .user-workspace-main .section-card,
+  .user-workspace-main .task-card,
+  .user-workspace-main .filters-card,
+  .user-workspace-main .post-form-card,
+  .user-workspace-main .payment-info-card {
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 560px) {
+  .user-workspace-main .admin-content {
+    padding: 1rem .75rem 1.5rem;
+  }
+
+  .user-workspace-main .page-header h1,
+  .user-workspace-main .dashboard-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .user-workspace-main .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-main .section-header {
+    padding: .9rem 1rem;
+  }
+
+  .user-workspace-main .quick-actions {
+    padding: .9rem 1rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-main .quick-actions .btn {
+    width: 100%;
+  }
+
+  .user-workspace-main .activity-row {
+    padding: .9rem 1rem;
+  }
+}
