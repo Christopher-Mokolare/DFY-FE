@@ -155,13 +155,16 @@ export default function TaskChat() {
       .then(async () => {
         setConnected(true)
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
-        await hub.invoke('JoinTaskChat', parseInt(taskId.replace(/\D/g, '') || '0'))
+        await hub.invoke('JoinTaskChat', taskId)
       })
-      .catch(() => setConnected(false))
+      .catch(() => {
+        setConnected(false)
+        if (!pollRef.current) pollRef.current = setInterval(fetchMessages, POLL_INTERVAL)
+      })
 
     hubRef.current = hub
     return () => {
-      hub.invoke('LeaveTaskChat', parseInt(taskId.replace(/\D/g, '') || '0')).catch(() => {})
+      hub.invoke('LeaveTaskChat', taskId).catch(() => {})
       hub.stop()
       hubRef.current = null
     }
@@ -169,7 +172,6 @@ export default function TaskChat() {
 
   useEffect(() => {
     fetchMessages()
-    pollRef.current = setInterval(fetchMessages, POLL_INTERVAL)
     return () => {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }
