@@ -7,7 +7,10 @@ export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as any)?.from?.pathname || null
+  // An explicit logout starts a fresh session. Never reuse the protected route
+  // that may have redirected to /login before logout navigation completed.
+  const loggedOut = sessionStorage.getItem('dfy:loggedOut') === '1'
+  const from = loggedOut ? null : ((location.state as any)?.from?.pathname || null)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,6 +24,7 @@ export default function Login() {
     setLoading(true)
     try {
       const loggedInUser = await login(email, password)
+      sessionStorage.removeItem('dfy:loggedOut')
       const isAdminUser = !!loggedInUser?.isAdmin || !!loggedInUser?.roles?.includes('Admin')
       const dest = from || (isAdminUser ? '/admin/dashboard' : '/dashboard')
       navigate(dest, { replace: true })
