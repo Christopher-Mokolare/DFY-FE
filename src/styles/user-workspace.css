@@ -3973,3 +3973,91 @@
     padding: .55rem .7rem;
   }
 }
+
+
+/* My Active Tasks — compact single-card action layout */
+.user-workspace-shell .active-tasks-page .active-tasks-content {
+  max-width: 1320px;
+}
+
+.user-workspace-shell .active-tasks-page > .container:not(.active-tasks-content) {
+  max-width: 1320px;
+  padding: 0;
+}
+
+.user-workspace-shell .active-tasks-page .tasks-grid {
+  grid-template-columns: minmax(0, 760px);
+  justify-content: start;
+  gap: .7rem;
+}
+
+.user-workspace-shell .active-task-card .task-card-header {
+  min-height: 44px;
+  padding: .55rem .75rem;
+}
+
+.user-workspace-shell .active-task-card .task-card-body {
+  padding: .65rem .75rem;
+}
+
+.user-workspace-shell .active-task-card .task-title {
+  margin: 0 0 .35rem;
+  font-size: .92rem;
+  line-height: 1.25;
+}
+
+.user-workspace-shell .active-task-card .task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .8rem;
+}
+
+.user-workspace-shell .active-task-card .task-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .68rem;
+  line-height: 1.3;
+}
+
+.user-workspace-shell .active-task-card .task-card-footer {
+  padding: .55rem .75rem;
+}
+
+.user-workspace-shell .active-task-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: .4rem;
+  width: 100%;
+}
+
+.user-workspace-shell .active-task-contact-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: .4rem;
+}
+
+.user-workspace-shell .active-task-contact-btn {
+  flex: 1;
+}
+
+.user-workspace-shell .active-task-actions > .btn {
+  width: 100%;
+  min-height: 32px;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .active-tasks-page .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .user-workspace-shell .active-task-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .active-task-contact-actions {
+    grid-column: auto;
+  }
+}
