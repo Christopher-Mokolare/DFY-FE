@@ -30,3 +30,84 @@
   .user-workspace-shell .task-card__meta { font-size: .57rem; }
   .user-workspace-shell .task-card__actions .btn { min-height: 27px !important; height: 27px !important; padding: .2rem .38rem !important; font-size: .56rem !important; }
 }
+
+/* ==========================================================================
+   Compact action sizing: buttons follow their wording, not the card width.
+   Task cards stay readable without becoming unnecessarily wide.
+   ========================================================================== */
+.user-workspace-shell .task-card {
+  width: min(100%, 680px);
+  justify-self: start;
+}
+
+.user-workspace-shell .task-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+.user-workspace-shell .task-card__actions .active-task-actions,
+.user-workspace-shell .task-card__actions .action-row,
+.user-workspace-shell .task-card__actions .active-task-contact-actions {
+  width: auto !important;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: .35rem !important;
+}
+
+.user-workspace-shell .task-card__actions .btn,
+.user-workspace-shell .task-card__actions a.btn,
+.user-workspace-shell .task-card__actions button {
+  width: auto !important;
+  min-width: max-content;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.user-workspace-shell .task-card__actions .btn-block,
+.user-workspace-shell .task-card__actions .active-task-actions .btn-block {
+  width: auto !important;
+}
+
+.user-workspace-shell .task-card--active .task-card__actions .active-task-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.user-workspace-shell .task-card--active .task-card__actions .active-task-contact-actions {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .task-card {
+    width: min(100%, 100%);
+  }
+
+  .user-workspace-shell .task-card__actions {
+    gap: .28rem;
+  }
+
+  .user-workspace-shell .task-card__actions .btn,
+  .user-workspace-shell .task-card__actions a.btn,
+  .user-workspace-shell .task-card__actions button {
+    min-width: 0;
+    padding-left: .48rem !important;
+    padding-right: .48rem !important;
+    font-size: .59rem !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .task-card__actions .btn,
+  .user-workspace-shell .task-card__actions a.btn,
+  .user-workspace-shell .task-card__actions button {
+    padding-left: .42rem !important;
+    padding-right: .42rem !important;
+    font-size: .57rem !important;
+  }
+}
