@@ -82,9 +82,36 @@ export default function TaskChat() {
   const mergeMessages = useCallback((incoming: ChatMessage[]) => {
     const toAdd = incoming.filter(msg => !knownIdsRef.current.has(String(msg.id)))
     if (!toAdd.length) return
+
     toAdd.forEach(msg => knownIdsRef.current.add(String(msg.id)))
     const normalized = toAdd.map(msg => ({ ...msg, id: String(msg.id) }))
-    setMessages(prev => [...prev, ...normalized].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()))
+
+    setMessages(prev => {
+      let next = [...prev]
+
+      // The sender gets an optimistic bubble immediately, then SignalR/API returns
+      // the persisted message with its real database ID. Reconcile the optimistic
+      // bubble instead of rendering the same message twice.
+      for (const msg of normalized) {
+        const optimisticIndex = next.findIndex(existing =>
+          String(existing.id).startsWith('temp-') &&
+          existing.isCurrentUser === msg.isCurrentUser &&
+          existing.senderId === msg.senderId &&
+          existing.content === msg.content &&
+          Math.abs(new Date(existing.timestamp).getTime() - new Date(msg.timestamp).getTime()) < 30_000
+        )
+
+        if (optimisticIndex !== -1) {
+          const optimisticId = String(next[optimisticIndex].id)
+          knownIdsRef.current.delete(optimisticId)
+          next[optimisticIndex] = msg
+        } else {
+          next.push(msg)
+        }
+      }
+
+      return next.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    })
   }, [])
 
   const fetchTask = useCallback(async () => {
