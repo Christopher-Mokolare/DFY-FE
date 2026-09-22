@@ -584,3 +584,42 @@
     font-size: .57rem !important;
   }
 }
+
+
+/* ==========================================================================
+   Workspace task grid sizing
+   Keep the Browse Tasks card width as the reference. Two cards share the
+   row; additional cards wrap. A single card does not stretch across the
+   entire workspace.
+   ========================================================================== */
+
+.user-workspace-shell .tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 680px));
+  justify-content: start;
+  align-items: start;
+  gap: 1rem;
+}
+
+.user-workspace-shell .tasks-grid > .task-card {
+  width: 100%;
+  max-width: 680px;
+  justify-self: stretch;
+}
+
+@media (max-width: 900px) {
+  .user-workspace-shell .tasks-grid {
+    grid-template-columns: minmax(0, 680px);
+  }
+}
+
+@media (max-width: 768px) {
+  .user-workspace-shell .tasks-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .75rem;
+  }
+
+  .user-workspace-shell .tasks-grid > .task-card {
+    max-width: 100%;
+  }
+}
