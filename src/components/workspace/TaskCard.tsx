@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import WorkspaceCard from './WorkspaceCard'
 import './TaskCard.css'
 
-type TaskCardVariant = 'browse' | 'posted' | 'active' | 'completed'
+type TaskCardVariant = 'browse' | 'posted' | 'active' | 'completed' | 'action-required'
 
 interface TaskCardProps {
   variant: TaskCardVariant
