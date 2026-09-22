@@ -141,9 +141,11 @@ export default function MyPostedTasks() {
               <button className="status-heading" onClick={() => toggle(key)}><span><i className={`fas ${icon}`} /> {label} ({grouped[key].length})</span><i className={`fas fa-chevron-${expanded[key] ? 'up' : 'down'}`} /></button>
               {expanded[key] && <div className="tasks-grid">{grouped[key].map(task => (
                 <TaskCard
+                  key={task.taskId || task.id}
+                  id={"posted-task-" + task.taskId}
                   variant="posted"
                   status={<span className={getStatusBadge(task.taskStatus)}>{task.taskStatus}</span>}
-                  amount={<>{task.budget}</>}
+                  amount={<>R{task.budget}</>}
                   title={task.taskName || task.taskDescription}
                   description={task.taskName ? task.taskDescription : undefined}
                   meta={<><span>{task.category || "General"}</span><span>{new Date(task.createdAt).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" })}</span><span>{task.area?.length > 30 ? task.area.substring(0, 30) + "..." : task.area}</span></>}
