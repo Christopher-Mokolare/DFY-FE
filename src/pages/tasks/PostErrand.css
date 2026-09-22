@@ -151,3 +151,218 @@
   .step-nav .btn { width: 100%; justify-content: center; }
   input, select, textarea, button { font-size: 16px !important; }
 }
+
+
+/* Clean authenticated workspace presentation */
+.user-dashboard-content .post-page {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.post-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin: 0 0 1.25rem;
+  padding: .25rem 0;
+}
+
+.post-page-heading h1 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.65rem, 3vw, 2.1rem);
+  line-height: 1.1;
+  letter-spacing: -.04em;
+}
+
+.post-page-heading p {
+  max-width: 650px;
+  margin: .5rem 0 0;
+  color: #718096;
+  font-size: .9rem;
+  line-height: 1.55;
+}
+
+.post-page-heading-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .55rem;
+  flex-wrap: wrap;
+}
+
+.post-page-heading-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .42rem .65rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  font-size: .68rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.post-page-heading-meta i {
+  color: var(--primary);
+}
+
+.user-dashboard-content .post-form-card {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-dashboard-content .post-form-card .form-steps {
+  margin: -.1rem -.15rem 1.35rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-dashboard-content .post-form-card .form-section {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.user-dashboard-content .post-form-card .form-section h3 {
+  margin-bottom: 1.25rem;
+  color: #1e293b;
+  font-size: .98rem;
+}
+
+.user-dashboard-content .post-form-card .form-group {
+  margin-bottom: 1rem;
+}
+
+.user-dashboard-content .post-form-card .form-label {
+  display: block;
+  margin-bottom: .45rem;
+  color: #344054;
+  font-size: .75rem;
+  font-weight: 750;
+}
+
+.user-dashboard-content .post-form-card .text-muted {
+  color: #8a96a8;
+}
+
+.user-dashboard-content .post-form-card .form-input,
+.user-dashboard-content .post-form-card .form-select,
+.user-dashboard-content .post-form-card .form-textarea {
+  min-height: 45px;
+  width: 100%;
+  border: 1px solid #dfe5ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.user-dashboard-content .post-form-card .form-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.user-dashboard-content .post-form-card .input-with-icon .form-input,
+.user-dashboard-content .post-form-card .input-with-icon .form-select {
+  padding-left: 2.35rem;
+}
+
+.user-dashboard-content .post-form-card .form-input:focus,
+.user-dashboard-content .post-form-card .form-select:focus,
+.user-dashboard-content .post-form-card .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255,138,0,.1);
+}
+
+.user-dashboard-content .post-form-card .priority-card {
+  min-height: 92px;
+  padding: .8rem .7rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.user-dashboard-content .post-form-card .priority-card.selected {
+  border-color: var(--primary);
+  background: rgba(255,138,0,.045);
+  box-shadow: 0 0 0 1px rgba(255,138,0,.08);
+}
+
+.user-dashboard-content .post-form-card .commission-breakdown,
+.user-dashboard-content .post-form-card .payment-info-card {
+  border: 1px solid #e7ebf1;
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.user-dashboard-content .post-form-card .payment-info-card {
+  margin-top: 1.15rem;
+}
+
+.user-dashboard-content .post-form-card .step-nav {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid #edf0f4;
+}
+
+.user-dashboard-content .post-form-card .btn {
+  min-height: 42px;
+  border-radius: 9px;
+  font-weight: 750;
+}
+
+@media (max-width: 800px) {
+  .post-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .75rem;
+  }
+
+  .post-page-heading-meta {
+    justify-content: flex-start;
+  }
+
+  .user-dashboard-content .post-form-card {
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .post-page-heading {
+    margin-bottom: 1rem;
+  }
+
+  .post-page-heading h1 {
+    font-size: 1.4rem;
+  }
+
+  .post-page-heading-meta span {
+    font-size: .64rem;
+  }
+
+  .user-dashboard-content .post-form-card {
+    padding: 1rem;
+    border-radius: 13px;
+  }
+
+  .user-dashboard-content .post-form-card .form-steps {
+    overflow-x: auto;
+    margin-left: 0;
+    margin-right: 0;
+    padding-bottom: .9rem;
+  }
+
+  .user-dashboard-content .post-form-card .form-step {
+    min-width: 105px;
+    font-size: .76rem;
+  }
+}
