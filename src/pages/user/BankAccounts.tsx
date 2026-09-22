@@ -243,4 +243,4 @@ export default function BankAccounts() {
       </div>
     </div>
   )
-}\n}\n
+}
