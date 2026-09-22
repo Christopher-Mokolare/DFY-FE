@@ -323,3 +323,203 @@
     min-height: 76px;
   }
 }
+
+
+/* =========================================================
+   Mobile runner dashboard — compact, touch-friendly workspace
+   ========================================================= */
+@media (max-width: 768px) {
+  .user-workspace-shell .user-dashboard-content {
+    padding: .7rem .7rem 1.1rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page {
+    max-width: none;
+  }
+
+  .user-workspace-shell .dashboard-header {
+    margin: 0 0 .65rem !important;
+    padding: .15rem 0 .1rem !important;
+  }
+
+  .user-workspace-shell .dashboard-header .container {
+    padding: 0 !important;
+  }
+
+  .user-workspace-shell .dashboard-role-pill {
+    margin-bottom: .35rem;
+    padding: .22rem .48rem;
+    font-size: .58rem;
+    border-radius: 999px;
+  }
+
+  .user-workspace-shell .dashboard-header h1 {
+    margin: 0;
+    font-size: 1.2rem !important;
+    line-height: 1.18;
+    letter-spacing: -.025em;
+  }
+
+  .user-workspace-shell .dashboard-header p {
+    margin: .2rem 0 0;
+    font-size: .7rem !important;
+    line-height: 1.35;
+  }
+
+  .user-workspace-shell .dashboard-body {
+    gap: .6rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .4rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-card {
+    min-height: 62px !important;
+    padding: .5rem .55rem !important;
+    gap: .45rem !important;
+    border-radius: 9px !important;
+    box-shadow: 0 2px 8px rgba(15,23,42,.035) !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-icon {
+    width: 27px !important;
+    height: 27px !important;
+    flex-basis: 27px !important;
+    border-radius: 7px !important;
+    font-size: .65rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-content h3 {
+    margin: 0 !important;
+    font-size: .88rem !important;
+    line-height: 1.1;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-content p {
+    margin-top: .15rem !important;
+    font-size: .56rem !important;
+    line-height: 1.15;
+  }
+
+  .user-workspace-shell .dashboard-page .section-card {
+    border-radius: 10px !important;
+    box-shadow: 0 2px 9px rgba(15,23,42,.035) !important;
+  }
+
+  .user-workspace-shell .dashboard-page .section-header {
+    min-height: 34px !important;
+    padding: .48rem .6rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .section-header h2 {
+    font-size: .68rem !important;
+    line-height: 1.2;
+  }
+
+  .user-workspace-shell .dashboard-page .section-link {
+    font-size: .62rem;
+  }
+
+  .user-workspace-shell .dashboard-page .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    padding: .5rem .6rem .6rem !important;
+    gap: .3rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .quick-actions .btn {
+    min-height: 31px !important;
+    padding: .35rem .3rem !important;
+    border-radius: 7px !important;
+    font-size: .59rem !important;
+    line-height: 1.15;
+    white-space: normal;
+  }
+
+  .user-workspace-shell .dashboard-page .activity-feed {
+    padding: .35rem .6rem .55rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .activity-item {
+    gap: .5rem;
+    padding: .45rem 0 !important;
+  }
+
+  .user-workspace-shell .dashboard-page .activity-icon {
+    width: 25px;
+    height: 25px;
+    font-size: .6rem;
+  }
+
+  .user-workspace-shell .dashboard-page .activity-title {
+    font-size: .67rem;
+    line-height: 1.25;
+  }
+
+  .user-workspace-shell .dashboard-page .activity-meta {
+    margin-top: .12rem;
+    font-size: .58rem;
+  }
+
+  .user-workspace-shell .dashboard-page .rating-card {
+    margin: 0 .6rem .45rem;
+    padding: .55rem .6rem;
+    border-radius: 8px;
+  }
+
+  .user-workspace-shell .dashboard-page .rating-card-title {
+    font-size: .66rem;
+  }
+
+  .user-workspace-shell .dashboard-page .rating-card-stars {
+    font-size: .64rem;
+  }
+
+  .user-workspace-shell .dashboard-page .rating-card-date {
+    font-size: .58rem;
+  }
+
+  .user-workspace-shell .dashboard-page .text-muted {
+    padding: 0 .6rem .6rem;
+    margin: 0;
+    font-size: .65rem;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .user-dashboard-content {
+    padding-left: .55rem !important;
+    padding-right: .55rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stats-grid {
+    gap: .3rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-card {
+    min-height: 58px !important;
+    padding: .42rem .48rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-icon {
+    width: 24px !important;
+    height: 24px !important;
+    flex-basis: 24px !important;
+    font-size: .58rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-content h3 {
+    font-size: .82rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .stat-content p {
+    font-size: .53rem !important;
+  }
+
+  .user-workspace-shell .dashboard-page .quick-actions .btn {
+    min-height: 29px !important;
+    font-size: .56rem !important;
+  }
+}
