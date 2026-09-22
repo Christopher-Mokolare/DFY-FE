@@ -78,11 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch { /* fall back to login user */ }
       localStorage.setItem('currentUser', JSON.stringify(fullUser))
       setUser(fullUser)
+      // Login awaits this function and navigates immediately after it resolves.
+      // Defer clearing the flag by one macrotask so Layout cannot render Header
+      // between the auth state update and the destination navigation.
+      setTimeout(() => setLoginTransitioning(false), 0)
       return fullUser
-    } finally {
-      // Keep the transition flag active until Login has handed control to the
-      // destination route. Layout uses it to suppress Header during this window.
-      setLoginTransitioning(false)
     }
   }, [])
 
