@@ -90,7 +90,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {activity.length > 0 && <div className="section-card dashboard-feed-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent activity</h2><Link to="/tasks/my-completed" className="section-link">View all <i className="fas fa-arrow-right" /></Link></div><div className="activity-feed">
+            {activity.length > 0 && <div className="section-card dashboard-feed-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent activity</h2><Link to="/activity" className="section-link">View all <i className="fas fa-arrow-right" /></Link></div><div className="activity-feed">
               {activity.slice(0, 6).map((a, i) => {
                 const title = a.taskName || a.title || a.name || a.description || a.message || 'Task updated'
                 const description = a.taskName || a.title || a.name ? (a.description || a.message || '') : ''
