@@ -55,7 +55,7 @@ export default function MyCompletedTasks() {
   if (loading) return <div className="loading-state"><div className="spinner" /><p>Loading completed tasks...</p></div>
 
   return (
-    <div style={{ paddingBottom: '3rem' }}>
+    <div className="my-completed-page" style={{ paddingBottom: '3rem' }}>
       <div className="page-header">
         <div className="container">
           <h1><i className="fas fa-trophy" /> Completed Tasks</h1>
