@@ -965,3 +965,27 @@
   outline-offset: 2px;
   border-radius: 10px;
 }
+
+
+/* Unread notification count in the workspace topbar bell */
+.admin-notification-button {
+  position: relative;
+}
+.admin-notification-button .admin-topbar-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 .3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 800;
+  line-height: 1;
+}
