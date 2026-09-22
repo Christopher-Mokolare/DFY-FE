@@ -31,7 +31,7 @@ export default function TaskCard({ variant, status, amount, title, description, 
       footer={actions ? <div className="task-card__actions">{actions}</div> : undefined}
     >
       <h3 className="task-card__title">{title}</h3>
-      <div className="task-card__description">{description || <span aria-hidden="true">&nbsp;</span>}</div>
+      {description && <div className="task-card__description">{description}</div>}
       {meta && <div className="task-card__meta">{meta}</div>}
       {extra && <div className="task-card__extra">{extra}</div>}
     </WorkspaceCard>
