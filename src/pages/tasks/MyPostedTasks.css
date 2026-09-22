@@ -140,3 +140,33 @@
   }
 }
 
+
+
+/* Keep task actions usable on every viewport. */
+.task-card-footer .action-row {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.task-card-footer .action-row > .btn,
+.task-card-footer .action-row > a {
+  flex: 1 1 140px;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+}
+@media (max-width: 640px) {
+  .task-card-footer .action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .task-card-footer .action-row > .btn,
+  .task-card-footer .action-row > a {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+  }
+}
