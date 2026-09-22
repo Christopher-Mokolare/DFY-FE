@@ -132,6 +132,7 @@ export default function MyActiveTasks() {
                   title={t.taskName || t.taskDescription}
                   description={t.taskName ? t.taskDescription : undefined}
                   meta={<><span><i className="fas fa-map-marker-alt" /> {t.area}</span>{t.dateNeeded && <span><i className="fas fa-calendar" /> {new Date(t.dateNeeded).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}<span><i className="fas fa-user" /> {t.userName}</span>{t.userContact && <span><i className="fas fa-phone" /> {t.userContact}</span>}</>}
+                  extra={<><div className="task-earnings"><span className="task-earnings-label">You earn</span><strong>R{Number(t.payoutAmount || t.budget * 0.85).toFixed(0)}</strong></div><div className="task-protection"><i className="fas fa-shield-alt" /><span>Protected payment · Direct bank payout</span></div></>}
                   actions={<div className="active-task-actions">
                     <div className="active-task-contact-actions">
                       <button className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate('/tasks/' + t.taskId + '/chat?title=' + encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat'))}><i className="fas fa-comment" /> Chat</button>
