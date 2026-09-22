@@ -2245,3 +2245,117 @@
     width: 100%;
   }
 }
+
+
+/* Final bank account spacing correction */
+.user-workspace-shell .bank-account-form-card,
+.user-workspace-shell .bank-account-list-card {
+  padding: 1.5rem;
+}
+
+.user-workspace-shell .bank-account-card-header {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  align-items: flex-start;
+}
+
+.user-workspace-shell .bank-account-card-header > div:last-child {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0;
+}
+
+.user-workspace-shell .bank-account-card-header h2 {
+  margin: 0;
+}
+
+.user-workspace-shell .bank-account-card-header p {
+  margin: .3rem 0 0;
+}
+
+.user-workspace-shell .bank-form-grid {
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0;
+  gap: 1rem;
+}
+
+.user-workspace-shell .bank-form-grid:last-of-type {
+  margin-bottom: 1.1rem;
+}
+
+.user-workspace-shell .bank-form-grid .form-group {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.user-workspace-shell .bank-account-form-card form {
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .user-workspace-shell .bank-account-form-card,
+  .user-workspace-shell .bank-account-list-card {
+    padding: 1rem;
+  }
+
+  .user-workspace-shell .bank-account-card-header {
+    gap: .65rem;
+    margin-bottom: 1rem;
+  }
+
+  .user-workspace-shell .bank-account-card-header > div:last-child {
+    flex: 1 1 0;
+  }
+
+  .user-workspace-shell .bank-account-card-header h2 {
+    font-size: .95rem;
+    line-height: 1.3;
+  }
+
+  .user-workspace-shell .bank-account-card-header p {
+    margin-top: .25rem;
+    font-size: .78rem;
+    line-height: 1.45;
+  }
+
+  .user-workspace-shell .bank-form-grid {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+    margin-bottom: .75rem;
+  }
+
+  .user-workspace-shell .bank-form-grid:last-of-type {
+    margin-bottom: 1rem;
+  }
+
+  .user-workspace-shell .bank-account-form-card .form-group {
+    margin: 0;
+  }
+
+  .user-workspace-shell .bank-submit {
+    width: 100%;
+    margin-top: .1rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-shell .bank-account-form-card,
+  .user-workspace-shell .bank-account-list-card {
+    padding: .9rem;
+  }
+
+  .user-workspace-shell .bank-account-card-header {
+    margin-bottom: .85rem;
+  }
+
+  .user-workspace-shell .bank-account-card-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+}
