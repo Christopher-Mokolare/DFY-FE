@@ -1534,3 +1534,63 @@ html, body, #root {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Admin sidebar — same grouped workspace treatment as the authenticated user shell. */
+.admin-sidebar {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-brand {
+  flex: 0 0 auto;
+}
+.admin-brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  border-radius: 11px;
+  background: transparent;
+  box-shadow: none;
+}
+.admin-nav-sections {
+  gap: 1rem;
+}
+.admin-nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+.admin-sidebar-section-label {
+  padding: 0 .7rem .35rem;
+  color: #64748b;
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.admin-nav-section:first-child .admin-sidebar-section-label {
+  color: #64748b;
+}
+.admin-profile-link {
+  text-decoration: none;
+}
+.admin-profile-link:hover {
+  color: inherit;
+}
+.admin-sidebar-footer {
+  flex: 0 0 auto;
+}
+@media (max-width: 768px) {
+  .admin-sidebar {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .admin-nav-sections {
+    padding-bottom: .5rem;
+  }
+}
