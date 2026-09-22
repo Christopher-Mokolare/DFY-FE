@@ -62,63 +62,148 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="dashboard-page">
-        <div className="dashboard-header"><div className="container">
-          <div className="dashboard-role-pill"><i className={'fas ' + (type === 'runner' ? 'fa-running' : type === 'both' ? 'fa-handshake' : 'fa-user-tie')} /> {type === 'both' ? 'Creator & Runner' : type ? (type === 'creator' ? 'Creator' : 'Runner') : 'Account setup'}</div>
-          <h1>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {name}</h1>
-          <p>{type === 'runner' ? 'Find tasks, manage active work and track your payouts.' : type === 'both' ? 'Manage your posted tasks and the work you are completing.' : 'Manage your posted tasks, payments and activity.'}</p>
-          {isProfileIncomplete() && <div className="profile-alert">
-            <div><h6><i className="fas fa-user-circle" /> Profile {completion}% complete</h6><div className="progress-bar-wrap"><div className="progress-bar-fill" style={{ width: completion + '%' }} /></div><p>Complete your profile to unlock all account features, including posting and payout access.</p></div>
-            <Link to="/user/profile" className="btn btn-secondary btn-sm">Complete Profile</Link>
-          </div>}
-        </div></div>
-
-        <div className="container dashboard-body">
-          {loading ? <div className="loading-state"><div className="spinner" /><p>Loading your dashboard...</p></div> : <>
-            <div className="stats-grid">{statCards.map(([label, value, icon]) => <div className="stat-card" key={String(label)}><div className="stat-icon bg-primary"><i className={'fas ' + icon} /></div><div className="stat-content"><h3>{value}</h3><p>{label}</p></div></div>)}</div>
-
-            <div className="section-card">
-              <div className="section-header"><h2><i className="fas fa-bolt" /> Quick actions</h2></div>
-              <div className="quick-actions">
-                {canPostErrands() && !isProfileIncomplete() && <button className="btn btn-primary" onClick={handlePostErrand}><i className="fas fa-plus" /> Post a Task</button>}
-                {canAcceptTasks() && <button className="btn btn-primary" onClick={() => navigate('/tasks/browse')}><i className="fas fa-search" /> Find a Task</button>}
-                {(type === 'creator' || type === 'both') && <Link to="/tasks/my-posted" className="btn btn-outline"><i className="fas fa-list" /> My Posted Tasks</Link>}
-                {(type === 'runner' || type === 'both') && <Link to="/tasks/my-active" className="btn btn-outline"><i className="fas fa-tasks" /> My Active Tasks</Link>}
-                {(type === 'runner' || type === 'both') && <Link to="/user/profile?section=banking" className="btn btn-secondary"><i className="fas fa-university" /> Bank Account</Link>}
-                <Link to="/notifications" className="btn btn-outline"><i className="fas fa-bell" /> Notifications</Link>
-                <Link to="/user/profile" className="btn btn-secondary"><i className="fas fa-user" /> Profile</Link>
-              </div>
+      <div className="admin-page user-overview-page">
+        <section className="admin-welcome">
+          <div>
+            <div className="admin-eyebrow">
+              <span className="admin-pulse" /> ACCOUNT OVERVIEW
             </div>
+            <h1>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {name}.</h1>
+            <p>{type === 'runner' ? 'Find tasks, manage active work and track your payouts.' : type === 'both' ? 'Manage your posted tasks and the work you are completing.' : 'Manage your posted tasks, payments and activity.'}</p>
+          </div>
+          <div className="admin-date">
+            <i className="far fa-calendar" />
+            {new Date().toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </div>
+        </section>
 
-            {activity.length > 0 && <div className="section-card dashboard-feed-card"><div className="section-header"><h2><i className="fas fa-history" /> Recent activity</h2><Link to="/activity" className="section-link">View all <i className="fas fa-arrow-right" /></Link></div><div className="activity-feed">
-              {activity.slice(0, 6).map((a, i) => {
-                const title = a.taskName || a.title || a.name || a.description || a.message || 'Task updated'
-                const description = a.taskName || a.title || a.name ? (a.description || a.message || '') : ''
-                const status = String(a.status || 'Updated').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ')
-                return <div key={a.id || i} className="activity-item">
-                  <div className="activity-icon"><i className={'fas ' + (a.type === 'created' ? 'fa-plus-circle' : 'fa-handshake')} /></div>
-                  <div className="activity-content">
-                    <strong className="activity-title">{title}</strong>
-                    {description && <p>{description}</p>}
-                    <span className="activity-meta">{status} <span aria-hidden="true">·</span> {a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''}</span>
-                  </div>
-                </div>
-              })}
-            </div></div>}
+        {isProfileIncomplete() && (
+          <section className="user-overview-profile-alert">
+            <div>
+              <span className="admin-panel-kicker">PROFILE</span>
+              <strong><i className="fas fa-user-circle" /> {completion}% complete</strong>
+              <p>Complete your profile to unlock posting and payout features.</p>
+            </div>
+            <Link to="/user/profile" className="btn btn-secondary btn-sm">Complete profile</Link>
+          </section>
+        )}
 
-            {(type === 'runner' || type === 'both') && <div className="section-card"><div className="section-header"><h2><i className="fas fa-star" /> Recent reviews</h2></div>
-              {ratingsLoading ? <div className="loading-state"><div className="spinner" /></div> : ratings.length === 0 ? <p className="text-muted">No reviews yet. Complete tasks to build your reputation.</p> :
-                ratings.slice(0, 3).map(r => <div className="rating-card" key={r.id}>
-                  <div className="rating-card-header">
-                    <div><span className="rating-card-title">{r.taskName || 'Completed task'}</span><div className="rating-card-stars" aria-label={String(r.ratingValue) + ' out of 5 stars'}>{'★'.repeat(r.ratingValue)}{'☆'.repeat(5 - r.ratingValue)}</div></div>
-                    {r.createdAt && <span className="rating-card-date">{new Date(r.createdAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>}
-                  </div>
-                  {r.review && <p className="rating-card-review">“{r.review}”</p>}
-                </div>)}
-              {ratings.length > 3 && <Link to="/tasks/my-completed" className="section-link ratings-view-all">View all reviews <i className="fas fa-arrow-right" /></Link>}
-            </div>}
-          </>}
+        <section className="admin-kpi-grid" aria-label="Account metrics">
+          {statCards.map(([label, value, icon]) => (
+            <article className="admin-kpi" key={String(label)}>
+              <div className="admin-kpi-top"><span>{label}</span><i className={'fas ' + icon} /></div>
+              <strong>{value}</strong>
+              <small>{label === 'Available' ? 'Tasks ready to claim' : label === 'Active' ? 'Tasks you are working on' : label === 'Posted tasks' || label === 'Posted' ? 'Tasks you have posted' : label === 'Pending payout' ? 'Awaiting payout' : label === 'Paid out' ? 'Total runner earnings' : label === 'Awaiting action' ? 'Tasks requiring attention' : 'Completed tasks'}</small>
+            </article>
+          ))}
+        </section>
+
+        <section className="admin-attention-grid user-overview-actions">
+          {canPostErrands() && !isProfileIncomplete() && (
+            <Link to="/tasks/post" className="admin-attention-card neutral">
+              <div className="admin-attention-icon"><i className="fas fa-plus" /></div>
+              <div><span>Creator</span><strong>Post a task</strong><small>Create a new errand for the marketplace</small></div>
+              <i className="fas fa-arrow-right admin-attention-arrow" />
+            </Link>
+          )}
+          {canAcceptTasks() && (
+            <Link to="/tasks/browse" className="admin-attention-card warning">
+              <div className="admin-attention-icon"><i className="fas fa-search" /></div>
+              <div><span>Runner</span><strong>Find a task</strong><small>Browse available work and claim a task</small></div>
+              <i className="fas fa-arrow-right admin-attention-arrow" />
+            </Link>
+          )}
+          {(type === 'runner' || type === 'both') && (
+            <Link to="/tasks/my-active" className="admin-attention-card danger">
+              <div className="admin-attention-icon"><i className="fas fa-running" /></div>
+              <div><span>In progress</span><strong>My active tasks</strong><small>Continue work and manage completion</small></div>
+              <i className="fas fa-arrow-right admin-attention-arrow" />
+            </Link>
+          )}
+        </section>
+
+        <div className="admin-dashboard-grid user-overview-grid">
+          <section className="admin-panel admin-recent-panel">
+            <div className="admin-panel-header">
+              <div><span className="admin-panel-kicker">Activity</span><h2>Recent activity</h2></div>
+              <Link to="/activity">View all <i className="fas fa-arrow-right" /></Link>
+            </div>
+            {activity.length > 0 ? (
+              <div className="admin-recent-list">
+                {activity.slice(0, 6).map((a, i) => {
+                  const title = a.taskName || a.title || a.name || a.description || a.message || 'Task updated'
+                  const status = String(a.status || 'Updated').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ')
+                  return (
+                    <div key={a.id || i} className="admin-recent-row">
+                      <div className="admin-recent-main">
+                        <div className="admin-task-avatar">{title.charAt(0).toUpperCase()}</div>
+                        <div>
+                          <strong>{title}</strong>
+                          <span>{status} · {a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : 'Recently'}</span>
+                        </div>
+                      </div>
+                      <div className="admin-recent-value">
+                        <span className="admin-status neutral">{status}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="admin-empty"><i className="fas fa-inbox" /><p>No recent activity yet.</p></div>
+            )}
+          </section>
+
+          <aside className="admin-panel admin-quick-panel">
+            <div className="admin-panel-header">
+              <div><span className="admin-panel-kicker">Shortcuts</span><h2>Quick actions</h2></div>
+            </div>
+            <div className="admin-action-list">
+              {canPostErrands() && !isProfileIncomplete() && <Link to="/tasks/post"><span className="admin-action-icon orange"><i className="fas fa-plus" /></span><span><strong>Post a task</strong><small>Create a new errand</small></span><i className="fas fa-chevron-right" /></Link>}
+              {canAcceptTasks() && <Link to="/tasks/browse"><span className="admin-action-icon blue"><i className="fas fa-search" /></span><span><strong>Find a task</strong><small>Browse available work</small></span><i className="fas fa-chevron-right" /></Link>}
+              {(type === 'creator' || type === 'both') && <Link to="/tasks/my-posted"><span className="admin-action-icon green"><i className="fas fa-list-check" /></span><span><strong>My posted tasks</strong><small>Track your errands</small></span><i className="fas fa-chevron-right" /></Link>}
+              {(type === 'runner' || type === 'both') && <Link to="/tasks/my-active"><span className="admin-action-icon red"><i className="fas fa-running" /></span><span><strong>My active tasks</strong><small>Continue your work</small></span><i className="fas fa-chevron-right" /></Link>}
+              {(type === 'runner' || type === 'both') && <Link to="/user/profile?section=banking"><span className="admin-action-icon slate"><i className="fas fa-university" /></span><span><strong>Bank account</strong><small>Manage payout details</small></span><i className="fas fa-chevron-right" /></Link>}
+              <Link to="/notifications"><span className="admin-action-icon slate"><i className="fas fa-bell" /></span><span><strong>Notifications</strong><small>Review account updates</small></span><i className="fas fa-chevron-right" /></Link>
+              <Link to="/user/profile"><span className="admin-action-icon slate"><i className="fas fa-user" /></span><span><strong>Profile</strong><small>Manage your account</small></span><i className="fas fa-chevron-right" /></Link>
+            </div>
+          </aside>
         </div>
+
+        {(type === 'runner' || type === 'both') && (
+          <section className="admin-health-panel user-overview-health">
+            <div>
+              <span className="admin-panel-kicker">Reputation</span>
+              <h2>Keep building your runner profile</h2>
+              <p>{ratings.length ? 'Your recent reviews are shown below.' : 'No reviews yet. Complete tasks and build your reputation with reliable work.'}</p>
+            </div>
+            <div className="admin-health-metrics">
+              <div><strong>{stats?.myActiveTasks ?? 0}</strong><span>Active tasks</span></div>
+              <div><strong>{ratings.length}</strong><span>Recent reviews</span></div>
+              <div><strong>{Number(stats?.totalEarnings ?? 0) > 0 ? 'R' + Number(stats?.totalEarnings ?? 0).toFixed(0) : 'R0'}</strong><span>Paid out</span></div>
+            </div>
+          </section>
+        )}
+
+        {(type === 'runner' || type === 'both') && ratings.length > 0 && (
+          <section className="admin-panel user-overview-reviews">
+            <div className="admin-panel-header">
+              <div><span className="admin-panel-kicker">Feedback</span><h2>Recent reviews</h2></div>
+              <Link to="/tasks/my-completed">View completed <i className="fas fa-arrow-right" /></Link>
+            </div>
+            <div className="user-overview-review-list">
+              {ratings.slice(0, 3).map(r => (
+                <div className="user-overview-review" key={r.id}>
+                  <div>
+                    <strong>{r.taskName || 'Completed task'}</strong>
+                    <span className="user-overview-stars" aria-label={String(r.ratingValue) + ' out of 5 stars'}>{'★'.repeat(r.ratingValue)}{'☆'.repeat(5 - r.ratingValue)}</span>
+                  </div>
+                  {r.review && <p>“{r.review}”</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
       {ProfileIncompleteModal}
     </>
