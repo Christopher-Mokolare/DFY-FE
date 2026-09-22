@@ -4631,3 +4631,810 @@
     padding: .85rem .8rem;
   }
 }
+
+
+/* ==========================================================================
+   Authenticated workspace consistency pass
+   Every Creator / Runner page uses the same compact operations rhythm:
+   headings -> toolbar/form surface -> content cards -> compact actions.
+   ========================================================================== */
+
+.user-workspace-shell .admin-content {
+  background: #f5f7fb;
+}
+
+.user-workspace-shell .admin-content > .container,
+.user-workspace-shell .admin-content > .activity-page,
+.user-workspace-shell .admin-content > .notif-page,
+.user-workspace-shell .admin-content > .messages-hub,
+.user-workspace-shell .admin-content > .profile-page,
+.user-workspace-shell .admin-content > .my-completed-page,
+.user-workspace-shell .admin-content > .my-posted-page,
+.user-workspace-shell .admin-content > .active-tasks-page,
+.user-workspace-shell .admin-content > .browse-page,
+.user-workspace-shell .admin-content > .post-page,
+.user-workspace-shell .admin-content > .bank-accounts-page {
+  min-width: 0;
+}
+
+.user-workspace-shell .page-header {
+  max-width: 1320px;
+  margin: 0 auto 1.1rem;
+  padding: 0;
+  background: transparent;
+  color: #172033;
+  box-shadow: none;
+}
+
+.user-workspace-shell .page-header h1 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+  letter-spacing: -.035em;
+}
+
+.user-workspace-shell .page-header p {
+  margin: .35rem 0 0;
+  color: #718096;
+  font-size: .82rem;
+}
+
+.user-workspace-shell .section-card,
+.user-workspace-shell .filters-card,
+.user-workspace-shell .profile-card,
+.user-workspace-shell .task-card,
+.user-workspace-shell .status-section,
+.user-workspace-shell .notification-card,
+.user-workspace-shell .messages-toolbar,
+.user-workspace-shell .messages-empty,
+.user-workspace-shell .conversation-card,
+.user-workspace-shell .notif-item,
+.user-workspace-shell .activity-row,
+.user-workspace-shell .usertype-card {
+  border: 1px solid #e7ebf1;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-shell .section-card {
+  border-radius: 15px;
+  background: #fff;
+}
+
+.user-workspace-shell .section-header {
+  min-height: 56px;
+  padding: .9rem 1.1rem;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .section-header h2 {
+  color: #273449;
+  font-size: .86rem;
+  font-weight: 750;
+}
+
+.user-workspace-shell .section-header h2 i {
+  color: var(--primary);
+  margin-right: .45rem;
+}
+
+.user-workspace-shell .form-group {
+  margin-bottom: .85rem;
+}
+
+.user-workspace-shell .form-label {
+  margin-bottom: .35rem;
+  color: #475569;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.user-workspace-shell .form-input,
+.user-workspace-shell .form-select,
+.user-workspace-shell .form-textarea {
+  min-height: 40px;
+  padding: .58rem .75rem;
+  border-color: #dfe5ec;
+  border-radius: 9px;
+  font-size: .8rem;
+  box-shadow: none;
+}
+
+.user-workspace-shell .form-textarea {
+  min-height: 92px;
+}
+
+.user-workspace-shell .form-input:focus,
+.user-workspace-shell .form-select:focus,
+.user-workspace-shell .form-textarea:focus {
+  border-color: rgba(255,138,0,.7);
+  box-shadow: 0 0 0 3px rgba(255,138,0,.1);
+}
+
+.user-workspace-shell .btn {
+  min-height: 38px;
+  padding: .55rem .85rem;
+  border-radius: 9px;
+  font-size: .76rem;
+}
+
+.user-workspace-shell .btn-sm {
+  min-height: 34px;
+  padding: .42rem .7rem;
+  font-size: .72rem;
+}
+
+.user-workspace-shell .btn-lg {
+  min-height: 42px;
+  padding: .65rem 1rem;
+  font-size: .82rem;
+}
+
+.user-workspace-shell .empty-state {
+  min-height: 180px;
+  padding: 2.25rem 1rem;
+  border-radius: 15px;
+}
+
+.user-workspace-shell .empty-state i {
+  font-size: 2rem;
+}
+
+/* Activity */
+.user-workspace-shell .activity-page,
+.user-workspace-shell .activity-container {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.user-workspace-shell .activity-list {
+  display: grid;
+  gap: .55rem;
+}
+
+.user-workspace-shell .activity-row {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  min-height: 68px;
+  padding: .8rem 1rem;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.user-workspace-shell .activity-row-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #fff7ed;
+  color: var(--primary);
+}
+
+.user-workspace-shell .activity-row-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.user-workspace-shell .activity-row-content h2 {
+  margin: 0;
+  color: #273449;
+  font-size: .78rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-workspace-shell .activity-row-content p {
+  margin: .15rem 0;
+  color: #718096;
+  font-size: .7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-workspace-shell .activity-row-meta {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  color: #94a3b8;
+  font-size: .64rem;
+}
+
+.user-workspace-shell .activity-status {
+  padding: .18rem .45rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* Browse / posted / active / completed task surfaces */
+.user-workspace-shell .browse-page,
+.user-workspace-shell .my-posted-page,
+.user-workspace-shell .active-tasks-page,
+.user-workspace-shell .my-completed-page {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.user-workspace-shell .browse-content {
+  padding: 0;
+}
+
+.user-workspace-shell .browse-toolbar {
+  min-height: 42px;
+  margin-bottom: .7rem;
+}
+
+.user-workspace-shell .browse-toolbar-stat {
+  color: #64748b;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.user-workspace-shell .filters-card {
+  margin-bottom: .8rem;
+  padding: .9rem 1rem;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.user-workspace-shell .filters-row {
+  gap: .6rem;
+}
+
+.user-workspace-shell .tasks-grid {
+  gap: .75rem;
+}
+
+.user-workspace-shell .task-card {
+  border-radius: 13px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.user-workspace-shell .task-card-header {
+  padding: .72rem .9rem;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .task-card-body {
+  padding: .8rem .9rem;
+}
+
+.user-workspace-shell .task-card-footer {
+  min-height: 50px;
+  padding: .65rem .9rem;
+  border-top: 1px solid #edf0f4;
+  background: #fff;
+}
+
+.user-workspace-shell .task-title {
+  margin: 0 0 .5rem;
+  color: #273449;
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.user-workspace-shell .task-meta {
+  gap: .35rem .7rem;
+}
+
+.user-workspace-shell .task-meta-item {
+  min-width: 0;
+  color: #718096;
+  font-size: .67rem;
+}
+
+.user-workspace-shell .task-meta-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-workspace-shell .task-budget {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.user-workspace-shell .task-card-footer .action-row {
+  gap: .4rem;
+}
+
+.user-workspace-shell .runner-info {
+  margin-top: .6rem;
+  padding-top: .6rem;
+  border-top: 1px solid #edf0f4;
+}
+
+/* Post an Errand */
+.user-workspace-shell .post-page {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.user-workspace-shell .post-page-heading,
+.user-workspace-shell .bank-page-heading,
+.user-workspace-shell .messages-hero {
+  margin-bottom: 1rem;
+}
+
+.user-workspace-shell .post-form-card {
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.user-workspace-shell .form-section {
+  padding: 1rem 0;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .form-section:last-of-type {
+  border-bottom: 0;
+}
+
+.user-workspace-shell .form-steps {
+  padding: .7rem 1rem;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .step-nav {
+  margin-top: 1rem;
+  padding-top: .8rem;
+  border-top: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .priority-options {
+  gap: .6rem;
+}
+
+.user-workspace-shell .priority-card {
+  padding: .75rem .85rem;
+  border-radius: 10px;
+}
+
+.user-workspace-shell .commission-breakdown,
+.user-workspace-shell .payment-info-card {
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+/* Messages / notifications */
+.user-workspace-shell .messages-hub,
+.user-workspace-shell .notif-page {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.user-workspace-shell .messages-hero {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.user-workspace-shell .messages-hero h1 {
+  margin: .35rem 0;
+  color: #172033;
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+  letter-spacing: -.035em;
+}
+
+.user-workspace-shell .messages-hero p {
+  max-width: 720px;
+  color: #718096;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.user-workspace-shell .messages-toolbar {
+  padding: .65rem;
+  margin-bottom: .7rem;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.user-workspace-shell .messages-search {
+  min-height: 38px;
+}
+
+.user-workspace-shell .conversation-list {
+  display: grid;
+  gap: .55rem;
+}
+
+.user-workspace-shell .conversation-card {
+  min-width: 0;
+  padding: .75rem .9rem;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.user-workspace-shell .conversation-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+}
+
+.user-workspace-shell .conversation-top strong {
+  font-size: .78rem;
+}
+
+.user-workspace-shell .conversation-meta,
+.user-workspace-shell .conversation-main p {
+  font-size: .68rem;
+}
+
+.user-workspace-shell .notif-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-bottom: .65rem;
+}
+
+.user-workspace-shell .notif-tabs {
+  display: flex;
+  gap: .35rem;
+  margin-bottom: .7rem;
+  padding: .3rem;
+  overflow-x: auto;
+  border: 1px solid #e7ebf1;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.user-workspace-shell .notif-tab {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: .35rem .65rem;
+  border-radius: 8px;
+}
+
+.user-workspace-shell .notif-list {
+  display: grid;
+  gap: .5rem;
+}
+
+.user-workspace-shell .notif-item {
+  border-radius: 12px;
+  background: #fff;
+}
+
+.user-workspace-shell .notif-main-action {
+  min-width: 0;
+  padding: .75rem .85rem;
+}
+
+.user-workspace-shell .notif-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+}
+
+.user-workspace-shell .notif-title {
+  font-size: .76rem;
+}
+
+.user-workspace-shell .notif-message {
+  font-size: .69rem;
+}
+
+/* Profile */
+.user-workspace-shell .profile-grid {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+  gap: .9rem;
+}
+
+.user-workspace-shell .profile-card {
+  padding: 1.1rem;
+  border-radius: 15px;
+}
+
+.user-workspace-shell .profile-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 13px;
+  margin-bottom: .65rem;
+}
+
+.user-workspace-shell .profile-grid > div:last-child {
+  gap: .9rem !important;
+}
+
+.user-workspace-shell .usertype-grid {
+  gap: .65rem;
+}
+
+.user-workspace-shell .usertype-card {
+  padding: .85rem;
+  border-radius: 11px;
+}
+
+.user-workspace-shell .usertype-perks {
+  margin-top: .55rem;
+}
+
+/* Bank accounts */
+.user-workspace-shell .bank-page-grid {
+  gap: .8rem;
+}
+
+.user-workspace-shell .bank-account-form-card,
+.user-workspace-shell .bank-account-list-card {
+  border-radius: 15px;
+  padding: 1.1rem;
+}
+
+.user-workspace-shell .bank-form-grid {
+  gap: .75rem;
+}
+
+.user-workspace-shell .bank-form-footer {
+  gap: .7rem;
+  padding-top: .85rem;
+  margin-top: .15rem;
+  border-top: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .bank-account-row {
+  gap: .75rem;
+  padding: .75rem 0;
+}
+
+.user-workspace-shell .bank-account-row-actions {
+  gap: .5rem;
+}
+
+/* Compact action-required and chat surfaces if reached from notifications/tasks. */
+.user-workspace-shell .action-required-page,
+.user-workspace-shell .task-chat-page {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+/* Mobile: the same system, not a separate squeezed design. */
+@media (max-width: 768px) {
+  .user-workspace-main .admin-content {
+    padding: 1.1rem .9rem 1.75rem;
+  }
+
+  .user-workspace-shell .page-header {
+    margin-bottom: .85rem;
+  }
+
+  .user-workspace-shell .page-header h1,
+  .user-workspace-shell .messages-hero h1 {
+    font-size: 1.35rem;
+  }
+
+  .user-workspace-shell .page-header p,
+  .user-workspace-shell .messages-hero p {
+    font-size: .72rem;
+  }
+
+  .user-workspace-shell .section-card {
+    border-radius: 12px;
+  }
+
+  .user-workspace-shell .section-header {
+    min-height: 50px;
+    padding: .75rem .85rem;
+  }
+
+  .user-workspace-shell .section-header h2 {
+    font-size: .78rem;
+  }
+
+  .user-workspace-shell .form-row-2 {
+    gap: 0;
+  }
+
+  .user-workspace-shell .form-input,
+  .user-workspace-shell .form-select,
+  .user-workspace-shell .form-textarea {
+    min-height: 38px;
+    font-size: .76rem;
+  }
+
+  .user-workspace-shell .form-textarea {
+    min-height: 82px;
+  }
+
+  .user-workspace-shell .btn {
+    min-height: 36px;
+    padding: .48rem .7rem;
+    font-size: .7rem;
+  }
+
+  .user-workspace-shell .task-card-header {
+    padding: .65rem .75rem;
+  }
+
+  .user-workspace-shell .task-card-body {
+    padding: .7rem .75rem;
+  }
+
+  .user-workspace-shell .task-card-footer {
+    padding: .55rem .75rem;
+  }
+
+  .user-workspace-shell .task-card-footer .action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+
+  .user-workspace-shell .task-card-footer .action-row .btn {
+    width: 100%;
+  }
+
+  .user-workspace-shell .filters-card {
+    padding: .75rem;
+  }
+
+  .user-workspace-shell .filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .filters-row .btn {
+    width: 100%;
+  }
+
+  .user-workspace-shell .post-form-card {
+    max-width: none;
+    border-radius: 12px;
+  }
+
+  .user-workspace-shell .post-page-heading-meta,
+  .user-workspace-shell .bank-page-heading-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .4rem;
+    width: 100%;
+  }
+
+  .user-workspace-shell .post-page-heading-meta span,
+  .user-workspace-shell .bank-page-heading-meta span {
+    justify-content: center;
+    min-width: 0;
+    font-size: .62rem;
+  }
+
+  .user-workspace-shell .form-section {
+    padding: .8rem 0;
+  }
+
+  .user-workspace-shell .form-steps {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .user-workspace-shell .step-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .step-nav .btn {
+    width: 100%;
+  }
+
+  .user-workspace-shell .messages-toolbar {
+    padding: .5rem;
+  }
+
+  .user-workspace-shell .conversation-card {
+    padding: .65rem .7rem;
+  }
+
+  .user-workspace-shell .conversation-top {
+    gap: .4rem;
+  }
+
+  .user-workspace-shell .conversation-top time {
+    font-size: .6rem;
+  }
+
+  .user-workspace-shell .notif-actions {
+    justify-content: stretch;
+  }
+
+  .user-workspace-shell .notif-actions .btn {
+    flex: 1;
+  }
+
+  .user-workspace-shell .notif-tab {
+    min-height: 32px;
+    padding: .3rem .55rem;
+    font-size: .66rem;
+  }
+
+  .user-workspace-shell .notif-main-action {
+    padding: .65rem .7rem;
+  }
+
+  .user-workspace-shell .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .profile-card {
+    position: static;
+  }
+
+  .user-workspace-shell .profile-grid > div:last-child {
+    gap: .7rem !important;
+  }
+
+  .user-workspace-shell .bank-account-form-card,
+  .user-workspace-shell .bank-account-list-card {
+    padding: .85rem;
+  }
+
+  .user-workspace-shell .bank-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .bank-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .user-workspace-shell .bank-submit {
+    width: 100%;
+  }
+
+  .user-workspace-shell .bank-account-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .user-workspace-shell .bank-account-row-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-workspace-shell .active-task-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .user-workspace-shell .active-task-contact-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-workspace-main .admin-content {
+    padding-inline: .7rem;
+  }
+
+  .user-workspace-shell .page-header h1,
+  .user-workspace-shell .messages-hero h1 {
+    font-size: 1.22rem;
+  }
+
+  .user-workspace-shell .task-card-footer .action-row,
+  .user-workspace-shell .active-task-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .active-task-contact-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .user-workspace-shell .post-page-heading-meta,
+  .user-workspace-shell .bank-page-heading-meta {
+    grid-template-columns: 1fr;
+  }
+}
