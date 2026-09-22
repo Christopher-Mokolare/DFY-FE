@@ -2778,3 +2778,243 @@
     border-radius: 11px;
   }
 }
+
+
+/* Bank accounts — operations workspace treatment */
+.user-workspace-shell .bank-accounts-page {
+  max-width: none;
+}
+
+.user-workspace-shell .bank-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.user-workspace-shell .bank-page-heading h1 {
+  margin: .35rem 0 0;
+  color: #172033;
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  letter-spacing: -.035em;
+}
+
+.user-workspace-shell .bank-page-heading p {
+  margin: .4rem 0 0;
+  color: #718096;
+  font-size: .86rem;
+}
+
+.user-workspace-shell .bank-page-heading-meta {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.user-workspace-shell .bank-page-heading-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem .7rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.user-workspace-shell .bank-page-heading-meta i {
+  color: var(--primary);
+}
+
+.user-workspace-shell .bank-page-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+}
+
+.user-workspace-shell .bank-page-alert > div {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+
+.user-workspace-shell .bank-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, .9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.user-workspace-shell .bank-page-grid .admin-panel {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #e7ebf1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15,23,42,.035);
+}
+
+.user-workspace-shell .bank-page-grid .admin-panel-header {
+  margin-bottom: .75rem;
+}
+
+.user-workspace-shell .bank-page-grid .admin-panel-header h2 {
+  margin-top: .15rem;
+  color: #172033;
+  font-size: 1rem;
+}
+
+.user-workspace-shell .bank-panel-description {
+  margin: 0 0 1rem;
+  color: #718096;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.user-workspace-shell .bank-account-card-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: var(--primary);
+}
+
+.user-workspace-shell .bank-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  margin-bottom: 1.1rem;
+  padding: .75rem .85rem;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+.user-workspace-shell .bank-security-note i {
+  color: #16a34a;
+  margin-top: .1rem;
+}
+
+.user-workspace-shell .bank-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.user-workspace-shell .bank-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: .9rem;
+  border-top: 1px solid #edf0f4;
+}
+
+.user-workspace-shell .bank-form-footer > span {
+  color: #718096;
+  font-size: .72rem;
+}
+
+.user-workspace-shell .bank-form-footer > span i {
+  color: #94a3b8;
+  margin-right: .3rem;
+}
+
+.user-workspace-shell .bank-account-count {
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.user-workspace-shell .bank-account-list {
+  display: grid;
+  gap: .65rem;
+}
+
+.user-workspace-shell .bank-account-row {
+  border-color: #e7ebf1;
+  box-shadow: none;
+}
+
+.user-workspace-shell .bank-account-row-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.user-workspace-shell .bank-account-row-main strong {
+  display: block;
+  color: #1e293b;
+  font-size: .84rem;
+}
+
+.user-workspace-shell .bank-account-row-main span,
+.user-workspace-shell .bank-account-row-main small {
+  display: block;
+  margin-top: .18rem;
+  color: #718096;
+  font-size: .72rem;
+}
+
+.user-workspace-shell .bank-account-error {
+  margin: 0;
+  border-radius: 11px;
+}
+
+@media (max-width: 900px) {
+  .user-workspace-shell .bank-page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-workspace-shell .bank-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .8rem;
+    margin-bottom: 1rem;
+  }
+
+  .user-workspace-shell .bank-page-heading-meta {
+    justify-content: flex-start;
+  }
+
+  .user-workspace-shell .bank-page-grid .admin-panel {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .user-workspace-shell .bank-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-workspace-shell .bank-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .user-workspace-shell .bank-form-footer .bank-submit {
+    width: 100%;
+  }
+}
