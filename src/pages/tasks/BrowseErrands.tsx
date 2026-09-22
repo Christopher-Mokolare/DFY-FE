@@ -131,6 +131,7 @@ export default function BrowseErrands() {
           tasks.length === 0 ? <div className="empty-state"><i className="fas fa-search" /><h3>No Tasks Found</h3><p>{search || category ? 'Try adjusting your filters.' : 'No tasks are available right now.'}</p></div> :
           <div className="tasks-grid">{tasks.map(task => (
             <TaskCard
+              key={task.taskId || task.id}
               variant="browse"
               status={<span className="task-category"><i className="fas fa-tag" /> {task.category || 'General'}</span>}
               title={title(task)}
