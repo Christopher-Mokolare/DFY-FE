@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { tasksApi } from '../../api'
 import type { Task } from '../../types'
+import TaskCard from '../../components/workspace/TaskCard'
 
 function normStatus(value?: string) {
   return (value || '').toLowerCase().replace(/[_ -]/g, '')
@@ -63,7 +64,7 @@ export default function ActionRequired() {
   if (loading) return <div className="loading-state"><div className="spinner" /><p>Checking tasks that need your attention...</p></div>
 
   return (
-    <div style={{ paddingBottom: '3rem' }}>
+    <div className="action-required-page">
       <div className="page-header">
         <div className="container">
           <h1><i className={`fas ${filter === 'payments' ? 'fa-credit-card' : 'fa-triangle-exclamation'}`} /> {filter === 'confirmation' ? 'Await Confirmation' : filter === 'payments' ? 'Payments' : 'Action Required'}</h1>
