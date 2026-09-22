@@ -25,8 +25,9 @@ export default function Login() {
     try {
       const loggedInUser = await login(email, password)
       sessionStorage.removeItem('dfy:loggedOut')
-      const isAdminUser = !!loggedInUser?.isAdmin || !!loggedInUser?.roles?.includes('Admin')
-      const dest = from || (isAdminUser ? '/admin/dashboard' : '/dashboard')
+      const isAdminUser = !!loggedInUser?.isAdmin || !!loggedInUser?.roles?.includes('Admin') || loggedInUser?.userType === 'Admin'
+      // Admins must never inherit a creator/runner return route such as /dashboard.
+      const dest = isAdminUser ? '/admin/dashboard' : (from || '/dashboard')
       navigate(dest, { replace: true })
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed. Please try again.')
