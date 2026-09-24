@@ -46,8 +46,8 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright E2E
-        run: npm test
+      - name: Run staging E2E
+        run: npm test -- e2e/staging.spec.ts
 
       - name: Upload Playwright report
         if: always()
@@ -58,3 +58,46 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: ignore
+
+
+  mobile-e2e:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      BASE_URL: http://127.0.0.1:4173
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        env:
+          VITE_API_URL: https://dfy-be-staging.onrender.com/api/v1
+          VITE_SIGNALR_URL: https://dfy-be-staging.onrender.com/taskHub
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Vite preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/dfy-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/dfy-preview.log
+          exit 1
+
+      - name: Run mobile responsiveness suite
+        run: npm test -- e2e/mobile-responsive.spec.ts
