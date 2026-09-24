@@ -51,7 +51,17 @@ async function createTask(page: Page, taskName: string, description: string, bud
   await page.locator('select').first().selectOption({ label: 'Grocery Shopping' })
   await page.getByPlaceholder('Area / Suburb').fill('Johannesburg')
   await page.locator('input[type="radio"][value="standard"]').check()
-  await page.getByRole('button', { name: /^Next$/i }).first().click()
+
+  // Confirm the real Step 1 form accepted every required value before advancing.
+  await expect(page.locator('input[placeholder*="e.g."]')).toHaveValue(taskName)
+  await expect(page.locator('textarea[placeholder*="Tell us what you need"]')).toHaveValue(description)
+  await expect(page.locator('select').first()).toHaveValue('Grocery Shopping')
+  await expect(page.getByPlaceholder('Area / Suburb')).toHaveValue('Johannesburg')
+  await expect(page.locator('input[type="radio"][value="standard"]')).toBeChecked()
+
+  const stepOneNext = page.getByRole('button', { name: /^Next$/i }).first()
+  await expect(stepOneNext).toBeEnabled({ timeout: 10_000 })
+  await stepOneNext.click()
 
   await page.locator('input[type="datetime-local"]').fill(futureDate(days))
   await page.locator('input[type="number"]').fill(String(budget))
