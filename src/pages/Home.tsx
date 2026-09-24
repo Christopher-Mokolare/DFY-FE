@@ -12,6 +12,7 @@ const features = [
 
 interface PublicStats {
   tasksCompleted: number
+  taskCreators: number
   activeRunners: number
   averageRating: number
 }
@@ -37,6 +38,7 @@ export default function Home() {
         if (mounted && data) {
           setStats({
             tasksCompleted: Number(data.tasksCompleted) || 0,
+            taskCreators: Number(data.taskCreators) || 0,
             activeRunners: Number(data.activeRunners) || 0,
             averageRating: Number(data.averageRating) || 0,
           })
@@ -62,6 +64,7 @@ export default function Home() {
             </div>
             <div className="hero-stats">
               <div><strong>{stats ? formatCount(stats.tasksCompleted) : '—'}</strong><span>Tasks completed</span></div>
+              <div><strong>{stats ? formatCount(stats.taskCreators) : '—'}</strong><span>Task creators</span></div>
               <div><strong>{stats ? formatCount(stats.activeRunners) : '—'}</strong><span>Active runners</span></div>
               <div><strong>{stats ? stats.averageRating.toFixed(1) + '/5' : '—'}</strong><span>Average rating</span></div>
             </div>
