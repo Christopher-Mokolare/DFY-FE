@@ -116,9 +116,17 @@ async function assertMobileLayout(page: Page, route: string) {
           '.admin-content > section, .admin-content > article, .admin-content > form, .admin-content > div'
         ))
         const boxes = candidates
-          .map(el => el.getBoundingClientRect())
-          .filter(box => box.width > 0 && box.height > 0)
-        return boxes.length ? Math.max(...boxes.map(box => box.bottom)) : 0
+          .map(el => {
+            const box = el.getBoundingClientRect()
+            const styles = getComputedStyle(el)
+            const paddingBottom = parseFloat(styles.paddingBottom) || 0
+            const borderBottom = parseFloat(styles.borderBottomWidth) || 0
+            return box.width > 0 && box.height > 0
+              ? box.bottom - paddingBottom - borderBottom
+              : 0
+          })
+          .filter(bottom => bottom > 0)
+        return boxes.length ? Math.max(...boxes) : 0
       })
       expect(
         contentBottom,
