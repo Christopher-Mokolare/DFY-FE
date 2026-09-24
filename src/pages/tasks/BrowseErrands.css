@@ -375,3 +375,99 @@
 .user-dashboard-content .browse-page .browse-toolbar-stat { display:flex; align-items:baseline; gap:.5rem; color:var(--text-muted); font-size:.78rem; }
 .user-dashboard-content .browse-page .browse-toolbar-stat strong { color:var(--text); font-size:1.1rem; }
 @media (max-width:768px){ .user-dashboard-content .browse-page .browse-toolbar{align-items:stretch;flex-direction:column;} .user-dashboard-content .browse-page .browse-toolbar .btn{width:100%;justify-content:center;} }
+
+
+/* Mobile task details: use a contained bottom sheet so the footer never sits
+   underneath browser chrome or the fixed app navigation. */
+@media (max-width: 768px) {
+  .browse-page .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .browse-page .task-detail-modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 12px);
+    margin: 0;
+    border-radius: 18px 18px 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .browse-page .task-detail-modal::before {
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  .browse-page .task-detail-modal .modal-header {
+    flex: 0 0 auto;
+    padding: .85rem 1rem .75rem;
+    gap: .75rem;
+  }
+
+  .browse-page .task-detail-modal .modal-header > div {
+    min-width: 0;
+  }
+
+  .browse-page .task-detail-modal .modal-header h3 {
+    min-width: 0;
+    margin: .2rem 0 0;
+    font-size: 1rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .browse-page .task-detail-modal .modal-header h3 i {
+    flex: 0 0 auto;
+  }
+
+  .browse-page .task-detail-modal .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem;
+  }
+
+  .browse-page .task-detail-modal .detail-description {
+    margin-bottom: .9rem;
+    line-height: 1.55;
+  }
+
+  .browse-page .task-detail-modal .detail-grid {
+    grid-template-columns: 1fr;
+    gap: .55rem;
+    margin-bottom: .85rem;
+  }
+
+  .browse-page .task-detail-modal .detail-item {
+    padding: .7rem .75rem;
+  }
+
+  .browse-page .task-detail-modal .task-protection {
+    padding: .65rem .75rem;
+  }
+
+  .browse-page .task-detail-modal .detail-notes {
+    margin-top: .85rem;
+    padding-top: .85rem;
+  }
+
+  .browse-page .task-detail-modal .modal-footer {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .55rem;
+    padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+    background: var(--card);
+  }
+
+  .browse-page .task-detail-modal .modal-footer .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
