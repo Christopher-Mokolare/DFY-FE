@@ -1,0 +1,19 @@
+name: Seed staging test tasks
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chore/seed-staging-five-tasks
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Seed creator and five Browse Tasks
+        env:
+          DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
+          DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
+          DFY_API_URL: https://dfy-be-staging.onrender.com/api/v1
+          TEST_PASSWORD: Test@1234
+        run: node scripts/seed-staging-test-data.mjs
