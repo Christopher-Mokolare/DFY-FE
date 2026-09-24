@@ -655,3 +655,85 @@
     font-size: .57rem !important;
   }
 }
+
+
+/* =========================================================
+   Mobile runner KPI cards
+   Keep the four runner metrics compact, balanced and readable
+   without changing the desktop dashboard layout.
+   ========================================================= */
+@media (max-width: 768px) {
+  .user-overview-page .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+  }
+
+  .user-overview-page .admin-kpi {
+    min-width: 0;
+    min-height: 92px;
+    padding: .75rem;
+    border-radius: 11px;
+    overflow: hidden;
+  }
+
+  .user-overview-page .admin-kpi-top {
+    min-width: 0;
+    gap: .35rem;
+    margin-bottom: .35rem;
+  }
+
+  .user-overview-page .admin-kpi-top span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .67rem;
+  }
+
+  .user-overview-page .admin-kpi-top i {
+    flex: 0 0 auto;
+    font-size: .72rem;
+  }
+
+  .user-overview-page .admin-kpi > strong {
+    display: block;
+    min-width: 0;
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .user-overview-page .admin-kpi > small {
+    display: block;
+    min-width: 0;
+    margin-top: .22rem;
+    font-size: .61rem;
+    line-height: 1.25;
+    color: #718096;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-overview-page .admin-kpi-grid {
+    gap: .45rem;
+  }
+
+  .user-overview-page .admin-kpi {
+    min-height: 88px;
+    padding: .65rem;
+  }
+
+  .user-overview-page .admin-kpi-top span {
+    font-size: .62rem;
+  }
+
+  .user-overview-page .admin-kpi > strong {
+    font-size: 1.05rem;
+  }
+
+  .user-overview-page .admin-kpi > small {
+    font-size: .57rem;
+  }
+}
