@@ -6,7 +6,9 @@ test.use({
   hasTouch: true,
   isMobile: true,
   // Local preview uses the staging API; CI-only web-security bypass permits the cross-origin test API.
-  launchOptions: { args: ['--disable-web-security'] },
+  launchOptions: {
+    args: process.env.BASE_URL?.startsWith('http://127.0.0.1') ? ['--disable-web-security'] : [],
+  },
 })
 
 const PASSWORD = 'Test@1234'
