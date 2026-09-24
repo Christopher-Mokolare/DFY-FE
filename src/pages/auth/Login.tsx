@@ -10,7 +10,9 @@ export default function Login() {
   // An explicit logout starts a fresh session. Never reuse the protected route
   // that may have redirected to /login before logout navigation completed.
   const loggedOut = sessionStorage.getItem('dfy:loggedOut') === '1'
-  const from = loggedOut ? null : ((location.state as any)?.from?.pathname || null)
+  const authState = location.state as any
+  const from = loggedOut ? null : (authState?.from?.pathname || null)
+  const returnToTaskId = loggedOut ? null : authState?.returnToTaskId
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,7 +29,9 @@ export default function Login() {
       sessionStorage.removeItem('dfy:loggedOut')
       const isAdminUser = !!loggedInUser?.isAdmin || !!loggedInUser?.roles?.includes('Admin') || loggedInUser?.userType === 'Admin'
       // Admins must never inherit a creator/runner return route such as /dashboard.
-      const dest = isAdminUser ? '/admin/dashboard' : (from || '/dashboard')
+      const dest = isAdminUser
+        ? '/admin/dashboard'
+        : (returnToTaskId ? `/tasks/browse?taskId=${encodeURIComponent(returnToTaskId)}` : (from || '/dashboard'))
       navigate(dest, { replace: true })
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed. Please try again.')
