@@ -7,6 +7,7 @@ export const publicApi = {
 
 export const authApi = {
   login: (data: LoginModel) => api.post<AuthResponse>('/auth/login', data),
+  refresh: () => api.post<AuthResponse>('/auth/refresh'),
   register: (data: RegisterModel) => api.post<AuthResponse>('/auth/register', data),
   changePassword: (data: object) => api.post('/auth/change-password', data),
   getProfile: () => api.get('/user/profile'),
