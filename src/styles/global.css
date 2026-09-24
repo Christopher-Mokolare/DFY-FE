@@ -1609,7 +1609,7 @@ html, body, #root {
   .modal-overlay {
     align-items: flex-end;
     justify-content: center;
-    padding: 0;
+    padding: 0 0 var(--mobile-bottom-nav-height, 64px);
     overflow: hidden;
     overscroll-behavior: none;
   }
@@ -1617,7 +1617,7 @@ html, body, #root {
   .modal-box {
     width: 100%;
     max-width: none;
-    max-height: min(94dvh, calc(100dvh - 10px));
+    max-height: min(94dvh, calc(100dvh - var(--mobile-bottom-nav-height, 64px) - 10px));
     height: auto;
     margin: 0;
     border-radius: 18px 18px 0 0;
