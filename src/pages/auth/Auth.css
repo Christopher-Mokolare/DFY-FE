@@ -143,3 +143,28 @@
     background: #e0e0e0; border-radius: 2px;
   }
 }
+
+
+@media (max-width: 768px) {
+  .password-input .form-input {
+    padding-right: 3.5rem;
+    font-size: 16px;
+  }
+
+  .toggle-password {
+    right: 0.5rem;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .toggle-password i {
+    font-size: 1rem;
+  }
+}
