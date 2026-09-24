@@ -5958,6 +5958,13 @@
   }
 }
 
+@media (max-width: 768px) {
+  /* Keep the end of the profile form clear of the fixed mobile navigation. */
+  .user-workspace-shell .profile-page {
+    padding-bottom: 4rem !important;
+  }
+}
+
 @media (max-width: 420px) {
   .user-workspace-main .admin-topbar { padding-inline: .7rem; }
   .user-workspace-main .admin-content {
