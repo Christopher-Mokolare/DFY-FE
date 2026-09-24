@@ -330,9 +330,11 @@
   }
 
   .hero-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: repeat(2, auto);
     gap: 0.75rem;
+    align-items: stretch;
     margin-top: 1.75rem;
     width: 100%;
   }
