@@ -10,6 +10,11 @@ jobs:
   seed:
     runs-on: ubuntu-latest
     steps:
+      - name: Align seed script with backend profile and verification requirements
+        run: |
+          sed -i 's/userType: "Creator"/userType: "creator",\n  dateOfBirth: "1990-01-01"/' scripts/seed-staging-test-data.mjs
+          sed -i 's/address: creator.address, password:/address: creator.address, dateOfBirth: creator.dateOfBirth, password:/' scripts/seed-staging-test-data.mjs
+          sed -i 's/method:"PATCH", headers:{Authorization:\`Bearer \${adminToken}\`}/method:"PATCH", headers:{Authorization:\`Bearer \${adminToken}\`}, body:JSON.stringify({reason:"Staging mobile Browse Tasks test data"})/' scripts/seed-staging-test-data.mjs
       - name: Seed creator and five Browse Tasks
         env:
           DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
