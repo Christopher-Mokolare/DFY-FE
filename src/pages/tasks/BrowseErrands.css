@@ -389,6 +389,7 @@
   .browse-page .task-detail-modal {
     width: 100%;
     max-width: none;
+    height: min(92dvh, calc(100dvh - 12px));
     max-height: calc(100dvh - 12px);
     margin: 0;
     border-radius: 18px 18px 0 0;
