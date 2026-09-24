@@ -1,4 +1,4 @@
-name: Seed staging test tasks
+name: Seed staging test tasks with Playwright
 
 on:
   workflow_dispatch:
@@ -11,15 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Align seed script with backend profile and verification requirements
-        run: |
-          sed -i 's/userType: "Creator"/userType: "creator",\n  dateOfBirth: "1990-01-01"/' scripts/seed-staging-test-data.mjs
-          sed -i 's/address: creator.address, password:/address: creator.address, dateOfBirth: creator.dateOfBirth, password:/' scripts/seed-staging-test-data.mjs
-          sed -i 's/method:"PATCH", headers:{Authorization:\`Bearer \${adminToken}\`}/method:"PATCH", headers:{Authorization:\`Bearer \${adminToken}\`}, body:JSON.stringify({reason:"Staging mobile Browse Tasks test data"})/' scripts/seed-staging-test-data.mjs
-      - name: Seed creator and five Browse Tasks
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Seed and verify five Browse Tasks through the real UI
         env:
+          BASE_URL: https://dfy-fe-staging.onrender.com
+          DFY_CREATOR_EMAIL: ${{ secrets.DFY_CREATOR_EMAIL }}
+          DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
           DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
           DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
-          DFY_API_URL: https://dfy-be-staging.onrender.com/api/v1
-          TEST_PASSWORD: Test@1234
-        run: node scripts/seed-staging-test-data.mjs
+        run: npx playwright test e2e/seed-staging-browse-tasks.spec.ts --project=chromium --workers=1
