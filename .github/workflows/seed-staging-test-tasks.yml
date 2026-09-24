@@ -10,6 +10,7 @@ jobs:
   seed:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Align seed script with backend profile and verification requirements
         run: |
           sed -i 's/userType: "Creator"/userType: "creator",\n  dateOfBirth: "1990-01-01"/' scripts/seed-staging-test-data.mjs
