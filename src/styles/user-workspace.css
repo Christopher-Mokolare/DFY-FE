@@ -5892,7 +5892,9 @@
     max-width: 100%;
     min-width: 0;
     overflow-x: clip;
-    padding: 1rem .85rem calc(5.8rem + env(safe-area-inset-bottom));
+    overflow-y: visible;
+    padding: 1rem .85rem calc(8.5rem + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
   }
   .user-workspace-main .admin-content > * {
     min-width: 0;
@@ -5950,7 +5952,9 @@
 @media (max-width: 420px) {
   .user-workspace-main .admin-topbar { padding-inline: .7rem; }
   .user-workspace-main .admin-content {
-    padding-inline: .7rem; padding-bottom: calc(5.7rem + env(safe-area-inset-bottom));
+    padding-inline: .7rem;
+    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
   }
   .user-workspace-main .user-workspace-topbar-context .admin-breadcrumb { font-size: .57rem; }
   .user-workspace-main .user-workspace-topbar-context strong { font-size: .74rem; }
