@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import './Auth.css'
 
@@ -7,12 +7,13 @@ export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   // An explicit logout starts a fresh session. Never reuse the protected route
   // that may have redirected to /login before logout navigation completed.
   const loggedOut = sessionStorage.getItem('dfy:loggedOut') === '1'
   const authState = location.state as any
   const from = loggedOut ? null : (authState?.from?.pathname || null)
-  const returnToTaskId = loggedOut ? null : authState?.returnToTaskId
+  const returnToTaskId = loggedOut ? null : (authState?.returnToTaskId || searchParams.get('returnToTaskId'))
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -96,7 +97,10 @@ export default function Login() {
           </form>
 
           <p className="auth-switch">
-            Don't have an account? <Link to="/register" state={returnToTaskId ? { returnToTaskId } : undefined}>Sign Up</Link>
+            Don't have an account? <Link
+              to={returnToTaskId ? `/register?returnToTaskId=${encodeURIComponent(returnToTaskId)}` : '/register'}
+              state={returnToTaskId ? { returnToTaskId } : undefined}
+            >Sign Up</Link>
           </p>
         </div>
       </div>
