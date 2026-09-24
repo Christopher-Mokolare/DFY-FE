@@ -396,6 +396,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    animation: none;
   }
 
   .browse-page .task-detail-modal::before {
