@@ -59,6 +59,15 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'COMMUNICATION' },
   ].filter(item => item.show)
 
+
+  const mobileNavigation = [
+    { label: 'Home', to: '/dashboard', icon: 'fa-house' },
+    { label: 'Browse', to: '/tasks/browse', icon: 'fa-magnifying-glass' },
+    { label: 'Tasks', to: isRunner ? '/tasks/my-active' : '/tasks/my-posted', icon: 'fa-list-check' },
+    { label: 'Payments', to: '/tasks/action-required?filter=payments', icon: 'fa-credit-card', badge: paymentRequiredCount },
+    { label: 'Profile', to: '/user/profile', icon: 'fa-user' },
+  ]
+
   const renderNavigation = (items: typeof navigation) => items.map(item => (
     <NavLink key={item.section + item.to} to={item.to} onClick={() => setMobileOpen(false)} end={item.to === '/dashboard'} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
       <i className={`fas ${item.icon}`} />
@@ -154,6 +163,24 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
         </header>
 
         <main className="admin-content user-dashboard-content">{children}</main>
+
+        <nav className="user-mobile-bottom-nav" aria-label="Primary mobile navigation">
+          {mobileNavigation.map(item => (
+            <NavLink
+              key={item.label}
+              to={item.to}
+              end={item.to === '/dashboard' || item.to === '/user/profile'}
+              className={({ isActive }) => `user-mobile-bottom-nav__item ${isActive ? 'active' : ''}`}
+              aria-label={item.badge ? `${item.label}, ${item.badge} pending` : item.label}
+            >
+              <span className="user-mobile-bottom-nav__icon">
+                <i className={`fas ${item.icon}`} />
+                {!!item.badge && <span className="user-mobile-bottom-nav__badge">{item.badge > 99 ? '99+' : item.badge}</span>}
+              </span>
+              <span className="user-mobile-bottom-nav__label">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </div>
   )
