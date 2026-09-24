@@ -79,7 +79,12 @@ export default function BrowseErrands() {
   const payout = (task: Task) => Number((task as any).payoutAmount ?? 0)
 
   const openAccept = (task: Task) => {
-    if (!isAuthenticated()) return navigate('/login', { state: { returnToTaskId: task.taskId } })
+    if (!isAuthenticated()) {
+      const taskId = String(task.taskId || task.id || '')
+      return navigate(taskId ? `/login?returnToTaskId=${encodeURIComponent(taskId)}` : '/login', {
+        state: taskId ? { returnToTaskId: taskId } : undefined,
+      })
+    }
     if (isProfileIncomplete()) return navigate('/user/profile')
     if (!canAcceptTasks()) return
     setTermsAccepted(false)
