@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import type { Task } from '../../types'
@@ -10,6 +10,7 @@ const CATEGORIES = ['Grocery Shopping', 'Delivery', 'Cleaning', 'Gardening', 'Mo
 export default function BrowseErrands() {
   const { isAuthenticated, canAcceptTasks, isProfileIncomplete, user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -45,6 +46,21 @@ export default function BrowseErrands() {
   }, [search, category])
 
   useEffect(() => { load(page, search, category) }, [page])
+
+  useEffect(() => {
+    const taskId = searchParams.get('taskId')
+    if (!taskId || loading || tasks.length === 0) return
+    const task = tasks.find(t => String(t.taskId || t.id) === taskId)
+    if (task) {
+      setTermsAccepted(false)
+      setClaimError('')
+      setClaimModal(task)
+      setSearchParams(prev => {
+        prev.delete('taskId')
+        return prev
+      }, { replace: true })
+    }
+  }, [searchParams, tasks, loading, setSearchParams])
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1)
