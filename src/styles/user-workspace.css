@@ -5893,8 +5893,17 @@
     min-width: 0;
     overflow-x: clip;
     overflow-y: visible;
-    padding: 1rem .85rem calc(8.5rem + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+    padding: 1rem .85rem 2rem;
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Reserve real document space for the fixed bottom navigation. Padding alone
+     can still allow the last painted section to sit behind a fixed toolbar. */
+  .user-workspace-main .admin-content::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: calc(5.5rem + env(safe-area-inset-bottom));
   }
   .user-workspace-main .admin-content > * {
     min-width: 0;
@@ -5953,8 +5962,12 @@
   .user-workspace-main .admin-topbar { padding-inline: .7rem; }
   .user-workspace-main .admin-content {
     padding-inline: .7rem;
-    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+    padding-bottom: 2rem;
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .user-workspace-main .admin-content::after {
+    height: calc(5.5rem + env(safe-area-inset-bottom));
   }
   .user-workspace-main .user-workspace-topbar-context .admin-breadcrumb { font-size: .57rem; }
   .user-workspace-main .user-workspace-topbar-context strong { font-size: .74rem; }
