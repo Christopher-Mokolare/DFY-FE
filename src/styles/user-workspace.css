@@ -5832,6 +5832,22 @@
    Responsive mobile workspace
    Desktop keeps the persistent sidebar. Mobile uses a native bottom nav.
    ========================================================================== */
+.user-workspace-shell,
+.user-workspace-shell .admin-main {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.user-workspace-shell .admin-main,
+.user-workspace-shell .admin-content,
+.user-workspace-shell .admin-content > * {
+  min-width: 0;
+}
+
+.admin-mobile-logout { display: none; }
+
 .user-mobile-bottom-nav { display: none; }
 
 @media (max-width: 768px) {
@@ -5854,14 +5870,37 @@
     color: #172033; font-size: .78rem;
   }
   .user-workspace-main .admin-topbar-right { gap: .4rem; }
-  .user-workspace-main .admin-notification-button {
+  .user-workspace-main .admin-notification-button,
+  .user-workspace-main .admin-mobile-logout {
     width: 38px; height: 38px; flex: 0 0 38px; border-radius: 10px;
+  }
+  .user-workspace-main .admin-mobile-logout {
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    background: #f8fafc;
+    color: #334155;
+    cursor: pointer;
+  }
+  .user-workspace-main .admin-mobile-logout:active {
+    transform: scale(.96);
   }
   .user-workspace-main .admin-live-status { display: none; }
   .user-workspace-sidebar, .user-workspace-main .admin-sidebar-backdrop { display: none !important; }
   .user-workspace-main .admin-content {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
     padding: 1rem .85rem calc(5.8rem + env(safe-area-inset-bottom));
+  }
+  .user-workspace-main .admin-content > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .user-workspace-main .admin-content img,
+  .user-workspace-main .admin-content table {
+    max-width: 100%;
   }
   .user-workspace-shell .page-header { margin-bottom: 1rem; }
   .user-workspace-shell .page-header h1,

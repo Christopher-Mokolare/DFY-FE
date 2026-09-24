@@ -155,6 +155,9 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
               <i className="fas fa-bell" />
               {unreadNotifications > 0 && <span className="admin-topbar-badge" aria-label={unreadNotifications + ' unread notifications'}>{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
             </NavLink>
+            <button type="button" className="admin-icon-button admin-mobile-logout" onClick={logout} title="Sign out" aria-label="Sign out">
+              <i className="fas fa-arrow-right-from-bracket" />
+            </button>
             <div className="admin-live-status">
               <span />
               Account active
