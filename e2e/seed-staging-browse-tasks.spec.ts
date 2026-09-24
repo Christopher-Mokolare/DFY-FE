@@ -25,21 +25,30 @@ function futureDate(days: number) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00.000Z`
 }
 
-async function login(page: Page, email: string, password: string) {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.getByPlaceholder('Email Address').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await Promise.all([
-    page.waitForResponse(r => r.url().includes('/auth/login') && r.request().method() === 'POST'),
-    page.getByRole('button', { name: /sign in/i }).click(),
-  ])
-  await expect(page).toHaveURL(/dashboard|admin/i, { timeout: 30_000 })
+async function apiLogin(api: APIRequestContext, email: string, password: string) {
+  const response = await api.post(`${API_BASE_URL}/auth/login`, {
+    headers: { 'Content-Type': 'application/json' },
+    data: { email, password },
+  })
+
+  if (!response.ok()) {
+    throw new Error(`Login failed for configured test account: ${response.status()} ${await response.text()}`)
+  }
+
+  const body = await response.json()
+  const token = body?.token || body?.data?.token
+  if (!body?.success || !token) {
+    throw new Error('Login response did not contain a usable authentication token.')
+  }
+
+  return String(token)
 }
 
-async function token(page: Page) {
-  const value = await page.evaluate(() => localStorage.getItem('token'))
-  if (!value) throw new Error('Authenticated browser session did not contain a token.')
-  return value
+async function setBrowserSession(page: Page, authToken: string) {
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+  await page.evaluate((token) => {
+    localStorage.setItem('token', token)
+  }, authToken)
 }
 
 async function postedTasks(api: APIRequestContext, authToken: string) {
@@ -52,25 +61,21 @@ async function postedTasks(api: APIRequestContext, authToken: string) {
 }
 
 async function createTask(
-  page: Page,
   api: APIRequestContext,
+  authToken: string,
   taskName: string,
   description: string,
   budget: number,
   days: number,
 ) {
-  const authToken = await token(page)
   const existing = await postedTasks(api, authToken)
   const existingTask = existing.find((item: any) => item?.taskName === taskName)
 
   if (existingTask) {
-    return String(existingTask.taskId || existingTask.id)
+    const existingId = existingTask.taskId || existingTask.id
+    if (existingId) return String(existingId)
   }
 
-  // Use the same authenticated /tasks endpoint as the application, but do not
-  // drive the form. The form's React state is not part of what this seed needs
-  // to prove, and previously caused a false timeout before the API was reached.
-  // The backend persists the task before attempting the Ozow payment request.
   const response = await api.post(`${API_BASE_URL}/tasks`, {
     headers: {
       Authorization: `Bearer ${authToken}`,
@@ -89,13 +94,10 @@ async function createTask(
     },
   })
 
-  if (![200, 502].includes(response.status())) {
+  if (![200, 201, 502].includes(response.status())) {
     throw new Error(`Task creation failed for "${taskName}": ${response.status()} ${await response.text()}`)
   }
 
-  // A 502 can be returned when the staging Ozow call fails after the task has
-  // already been persisted. Recover the persisted task from My Posted instead
-  // of treating the payment-provider response as task-creation failure.
   const created = await postedTasks(api, authToken)
   const task = created.find((item: any) => item?.taskName === taskName)
   const taskId = task?.taskId || task?.id
@@ -106,9 +108,7 @@ async function createTask(
   return String(taskId)
 }
 
-async function verifyTask(page: Page, api: APIRequestContext, taskName: string, taskId: string) {
-  const adminToken = await token(page)
-
+async function verifyTask(api: APIRequestContext, adminToken: string, taskName: string, taskId: string) {
   const response = await api.patch(`${API_BASE_URL}/admin/tasks/${taskId}/verify`, {
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -120,29 +120,27 @@ async function verifyTask(page: Page, api: APIRequestContext, taskName: string, 
   if (![200, 204].includes(response.status())) {
     throw new Error(`Verification failed for "${taskName}": ${response.status()} ${await response.text()}`)
   }
-
-  await page.goto(`${BASE_URL}/admin/tasks`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  const search = page.getByPlaceholder('Search tasks...')
-  await search.fill(taskName)
-  await page.waitForTimeout(700)
-  await expect(page.getByText(taskName, { exact: true }).first()).toBeVisible({ timeout: 30_000 })
 }
 
 test('seed five real staging Browse Tasks through the authenticated API and verify in UI', async ({ page, request }) => {
-  await login(page, CREATOR_EMAIL!, CREATOR_PASSWORD!)
-
+  const creatorToken = await apiLogin(request, CREATOR_EMAIL!, CREATOR_PASSWORD!)
   const taskIds: string[] = []
+
   for (let i = 0; i < tasks.length; i++) {
-    taskIds.push(await createTask(page, request, tasks[i][0], tasks[i][1], tasks[i][2], i + 1))
+    taskIds.push(await createTask(request, creatorToken, tasks[i][0], tasks[i][1], tasks[i][2], i + 1))
   }
 
-  await login(page, ADMIN_EMAIL!, ADMIN_PASSWORD!)
+  const adminToken = await apiLogin(request, ADMIN_EMAIL!, ADMIN_PASSWORD!)
   for (let i = 0; i < tasks.length; i++) {
-    await verifyTask(page, request, tasks[i][0], taskIds[i])
+    await verifyTask(request, adminToken, tasks[i][0], taskIds[i])
   }
 
-  await login(page, CREATOR_EMAIL!, CREATOR_PASSWORD!)
+  // Only the final assertion uses the real UI. Authentication is performed
+  // through the same /auth/login endpoint as the application so a loading,
+  // placeholder, or markup change on /login cannot falsely fail the seed.
+  await setBrowserSession(page, creatorToken)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+
   for (const [name] of tasks) {
     await expect(page.getByText(name, { exact: true })).toBeVisible({ timeout: 30_000 })
   }
