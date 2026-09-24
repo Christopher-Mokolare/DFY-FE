@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import type { User } from '../types'
 import { authApi } from '../api'
 
@@ -43,6 +43,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [loginTransitioning, setLoginTransitioning] = useState(false)
 
+  const lastActivityRefreshRef = useRef(0)
+  const refreshInFlightRef = useRef<Promise<void> | null>(null)
+
+  const refreshSession = useCallback(async () => {
+    if (!localStorage.getItem('token')) return
+
+    if (refreshInFlightRef.current) {
+      await refreshInFlightRef.current
+      return
+    }
+
+    const request = authApi.refresh()
+      .then(res => {
+        const data = res.data
+        if (!data.success || !data.token) throw new Error(data.message || 'Session refresh failed')
+        localStorage.setItem('token', data.token)
+        setToken(data.token)
+        if (data.user) {
+          localStorage.setItem('currentUser', JSON.stringify(data.user))
+          setUser(data.user)
+        }
+        lastActivityRefreshRef.current = Date.now()
+      })
+      .finally(() => {
+        refreshInFlightRef.current = null
+      })
+
+    refreshInFlightRef.current = request
+    await request
+  }, [])
+
+
   useEffect(() => {
     // Refresh the authoritative profile in the background without blocking the
     // authenticated workspace from rendering.
@@ -59,6 +91,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => { /* keep the synchronously restored user */ })
   }, [session.token, session.user])
 
+  useEffect(() => {
+    if (!token) return
+
+    const tokenPayload = (() => {
+      try {
+        return JSON.parse(atob(token.split('.')[1])) as { exp?: number }
+      } catch {
+        return null
+      }
+    })()
+
+    const expiresAt = tokenPayload?.exp ? tokenPayload.exp * 1000 : 0
+    const remaining = expiresAt - Date.now()
+
+    if (remaining <= 0) {
+      logout()
+      return
+    }
+
+    const expiryTimer = window.setTimeout(() => logout(), remaining + 250)
+
+    const refreshOnActivity = () => {
+      const now = Date.now()
+      // Refresh at most once every 5 minutes while the user is active.
+      // The JWT itself expires after 30 minutes, so inactivity naturally
+      // allows the session to expire.
+      if (now - lastActivityRefreshRef.current < 5 * 60 * 1000) return
+      refreshSession().catch(() => {})
+    }
+
+    const events = ['pointerdown', 'keydown', 'touchstart', 'scroll', 'mousemove'] as const
+    events.forEach(event => window.addEventListener(event, refreshOnActivity, { passive: true }))
+
+    return () => {
+      window.clearTimeout(expiryTimer)
+      events.forEach(event => window.removeEventListener(event, refreshOnActivity))
+    }
+  }, [token, refreshSession, logout])
+
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     setLoginTransitioning(true)
     try {
@@ -68,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.message || 'Login failed')
       }
       localStorage.setItem('token', data.token)
+      lastActivityRefreshRef.current = Date.now()
       setToken(data.token)
     // Fetch full profile so idNumber/address are available for isProfileComplete
       let fullUser = data.user
