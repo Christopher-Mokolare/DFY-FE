@@ -147,6 +147,43 @@ async function assertMobileLayout(page: Page, route: string) {
 
 test.describe.configure({ mode: 'serial' })
 
+test.describe('mobile task details modal', () => {
+  test('view task modal stays fully inside the mobile viewport', async ({ page }) => {
+    await gotoWithRetry(page, '/tasks/browse')
+
+    const viewTask = page.getByRole('button', { name: /view task/i }).first()
+    await expect(viewTask).toBeVisible({ timeout: 30_000 })
+    await viewTask.click()
+
+    const modal = page.locator('.task-detail-modal')
+    await expect(modal).toBeVisible()
+
+    const viewport = page.viewportSize()
+    expect(viewport).not.toBeNull()
+
+    const box = await modal.boundingBox()
+    expect(box).not.toBeNull()
+
+    if (box && viewport) {
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.y).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1)
+      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1)
+    }
+
+    const footer = modal.locator('.modal-footer')
+    await expect(footer).toBeVisible()
+    await expect(footer.getByRole('button', { name: /close/i })).toBeVisible()
+    await expect(footer.getByRole('button', { name: /sign in|accept task|complete profile|not available/i })).toBeVisible()
+
+    const footerBox = await footer.boundingBox()
+    expect(footerBox).not.toBeNull()
+    if (footerBox && viewport) {
+      expect(footerBox.y + footerBox.height).toBeLessThanOrEqual(viewport.height + 1)
+    }
+  })
+})
+
 test.describe('mobile responsiveness - public screens', () => {
   for (const route of ['/', '/about', '/contact', '/terms', '/login', '/register', '/tasks/browse']) {
     test(route, async ({ page }) => {
