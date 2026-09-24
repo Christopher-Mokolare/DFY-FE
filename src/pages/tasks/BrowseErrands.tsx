@@ -63,7 +63,7 @@ export default function BrowseErrands() {
   const payout = (task: Task) => Number((task as any).payoutAmount ?? 0)
 
   const openAccept = (task: Task) => {
-    if (!isAuthenticated()) return navigate('/login')
+    if (!isAuthenticated()) return navigate('/login', { state: { returnToTaskId: task.taskId } })
     if (isProfileIncomplete()) return navigate('/user/profile')
     if (!canAcceptTasks()) return
     setTermsAccepted(false)
