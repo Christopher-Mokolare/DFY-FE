@@ -663,12 +663,14 @@
    without changing the desktop dashboard layout.
    ========================================================= */
 @media (max-width: 768px) {
-  .user-overview-page .admin-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .55rem;
+  .admin-page.user-overview-page .admin-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .55rem !important;
+    width: 100%;
   }
 
-  .user-overview-page .admin-kpi {
+  .admin-page.user-overview-page .admin-kpi {
     min-width: 0;
     min-height: 92px;
     padding: .75rem;
