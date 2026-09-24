@@ -91,6 +91,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => { /* keep the synchronously restored user */ })
   }, [session.token, session.user])
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('currentUser')
+    localStorage.removeItem('refreshToken')
+    setToken(null)
+    setUser(null)
+  }, [])
+
   useEffect(() => {
     if (!token) return
 
@@ -159,14 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoginTransitioning(false)
       throw error
     }
-  }, [])
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('currentUser')
-    localStorage.removeItem('refreshToken')
-    setToken(null)
-    setUser(null)
   }, [])
 
   const refreshUser = useCallback(() => {
