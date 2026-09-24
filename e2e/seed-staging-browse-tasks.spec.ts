@@ -48,7 +48,7 @@ async function createTask(page: Page, taskName: string, description: string, bud
 
   await page.locator('input[placeholder*="e.g."]').fill(taskName)
   await page.locator('textarea[placeholder*="Tell us what you need"]').fill(description)
-  await page.locator('select').first().selectOption({ label: 'Home' })
+  await page.locator('select').first().selectOption({ label: 'Grocery Shopping' })
   await page.getByPlaceholder('Area / Suburb').fill('Johannesburg')
   await page.locator('input[type="radio"][value="standard"]').check()
   await page.getByRole('button', { name: /^Next$/i }).first().click()
