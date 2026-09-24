@@ -96,7 +96,7 @@ export default function Login() {
           </form>
 
           <p className="auth-switch">
-            Don't have an account? <Link to="/register">Sign Up</Link>
+            Don't have an account? <Link to="/register" state={returnToTaskId ? { returnToTaskId } : undefined}>Sign Up</Link>
           </p>
         </div>
       </div>
