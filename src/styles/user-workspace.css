@@ -5909,6 +5909,10 @@
     min-width: 0;
     max-width: 100%;
   }
+  /* Every authenticated mobile page gets real end-space for the fixed bottom nav. */
+  .user-workspace-main .admin-content > :last-child {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important;
+  }
   .user-workspace-main .admin-content img,
   .user-workspace-main .admin-content table {
     max-width: 100%;
