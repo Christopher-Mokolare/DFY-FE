@@ -1,5 +1,7 @@
 import { test, expect, Page, request } from '@playwright/test'
 
+test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true })
+
 const PASSWORD = 'Test@1234'
 
 function makeEmail(prefix: string) {
