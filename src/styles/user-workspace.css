@@ -5913,6 +5913,12 @@
   .user-workspace-main .admin-content > :last-child {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important;
   }
+
+  /* Dashboard is a direct content child. Keep its actual painted bottom above
+     the fixed navigation when the page is scrolled fully to the end. */
+  .user-workspace-main .admin-content > .admin-page.user-overview-page {
+    margin-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
   .user-workspace-main .admin-content img,
   .user-workspace-main .admin-content table {
     max-width: 100%;
