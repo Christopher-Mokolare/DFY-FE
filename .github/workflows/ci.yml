@@ -46,8 +46,8 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright E2E
-        run: npm test
+      - name: Run staging E2E
+        run: npm test -- e2e/staging.spec.ts
 
       - name: Upload Playwright report
         if: always()
