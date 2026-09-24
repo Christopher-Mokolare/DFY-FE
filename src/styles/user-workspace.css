@@ -5903,7 +5903,7 @@
     content: '';
     display: block;
     width: 100%;
-    height: calc(5.5rem + env(safe-area-inset-bottom));
+    height: calc(7.5rem + env(safe-area-inset-bottom));
   }
   .user-workspace-main .admin-content > * {
     min-width: 0;
