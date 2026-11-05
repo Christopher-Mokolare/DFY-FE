@@ -331,3 +331,53 @@
   .auth-card { animation: none; }
   .auth-form-side .form-input, .auth-form-side .form-select, .role-card, .toggle-password { transition: none; }
 }
+
+
+/* Registration consent controls */
+.auth-form-side .consent-group { gap: 0.65rem; margin: 0.5rem 0 1.1rem; }
+.auth-form-side .consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: #566174;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  cursor: pointer;
+}
+.auth-form-side .consent-label input {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+  accent-color: #e87500;
+}
+.auth-form-side .consent-label a { color: #c85b00; font-weight: 700; }
+
+.auth-link-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #c85b00;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.auth-link-button:disabled { cursor: wait; opacity: 0.65; }
+
+.auth-card-single { grid-template-columns: minmax(0, 1fr); max-width: 620px; }
+.auth-form-side .form-group > label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #273244;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.auth-form-side .alert-success {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #a7d7b4;
+  border-radius: 0.75rem;
+  background: #f0fbf3;
+  color: #176534;
+  line-height: 1.5;
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { bankingApi, authApi } from '../../api'
+import GoogleIdentityButton from '../../components/auth/GoogleIdentityButton'
 
 interface BankOption {
   bankCode: string
@@ -38,6 +39,14 @@ export default function BankAccounts() {
     accountHolderName: '',
     accountType: 'personal',
   })
+  const [profileSecurity, setProfileSecurity] = useState<{ hasGoogleLogin: boolean; authenticatorTwoFactorEnabled: boolean } | null>(null)
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [stepUpPassword, setStepUpPassword] = useState('')
+  const [stepUpCode, setStepUpCode] = useState('')
+  const [stepUpGoogleToken, setStepUpGoogleToken] = useState<string | null>(null)
+  const [stepUpError, setStepUpError] = useState('')
+  const [stepUpLoading, setStepUpLoading] = useState(false)
+  const [stepUpOperation, setStepUpOperation] = useState<{ label: string; execute: (token: string) => Promise<void> } | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -69,10 +78,22 @@ export default function BankAccounts() {
       setAccountsError(err.response?.data?.message || 'Unable to load your bank accounts. Please try again.')
     }
 
-    if (profileResult.status === 'fulfilled' && !form.accountHolderName) {
+    if (profileResult.status === 'fulfilled') {
       const profile = profileResult.value.data?.data ?? profileResult.value.data
-      const profileName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim()
-      if (profileName) setForm(prev => ({ ...prev, accountHolderName: profileName }))
+      if (profile) {
+        setProfileSecurity({
+          hasGoogleLogin: !!profile.hasGoogleLogin,
+          authenticatorTwoFactorEnabled: !!profile.authenticatorTwoFactorEnabled,
+        })
+        if (!form.accountHolderName) {
+          const profileName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim()
+          if (profileName) setForm(prev => ({ ...prev, accountHolderName: profileName }))
+        }
+      } else {
+        setProfileSecurity(null)
+      }
+    } else {
+      setProfileSecurity(null)
     }
 
     setLoading(false)
@@ -84,34 +105,88 @@ export default function BankAccounts() {
     setForm(prev => ({ ...prev, [field]: event.target.value }))
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const requestStepUp = (
+    label: string,
+    execute: (token: string) => Promise<void>,
+  ) => {
+    if (!profileSecurity) {
+      setError('Unable to confirm your account security settings. Reload this page and try again.')
+      return
+    }
+    setError('')
+    setSuccess('')
+    setStepUpError('')
+    setStepUpPassword('')
+    setStepUpCode('')
+    setStepUpGoogleToken(null)
+    setStepUpOperation({ label, execute })
+    setStepUpOpen(true)
+  }
+
+  const completeStepUp = async (googleTokenOverride?: string) => {
+    if (!profileSecurity || !stepUpOperation || stepUpLoading) return
+    const googleIdToken = googleTokenOverride || stepUpGoogleToken || undefined
+    if (profileSecurity.hasGoogleLogin && !googleIdToken) {
+      setStepUpError('Confirm your linked Google account to continue.')
+      return
+    }
+    if (!profileSecurity.hasGoogleLogin && !stepUpPassword) {
+      setStepUpError('Enter your current password to continue.')
+      return
+    }
+    if (profileSecurity.authenticatorTwoFactorEnabled && !stepUpCode.trim()) {
+      setStepUpError('Enter your authenticator or recovery code to continue.')
+      return
+    }
+
+    setStepUpLoading(true)
+    setStepUpError('')
+    try {
+      const response = await authApi.reauthenticate({
+        currentPassword: profileSecurity.hasGoogleLogin ? undefined : stepUpPassword,
+        googleIdToken: profileSecurity.hasGoogleLogin ? googleIdToken : undefined,
+        secondFactorCode: profileSecurity.authenticatorTwoFactorEnabled ? stepUpCode.trim() : undefined,
+      })
+      const data = response.data?.data || response.data
+      if (!response.data?.success || !data?.stepUpToken) {
+        throw new Error(response.data?.message || 'Recent reauthentication could not be completed.')
+      }
+      const operation = stepUpOperation
+      const token = data.stepUpToken as string
+      setStepUpOpen(false)
+      setStepUpOperation(null)
+      setStepUpPassword('')
+      setStepUpCode('')
+      setStepUpGoogleToken(null)
+      await operation.execute(token)
+    } catch (err: any) {
+      setStepUpError(err.response?.data?.message || err.message || 'Reauthentication failed. Please try again.')
+    } finally {
+      setStepUpLoading(false)
+    }
+  }
+
+  const addAccountAfterStepUp = async (token: string, selectedBank: BankOption) => {
     setSaving(true)
     setError('')
     setSuccess('')
-
     try {
-      const selectedBank = banks.find(bank => (bank.bankCode || bank.bankGroupId) === form.bankCode)
-      if (!selectedBank) throw new Error('Please select a supported bank.')
-
       const response = await bankingApi.addBankAccount({
         bankCode: selectedBank.bankCode || selectedBank.bankGroupId,
         bankGroupId: selectedBank.bankGroupId,
         bankName: selectedBank.name,
-        accountNumber: form.accountNumber,
-        accountHolderName: form.accountHolderName,
+        accountNumber: form.accountNumber.trim(),
+        accountHolderName: form.accountHolderName.trim(),
         branchCode: selectedBank.branchCode,
         accountType: form.accountType,
-      })
-
+      }, token)
       const payload = response.data
       await load()
       if (payload?.success === false) {
         setError(payload.message || 'Bank account verification failed.')
         return
       }
-
-      setSuccess(payload?.message || 'Bank account added and verified successfully.')
+      setSuccess(payload?.message || 'Bank account added and verification was requested.')
       setForm({ bankCode: '', accountNumber: '', accountHolderName: '', accountType: 'personal' })
     } catch (err: any) {
       await load()
@@ -121,18 +196,36 @@ export default function BankAccounts() {
     }
   }
 
-  const retryVerification = async (id: number) => {
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    const selectedBank = banks.find(bank => (bank.bankCode || bank.bankGroupId) === form.bankCode)
+    if (!selectedBank) {
+      setError('Please select a supported bank.')
+      return
+    }
+    if (!/^\d{9,11}$/.test(form.accountNumber.trim())) {
+      setError('Enter a valid 9–11 digit account number.')
+      return
+    }
+    if (!form.accountHolderName.trim()) {
+      setError('Enter the account holder name.')
+      return
+    }
+    requestStepUp('Add bank account', token => addAccountAfterStepUp(token, selectedBank))
+  }
+
+  const retryVerificationAfterStepUp = async (id: number, token: string) => {
     setVerifyingId(id)
     setError('')
     setSuccess('')
     try {
-      const response = await bankingApi.verifyBankAccount(id)
+      const response = await bankingApi.verifyBankAccount(id, token)
       await load()
       if (response.data?.success === false) {
         setError(response.data?.message || 'Bank verification failed.')
         return
       }
-      setSuccess(response.data?.message || 'Bank account verified successfully.')
+      setSuccess(response.data?.message || 'Bank account verification status refreshed.')
     } catch (err: any) {
       await load()
       setError(err.response?.data?.message || 'Unable to verify the bank account.')
@@ -141,15 +234,15 @@ export default function BankAccounts() {
     }
   }
 
-  const removeAccount = async (account: BankAccount) => {
-    if (!window.confirm(`Remove ${account.bankName} account ${account.accountNumber} from your payout settings?`))
-      return
+  const retryVerification = (id: number) =>
+    requestStepUp('Retry bank verification', token => retryVerificationAfterStepUp(id, token))
 
+  const removeAccountAfterStepUp = async (account: BankAccount, token: string) => {
     setRemovingId(account.id)
     setError('')
     setSuccess('')
     try {
-      const response = await bankingApi.removeBankAccount(account.id)
+      const response = await bankingApi.removeBankAccount(account.id, token)
       await load()
       setSuccess(response.data?.message || 'Bank account removed.')
     } catch (err: any) {
@@ -166,12 +259,18 @@ export default function BankAccounts() {
     }
   }
 
-  const setDefaultPayoutAccount = async (account: BankAccount) => {
+  const removeAccount = async (account: BankAccount) => {
+    if (!window.confirm(`Remove ${account.bankName} account ending ${account.accountNumber.slice(-4)} from your payout settings?`))
+      return
+    requestStepUp('Remove bank account', token => removeAccountAfterStepUp(account, token))
+  }
+
+  const setDefaultAfterStepUp = async (account: BankAccount, token: string) => {
     setSaving(true)
     setError('')
     setSuccess('')
     try {
-      const response = await bankingApi.setDefaultPayoutAccount(account.id)
+      const response = await bankingApi.setDefaultPayoutAccount(account.id, token)
       await load()
       setSuccess(response.data?.message || 'Default payout account updated.')
     } catch (err: any) {
@@ -181,6 +280,9 @@ export default function BankAccounts() {
       setSaving(false)
     }
   }
+
+  const setDefaultPayoutAccount = (account: BankAccount) =>
+    requestStepUp('Change default payout account', token => setDefaultAfterStepUp(account, token))
 
   const payoutReadyCount = accounts.filter(account => account.isVerified).length
   const displayedAccounts = [...accounts].sort(
@@ -206,6 +308,43 @@ export default function BankAccounts() {
 
       {success && <div className="alert alert-success bank-page-alert"><i className="fas fa-check-circle" /> {success}</div>}
       {error && <div className="alert alert-error bank-page-alert"><i className="fas fa-circle-exclamation" /><div><strong>Something needs attention</strong><span>{error}</span></div></div>}
+
+      {stepUpOpen && stepUpOperation && (
+        <div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !stepUpLoading) { setStepUpOpen(false); setStepUpOperation(null) } }} style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15, 23, 42, .58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="payout-step-up-title" className="admin-panel" style={{ width: 'min(100%, 440px)', padding: '1.5rem' }}>
+            <div className="admin-panel-header">
+              <div><span className="admin-panel-kicker">Account security</span><h2 id="payout-step-up-title">Confirm it’s you</h2></div>
+              <button type="button" className="btn btn-secondary btn-sm" disabled={stepUpLoading} onClick={() => { setStepUpOpen(false); setStepUpOperation(null) }}>Close</button>
+            </div>
+            <p className="bank-panel-description">Reauthenticate before you {stepUpOperation.label.toLowerCase()}. The resulting authorization can be used for only one payout-settings change and expires in five minutes.</p>
+            {stepUpError && <div className="alert alert-error" role="alert">{stepUpError}</div>}
+            {profileSecurity?.hasGoogleLogin ? (
+              <div className="form-group">
+                <label className="form-label">Linked Google account</label>
+                <GoogleIdentityButton onCredential={token => { setStepUpGoogleToken(token); void completeStepUp(token) }} disabled={stepUpLoading} mode="signin" />
+              </div>
+            ) : (
+              <form onSubmit={event => { event.preventDefault(); void completeStepUp() }}>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="payout-step-up-password">Current password</label>
+                  <input id="payout-step-up-password" className="form-input" type="password" autoComplete="current-password" value={stepUpPassword} onChange={event => setStepUpPassword(event.target.value)} required disabled={stepUpLoading} />
+                </div>
+                <button type="submit" className="btn btn-primary" disabled={stepUpLoading || !stepUpPassword || !!profileSecurity?.authenticatorTwoFactorEnabled && !stepUpCode.trim()}>
+                  {stepUpLoading ? 'Verifying…' : 'Verify and continue'}
+                </button>
+              </form>
+            )}
+            {profileSecurity?.authenticatorTwoFactorEnabled && (
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label className="form-label" htmlFor="payout-step-up-code">Authenticator or recovery code</label>
+                <input id="payout-step-up-code" className="form-input" value={stepUpCode} onChange={event => setStepUpCode(event.target.value.trim())} autoComplete="one-time-code" maxLength={20} disabled={stepUpLoading} />
+                <small className="form-help">Required because authenticator security is enabled for your account.</small>
+                {profileSecurity.hasGoogleLogin && <button type="button" className="btn btn-primary" disabled={stepUpLoading || !stepUpGoogleToken || !stepUpCode.trim()} onClick={() => void completeStepUp()} style={{ marginTop: '.75rem' }}>Verify code and continue</button>}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       <div className="bank-page-grid">
         <section className="admin-panel bank-account-form-card">
@@ -293,7 +432,7 @@ export default function BankAccounts() {
                     <div>
                       <strong>{account.bankName}</strong>
                       <span>{account.accountHolderName} · {account.accountType}</span>
-                      <small>Account {account.accountNumber}</small>
+                      <small>Account ending {account.accountNumber.slice(-4)}</small>
                     </div>
                   </div>
                   <div className="bank-account-row-actions">
