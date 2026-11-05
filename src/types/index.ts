@@ -2,6 +2,7 @@
 export interface LoginModel {
   email: string
   password: string
+  secondFactorCode?: string
 }
 
 export interface RegisterModel {
@@ -10,11 +11,13 @@ export interface RegisterModel {
   email: string
   phoneNumber: string
   userType: string
-  idNumber?: string
-  address: string
-  dateOfBirth?: string
   password: string
   confirmPassword?: string
+  termsAccepted: boolean
+  privacyAccepted: boolean
+  termsVersion: string
+  privacyVersion: string
+  marketingConsent: boolean
 }
 
 export interface User {
@@ -27,6 +30,11 @@ export interface User {
   phoneNumber?: string
   userType?: string
   isVerified: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  identityVerificationStatus?: string
+  authenticatorTwoFactorEnabled?: boolean
+  hasVerifiedPayoutAccount?: boolean
   profileCompleted: boolean
   profileCompletion?: number
   missingProfileFields?: string[]
@@ -38,7 +46,14 @@ export interface User {
   lastLoginAt?: string
   roles?: string[]
   isAdmin?: boolean
+  hasGoogleLogin?: boolean
+  hasPasswordLogin?: boolean
+  marketingConsent?: boolean
+  marketingConsentUpdatedAt?: string
+  marketingConsentVersion?: string
   idNumber?: string
+  hasIdNumber?: boolean
+  idNumberLastFour?: string
   address?: string
   dateOfBirth?: string
 }
@@ -46,10 +61,26 @@ export interface User {
 export interface AuthResponse {
   success: boolean
   message: string
+  requiresTwoFactor?: boolean
+  requiresAccountSetup?: boolean
+  requiresAccountLink?: boolean
   user?: User
   token?: string
   refreshToken?: string
   expiration?: string
+}
+
+export interface GoogleRegisterModel {
+  idToken: string
+  firstName: string
+  lastName: string
+  phoneNumber: string
+  userType: string
+  termsAccepted: boolean
+  privacyAccepted: boolean
+  termsVersion: string
+  privacyVersion: string
+  marketingConsent: boolean
 }
 
 export interface ChangePasswordModel {
@@ -61,7 +92,7 @@ export interface ChangePasswordModel {
 // Task types
 export type PaymentStatus =
   | 'Pending' | 'EscrowHeld' | 'EscrowReleased' | 'PayoutPending' | 'Processing'
-  | 'RunnerPaid' | 'PayoutReturned' | 'PayoutCancelled' | 'PayoutFailed'
+  | 'RunnerPaid' | 'PayoutReturned' | 'PayoutCancelled' | 'PayoutFailed' | 'AwaitingEligibility'
   | 'Completed' | 'DisputePending' | 'RefundPending' | 'Refunded' | 'Failed' | 'Expired'
   | 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
 export type TaskStatus =
@@ -86,7 +117,7 @@ export interface Task {
   dateNeeded: string
   budget: number
   notes?: string
-  paymentStatus: PaymentStatus
+  paymentStatus: PaymentStatus; payoutStatus?: string
   taskStatus: TaskStatus
   helperName?: string
   helperContact?: string

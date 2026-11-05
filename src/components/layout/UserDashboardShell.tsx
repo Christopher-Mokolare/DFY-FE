@@ -16,13 +16,13 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const [paymentRequiredCount, setPaymentRequiredCount] = useState(0)
   const [completedCount, setCompletedCount] = useState(0)
   const [conversationUnreadCount, setConversationUnreadCount] = useState(0)
+  const [workspaceRefreshTick, setWorkspaceRefreshTick] = useState(0)
   const type = user?.userType || ''
   const displayName = user?.firstName || user?.name || 'User'
   const isCreator = type === 'creator' || type === 'both'
   const isRunner = type === 'runner' || type === 'both'
   const roleLabel = isRunner && isCreator ? 'Creator & Runner' : isRunner ? 'Runner' : 'Creator'
-  const { notifications } = useNotifications()
-  const unreadNotifications = notifications.filter(n => !n.isRead).length
+  const { unreadCount: unreadNotifications } = useNotifications()
   const unreadMessages = conversationUnreadCount
   useEffect(() => {
     let active = true
@@ -34,7 +34,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     if (isCreator) tasksApi.getMyPostedAll().then(raw => {
       if (!active) return
       const normalized = raw.map((t: any) => String(t.taskStatus || '').toLowerCase())
-      setAwaitConfirmationCount(normalized.filter((status: string) => status === 'completed').length)
+      setAwaitConfirmationCount(normalized.filter((status: string) => status === 'awaitingconfirmation').length)
       setPaymentRequiredCount(normalized.filter((status: string) => status === 'pendingpayment').length)
     }).catch(() => {})
     if (isRunner) tasksApi.getMyCompleted().then(res => {
@@ -43,7 +43,13 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
       setCompletedCount(Number(data?.count ?? (Array.isArray(data) ? data.length : 0)))
     }).catch(() => {})
     return () => { active = false }
-  }, [isCreator, isRunner])
+  }, [isCreator, isRunner, pathname, workspaceRefreshTick])
+
+  useEffect(() => {
+    const refresh = () => setWorkspaceRefreshTick(value => value + 1)
+    window.addEventListener('dfy:workspace-refresh', refresh)
+    return () => window.removeEventListener('dfy:workspace-refresh', refresh)
+  }, [])
 
   const navigation = [
     { label: 'Overview', to: '/dashboard', icon: 'fa-chart-pie', show: true, section: 'WORKSPACE' },

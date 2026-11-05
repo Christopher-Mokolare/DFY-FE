@@ -17,6 +17,10 @@ import FAQ from './pages/FAQ'
 import Payments from './pages/Payments'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import VerifyEmail from './pages/auth/VerifyEmail'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
+import RunnerVerification from './pages/user/RunnerVerification'
 import Dashboard from './pages/Dashboard'
 import Activity from './pages/Activity'
 import BrowseErrands from './pages/tasks/BrowseErrands'
@@ -65,6 +69,10 @@ export default function App() {
               <Route path="/payments-and-completion" element={<Payments />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/runner-verification" element={<RunnerVerification />} />
               <Route path="/tasks/browse" element={<BrowseErrands />} />
               <Route path="/payments/success" element={<PaymentSuccess />} />
               <Route path="/payments/cancelled" element={<PaymentCancelled />} />
