@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import DOMPurify from 'dompurify'
-import { tasksApi, categoryApi, userPreferencesApi } from '../../api'
+import { tasksApi, categoryApi, taskConfigurationApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import './PostErrand.css'
 
 const DEFAULT_CATEGORIES = ['Grocery Shopping','Delivery','Cleaning','Gardening','Moving','Repairs','Tutoring','Pet Care','Cooking','Other']
+
+type TaskBudgetLimits = { minimumBudget: number; maximumBudget: number; currency: string }
 
 function validateTaskForm(values: {
   taskName: string
@@ -18,7 +20,7 @@ function validateTaskForm(values: {
   budget: string
   notes: string
   termsAccepted: boolean
-}) {
+}, limits: TaskBudgetLimits | null) {
   const errors: Record<string, string> = {}
   const name = values.taskName.trim()
   if (!name) errors.taskName = 'Task name is required.'
@@ -35,7 +37,8 @@ function validateTaskForm(values: {
   if (!['standard', 'urgent', 'low', 'medium', 'high'].includes(priority)) errors.priority = 'Please choose a valid priority.'
   const budgetValue = Number(values.budget)
   if (!values.budget || Number.isNaN(budgetValue)) errors.budget = 'Budget is required.'
-  else if (budgetValue < 50 || budgetValue > 100000) errors.budget = 'Budget must be between R50 and R100000.'
+  else if (!limits) errors.budget = 'Task budget limits are unavailable. Please try again.'
+  else if (budgetValue < limits.minimumBudget || budgetValue > limits.maximumBudget) errors.budget = `Budget must be between R${limits.minimumBudget} and R${limits.maximumBudget}.`
   if (values.dateNeeded) {
     const date = new Date(values.dateNeeded)
     const now = new Date()
@@ -66,11 +69,12 @@ function validateStepOne(values: { taskName: string; taskDescription: string; ca
   return { valid: Object.keys(errors).length === 0, errors }
 }
 
-function validateStepTwo(values: { dateNeeded: string; budget: string }) {
+function validateStepTwo(values: { dateNeeded: string; budget: string }, limits: TaskBudgetLimits | null) {
   const errors: Record<string, string> = {}
   const budgetValue = Number(values.budget)
   if (!values.budget || Number.isNaN(budgetValue)) errors.budget = 'Budget is required.'
-  else if (budgetValue < 50 || budgetValue > 100000) errors.budget = 'Budget must be between R50 and R100000.'
+  else if (!limits) errors.budget = 'Task budget limits are unavailable. Please try again.'
+  else if (budgetValue < limits.minimumBudget || budgetValue > limits.maximumBudget) errors.budget = `Budget must be between R${limits.minimumBudget} and R${limits.maximumBudget}.`
   if (values.dateNeeded) {
     const date = new Date(values.dateNeeded)
     const now = new Date()
@@ -113,8 +117,8 @@ export default function PostErrand() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [minAmount, setMinAmount] = useState(50)
-  const [maxAmount, setMaxAmount] = useState(5000)
+  const [budgetLimits, setBudgetLimits] = useState<TaskBudgetLimits | null>(null)
+  const [budgetLimitsError, setBudgetLimitsError] = useState('')
   const [form, setForm] = useState({ taskName: '', taskDescription: '', category: '', customCategory: '', area: '', priority: 'standard', dateNeeded: '', budget: '', notes: '', termsAccepted: false })
 
   useEffect(() => {
@@ -122,11 +126,14 @@ export default function PostErrand() {
       const cats = r.data?.data || r.data
       if (Array.isArray(cats) && cats.length) setCategories([...cats.map((c: any) => c.name || c), 'Other'])
     }).catch(() => {})
-    userPreferencesApi.get().then(r => {
-      const d = r.data?.data
-      if (d?.minTaskAmount) setMinAmount(d.minTaskAmount)
-      if (d?.maxTaskAmount) setMaxAmount(d.maxTaskAmount)
-    }).catch(() => {})
+    taskConfigurationApi.getTaskLimits().then(r => {
+      const limits = r.data?.data
+      if (!limits || !Number.isFinite(limits.minimumBudget) || !Number.isFinite(limits.maximumBudget) || limits.minimumBudget > limits.maximumBudget) {
+        throw new Error('Invalid task budget limits response.')
+      }
+      setBudgetLimits(limits)
+      setBudgetLimitsError('')
+    }).catch(() => setBudgetLimitsError('Unable to load task budget limits. Please try again later.'))
     if (editId) {
       tasksApi.getById(editId).then(r => {
         const t = r.data?.data || r.data
@@ -139,13 +146,13 @@ export default function PostErrand() {
     const val = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value
     setForm(f => ({ ...f, [field]: val }))
     if (field === 'category') setShowCustom(e.target.value === 'Other')
-    const result = validateTaskForm({ ...form, [field]: val } as any)
+    const result = validateTaskForm({ ...form, [field]: val } as any, budgetLimits)
     setFieldErrors(prev => ({ ...prev, [field]: result.errors[field] || '' }))
     if (field === 'termsAccepted' && result.errors.termsAccepted) setError(result.errors.termsAccepted)
   }
 
   const isStep1Valid = () => validateStepOne({ taskName: form.taskName, taskDescription: form.taskDescription, category: form.category, customCategory: form.customCategory, area: form.area, priority: form.priority }).valid
-  const isStep2Valid = () => validateStepTwo({ dateNeeded: form.dateNeeded, budget: form.budget }).valid
+  const isStep2Valid = () => validateStepTwo({ dateNeeded: form.dateNeeded, budget: form.budget }, budgetLimits).valid
   const budget = parseFloat(form.budget) || 0
   // Keep the creator-facing breakdown aligned with the backend's current escrow rule:
   // 15% DFY commission with a R5 minimum, deducted from the task budget.
@@ -218,13 +225,13 @@ export default function PostErrand() {
             <div className="form-row-2"><div className="form-group"><label className="form-label">Location *</label><div className="input-with-icon"><i className="fas fa-map-marker-alt" /><input className="form-input" placeholder="Area / Suburb" value={form.area} onChange={set('area')} required /></div>{fieldErrors.area && <small className="text-error">{fieldErrors.area}</small>}</div><div className="form-group"><label className="form-label">Urgency *</label><div className="priority-options">{[{ v: 'standard', icon: 'fa-clock', label: 'Standard', sub: '48 hours' }, { v: 'urgent', icon: 'fa-bolt', label: 'Urgent', sub: '24 hours' }].map(p => <label key={p.v} className={`priority-card ${form.priority === p.v ? 'selected' : ''}`}><input type="radio" name="priority" value={p.v} checked={form.priority === p.v} onChange={set('priority')} /><i className={`fas ${p.icon}`} /><span>{p.label}</span><small>{p.sub}</small></label>)}</div></div></div>
             <div className="step-nav"><button type="button" className="btn btn-primary" onClick={() => isStep1Valid() && setStep(2)} disabled={!isStep1Valid()}>Next <i className="fas fa-arrow-right" /></button></div>
           </div>}
-          {step === 2 && <div className="form-section"><h3><i className="fas fa-calendar-alt" /> When & How Much?</h3><div className="form-row-2"><div className="form-group"><label className="form-label">Deadline *</label><div className="input-with-icon"><i className="fas fa-calendar" /><input type="datetime-local" className="form-input" value={form.dateNeeded} onChange={set('dateNeeded')} required /></div>{fieldErrors.dateNeeded && <small className="text-error">{fieldErrors.dateNeeded}</small>}</div><div className="form-group"><label className="form-label">Your Budget (R) *</label><div className="budget-input-wrap"><span className="currency-prefix">R</span><input type="number" className="form-input budget-input" placeholder="100.00" min={minAmount} max={maxAmount} step={0.01} value={form.budget} onChange={set('budget')} required /></div><small className="text-muted text-xs">R{minAmount} minimum · R{maxAmount} maximum</small>{fieldErrors.budget && <small className="text-error">{fieldErrors.budget}</small>}{budget >= 50 && <div className="commission-breakdown">
+          {step === 2 && <div className="form-section"><h3><i className="fas fa-calendar-alt" /> When & How Much?</h3><div className="form-row-2"><div className="form-group"><label className="form-label">Deadline *</label><div className="input-with-icon"><i className="fas fa-calendar" /><input type="datetime-local" className="form-input" value={form.dateNeeded} onChange={set('dateNeeded')} required /></div>{fieldErrors.dateNeeded && <small className="text-error">{fieldErrors.dateNeeded}</small>}</div><div className="form-group"><label className="form-label">Your Budget (R) *</label><div className="budget-input-wrap"><span className="currency-prefix">R</span><input type="number" className="form-input budget-input" placeholder="100.00" min={budgetLimits?.minimumBudget} max={budgetLimits?.maximumBudget} step={0.01} value={form.budget} onChange={set('budget')} required /></div><small className="text-muted text-xs">{budgetLimits ? `R${budgetLimits.minimumBudget} minimum · R${budgetLimits.maximumBudget} maximum` : 'Loading budget limits…'}</small>{budgetLimitsError && <small className="text-error">{budgetLimitsError}</small>}{fieldErrors.budget && <small className="text-error">{fieldErrors.budget}</small>}{budgetLimits && budget >= budgetLimits.minimumBudget && <div className="commission-breakdown">
   <div className="breakdown-row"><span>Task budget</span><strong>R{budget.toFixed(2)}</strong></div>
   <div className="breakdown-row"><span>DFY platform fee (15%)</span><span>−R{dfyFee.toFixed(2)}</span></div>
   <div className="breakdown-row"><span>Runner payout</span><span>R{runnerPayout.toFixed(2)}</span></div>
   <div className="breakdown-row total"><span>You pay</span><span>R{budget.toFixed(2)}</span></div>
   <small className="text-muted">The DFY fee is deducted from the task budget. There is no separate platform fee added at checkout.</small>
-</div>}</div></div><div className="step-nav"><button type="button" className="btn btn-secondary" onClick={() => setStep(1)}><i className="fas fa-arrow-left" /> Previous</button><button type="button" className="btn btn-primary" onClick={() => isStep2Valid() && setStep(3)} disabled={!isStep2Valid()}>Next <i className="fas fa-arrow-right" /></button></div></div>}
+</div>}</div></div><div className="step-nav"><button type="button" className="btn btn-secondary" onClick={() => setStep(1)}><i className="fas fa-arrow-left" /> Previous</button><button type="button" className="btn btn-primary" onClick={() => isStep2Valid() && setStep(3)} disabled={!budgetLimits || !isStep2Valid()}>Next <i className="fas fa-arrow-right" /></button></div></div>}
           {step === 3 && <div className="form-section"><div className="form-group"><label className="form-label">Anything else? (Optional)</label><textarea className="form-textarea" rows={3} placeholder="Special requirements, preferences..." value={form.notes} onChange={set('notes')} /></div><label className="terms-check"><input type="checkbox" checked={form.termsAccepted} onChange={set('termsAccepted')} /><span>I agree to the <a href="/terms" target="_blank">Terms & Conditions</a></span></label><div className="payment-info-card"><div className="payment-info-header"><i className="fas fa-shield-alt" /><h4>Secure Paystack Payment</h4></div><div className="payment-features"><span><i className="fas fa-lock" /> Bank-level security</span><span><i className="fas fa-bolt" /> Secure hosted checkout</span><span><i className="fas fa-shield-alt" /> Payment verified by DFY</span></div><p className="text-muted text-xs text-center mt-2">You will pay R{budget.toFixed(2)} through Paystack. The task only becomes live after DFY verifies the payment.</p></div><div className="step-nav"><button type="button" className="btn btn-secondary" onClick={() => setStep(2)}><i className="fas fa-arrow-left" /> Previous</button><button type="submit" className="btn btn-primary btn-lg" disabled={submitting || !form.termsAccepted}>{submitting ? <><span className="spinner spinner-sm" /> {isEdit ? 'Saving...' : 'Creating...'}</> : <><i className={`fas ${isEdit ? 'fa-save' : 'fa-rocket'}`} /> {isEdit ? 'Save Changes' : 'Continue to Paystack'}</>}</button></div></div>}
         </form>
       </section>
