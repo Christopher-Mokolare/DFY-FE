@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi, disputesApi, ratingsApi } from '../../api'
 import Pagination from '../../components/Pagination'
+import TaskCard from '../../components/workspace/TaskCard'
 
 const PAGE_SIZE = 10
 
@@ -157,7 +158,7 @@ export default function MyActiveTasks() {
             {tasks.map(raw => {
               const t = norm(raw)
               return (
-                <div id={`active-task-${t.taskId}`} key={t.taskId} className="task-card active-task-card">
+                <TaskCard id={`active-task-${t.taskId}`} key={t.taskId} className="task-card active-task-card">
                   <div className="task-card-header">
                     <span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>
                     <div className="task-budget">
@@ -198,7 +199,7 @@ export default function MyActiveTasks() {
                       )}
                     </div>
                   </div>
-                </div>
+                </TaskCard>
               )
             })}
           </div>

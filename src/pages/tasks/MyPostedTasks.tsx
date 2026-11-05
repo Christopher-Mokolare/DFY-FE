@@ -6,6 +6,7 @@ import { usePostErrand } from '../../hooks/usePostErrand'
 import type { Task } from '../../types'
 import Pagination from '../../components/Pagination'
 import './MyPostedTasks.css'
+import TaskCard from '../../components/workspace/TaskCard'
 
 type Section = 'all' | 'pendingPayment' | 'posted' | 'claimed' | 'completed' | 'runnerPaid'
 
@@ -232,7 +233,7 @@ export default function MyPostedTasks() {
             {tasks.map(task => {
               const key = taskSection(task)
               return (
-                <div id={`posted-task-${task.taskId}`} key={task.taskId || task.id} className="task-card">
+                <TaskCard id={`posted-task-${task.taskId}`} key={task.taskId || task.id} className="task-card">
                   <div className="task-card-header"><span className={getStatusBadge(task.taskStatus)}>{task.taskStatus}</span><div className="task-budget">R{task.budget}</div></div>
                   <div className="task-card-body">
                     <h3 className="task-title">{task.taskName || task.taskDescription}</h3>
@@ -246,7 +247,7 @@ export default function MyPostedTasks() {
                     {(key === 'claimed' || key === 'completed') && <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/${task.taskId}/chat?title=${encodeURIComponent(task.taskName || task.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>{task.helperContact && <a href={`tel:${encodeURIComponent(task.helperContact)}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /> Call</a>}</div>{key === 'completed' && <button className="btn btn-primary btn-block btn-sm mt-2" onClick={() => setConfirmModal(task)}><i className="fas fa-check" /> Confirm & Pay Runner</button>}{key === 'claimed' && <div className="action-col mt-2"><button className="btn btn-secondary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)', flexDirection: 'column', gap: '0.1rem', lineHeight: 1.2 }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><span><i className="fas fa-times" /> Cancel Task</span></button></div>}</div>}
                     {key === 'runnerPaid' && <div className="action-row"><button className="btn btn-primary btn-sm flex-1" onClick={() => setDetailsModal(task)}>View Details</button>{task.helperContact && <a href={`tel:${task.helperContact}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /></a>}{!ratedTaskIds.has(task.taskId) && <button className="btn btn-outline btn-sm" onClick={() => { setRatingModal(task); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate</button>}</div>}
                   </div>
-                </div>
+                </TaskCard>
               )
             })}
           </div>}

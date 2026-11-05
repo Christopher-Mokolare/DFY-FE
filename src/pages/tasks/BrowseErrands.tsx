@@ -6,6 +6,7 @@ import type { Task } from '../../types'
 import Pagination from '../../components/Pagination'
 import { usePageMetadata } from '../../hooks/usePageMetadata'
 import './BrowseErrands.css'
+import TaskCard from '../../components/workspace/TaskCard'
 
 const heroImage = new URL('../../assets/images/image2.jpeg', import.meta.url).href
 
@@ -204,7 +205,7 @@ export default function BrowseErrands() {
         {loading ? <div className="loading-state"><div className="spinner" /><p>Loading available tasks...</p></div> :
           tasks.length === 0 ? <div className="empty-state"><i className="fas fa-search" /><h3>No Tasks Found</h3><p>{search || category ? 'Try adjusting your filters.' : 'No tasks are available right now.'}</p></div> :
           <div className="tasks-grid">{tasks.map(task => (
-            <article key={task.taskId || task.id} className="task-card">
+            <TaskCard as="article" key={task.taskId || task.id} className="task-card">
               <div className="task-card-header"><span className="task-category"><i className="fas fa-tag" /> {task.category || 'General'}</span></div>
               <div className="task-card-body">
                 <h3 className="task-title">{title(task)}</h3>
@@ -220,7 +221,7 @@ export default function BrowseErrands() {
                 <button className="btn btn-outline btn-sm" onClick={() => setDetailModal(task)}><i className="fas fa-eye" /> View task</button>
                 <button className="btn btn-primary btn-sm" disabled={isAuthenticated() && !canAcceptTasks()} onClick={() => openAccept(task)}>{buttonText()} <i className="fas fa-arrow-right" /></button>
               </div>
-            </article>
+            </TaskCard>
           ))}</div>}
 
         {!loading && <Pagination
