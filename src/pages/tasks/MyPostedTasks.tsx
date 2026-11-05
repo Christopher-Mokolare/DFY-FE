@@ -1,13 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { tasksApi, ratingsApi } from '../../api'
 import { usePostErrand } from '../../hooks/usePostErrand'
-import TaskCard from '../../components/workspace/TaskCard'
 import type { Task } from '../../types'
+import Pagination from '../../components/Pagination'
 import './MyPostedTasks.css'
+import TaskCard from '../../components/workspace/TaskCard'
 
-type Section = 'pendingPayment' | 'posted' | 'claimed' | 'completed' | 'runnerPaid'
+type Section = 'all' | 'pendingPayment' | 'posted' | 'claimed' | 'completed' | 'runnerPaid'
+
+function normStatus(status?: string) { return (status || '').toLowerCase().replace(/[_ -]/g, '') }
+function taskSection(task: Task): Exclude<Section, 'all'> {
+  const status = normStatus(task.taskStatus)
+  if (status === 'awaitingconfirmation') return 'completed'
+  if (['claimed', 'inprogress'].includes(status)) return 'claimed'
+  if (status === 'posted') return 'posted'
+  if (['runnerpaid', 'confirmed', 'payoutpending', 'completed'].includes(status)) return 'runnerPaid'
+  return 'pendingPayment'
+}
+function confirmationTimeLeft(deadline?: string) {
+  if (!deadline) return null
+  const ms = new Date(deadline).getTime() - Date.now()
+  if (ms <= 0) return 'Automatic confirmation is due now'
+  const hours = Math.floor(ms / 3600000)
+  const minutes = Math.floor((ms % 3600000) / 60000)
+  return `${hours}h ${minutes}m remaining to confirm or dispute`
+}
 
 function getStatusBadge(status: string) {
   const s = status?.toLowerCase().replace(/ /g, '_')
@@ -20,18 +39,34 @@ function getInitials(name: string) { return name?.split(' ').map(n => n[0]).join
 function isSafePaymentUrl(url: string) {
   try {
     const parsed = new URL(url)
-    return parsed.protocol === 'https:' && (parsed.hostname === 'stagingapi.ozow.com' || parsed.hostname === 'api.ozow.com' || parsed.hostname.endsWith('.ozow.com'))
+    return parsed.protocol === 'https:' && (parsed.hostname === 'checkout.paystack.com' || parsed.hostname === 'paystack.com' || parsed.hostname.endsWith('.paystack.com'))
   } catch { return false }
 }
 
+const PAGE_SIZE = 10
+const TASK_SECTIONS: { key: Section; icon: string; label: string }[] = [
+  { key: 'all', icon: 'fa-layer-group', label: 'All Tasks' },
+  { key: 'pendingPayment', icon: 'fa-exclamation-circle', label: 'Pending Payment' },
+  { key: 'posted', icon: 'fa-bullhorn', label: 'Live on Browse Errands' },
+  { key: 'claimed', icon: 'fa-spinner', label: 'In Progress' },
+  { key: 'completed', icon: 'fa-clock', label: 'Awaiting Confirmation' },
+  { key: 'runnerPaid', icon: 'fa-check-circle', label: 'Completed' },
+]
+
 export default function MyPostedTasks() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { handlePostErrand, ProfileIncompleteModal } = usePostErrand()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [expanded, setExpanded] = useState<Record<Section, boolean>>({ pendingPayment: true, posted: true, claimed: true, completed: true, runnerPaid: false })
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalTasks, setTotalTasks] = useState(0)
+  const [activeSection, setActiveSection] = useState<Section>('all')
+  const [statusCounts, setStatusCounts] = useState<Record<Section, number>>({
+    all: 0, pendingPayment: 0, posted: 0, claimed: 0, completed: 0, runnerPaid: 0,
+  })
   const [confirmModal, setConfirmModal] = useState<Task | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState('')
@@ -45,39 +80,65 @@ export default function MyPostedTasks() {
   const [ratingError, setRatingError] = useState('')
   const [ratedTaskIds, setRatedTaskIds] = useState<Set<string>>(new Set())
   const [detailsModal, setDetailsModal] = useState<Task | null>(null)
+  const [, setClock] = useState(0)
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async (targetPage = page, targetTaskId?: string) => {
+    setLoading(true)
+    setError('')
     try {
-      const res = await tasksApi.getMyPosted()
+      const res = await tasksApi.getMyPosted(targetPage, PAGE_SIZE, targetTaskId, activeSection)
       const inner = res.data?.data
       const raw: Task[] = inner?.tasks || inner?.Tasks || []
       setTasks(raw.map(t => ({ ...t, taskDescription: DOMPurify.sanitize(t.taskDescription || '', { ALLOWED_TAGS: [] }), area: DOMPurify.sanitize(t.area || '', { ALLOWED_TAGS: [] }), helperName: DOMPurify.sanitize(t.helperName || '', { ALLOWED_TAGS: [] }), helperContact: DOMPurify.sanitize(t.helperContact || '', { ALLOWED_TAGS: [] }), category: DOMPurify.sanitize(t.category || '', { ALLOWED_TAGS: [] }) })))
-    } catch { setError('Failed to load tasks.') } finally { setLoading(false) }
-  }
+      setTotalTasks(Number(inner?.count ?? raw.length))
+      setTotalPages(Math.max(1, Number(inner?.totalPages ?? 1)))
+      if (inner?.statusCounts) {
+        setStatusCounts({
+          all: Number(inner.statusCounts.all ?? 0),
+          pendingPayment: Number(inner.statusCounts.pendingPayment ?? 0),
+          posted: Number(inner.statusCounts.posted ?? 0),
+          claimed: Number(inner.statusCounts.claimed ?? 0),
+          completed: Number(inner.statusCounts.completed ?? 0),
+          runnerPaid: Number(inner.statusCounts.runnerPaid ?? 0),
+        })
+      }
+      if (inner?.page) setPage(Number(inner.page))
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load tasks. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [activeSection, page])
 
-  useEffect(() => { loadTasks() }, [])
+  const linkedTaskId = searchParams.get('taskId')
+  useEffect(() => {
+    void loadTasks(page, linkedTaskId ?? undefined)
+  }, [linkedTaskId, loadTasks, page])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(v => v + 1), 60000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const target = searchParams.get('taskId')
     if (!target || loading || tasks.length === 0) return
     const task = tasks.find(t => String(t.taskId) === target)
     if (!task) return
-    const status = task.taskStatus?.toLowerCase() || ''
-    const section: Section = status === 'completed' ? 'completed' : ['claimed', 'in_progress'].includes(status) ? 'claimed' : status === 'posted' ? 'posted' : 'pendingPayment'
-    setExpanded(e => ({ ...e, [section]: true }))
+    const category = taskSection(task)
+    if (activeSection !== 'all' && activeSection !== category) return
+    if (activeSection === 'all') {
+      setActiveSection(category)
+      setPage(1)
+      return
+    }
     requestAnimationFrame(() => document.getElementById(`posted-task-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
-    if (searchParams.get('action') === 'confirm' && status === 'completed') setConfirmModal(task)
-  }, [searchParams, loading, tasks])
-
-  const grouped = {
-    pendingPayment: tasks.filter(t => t.taskStatus?.toLowerCase() === 'pendingpayment'),
-    posted: tasks.filter(t => t.taskStatus?.toLowerCase() === 'posted'),
-    claimed: tasks.filter(t => ['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase() || '')),
-    completed: tasks.filter(t => t.taskStatus?.toLowerCase() === 'completed'),
-    runnerPaid: tasks.filter(t => ['runnerpaid', 'runner_paid', 'confirmed', 'payoutpending'].includes(t.taskStatus?.toLowerCase() || '')),
-  }
-
-  const toggle = (s: Section) => setExpanded(e => ({ ...e, [s]: !e[s] }))
+    if (searchParams.get('action') === 'confirm' && normStatus(task.taskStatus) === 'awaitingconfirmation') setConfirmModal(task)
+    setSearchParams(params => {
+      params.delete('taskId')
+      return params
+    }, { replace: true })
+  }, [activeSection, searchParams, loading, tasks, setSearchParams])
 
   const handleConfirm = async () => {
     if (!confirmModal) return
@@ -85,7 +146,7 @@ export default function MyPostedTasks() {
     try {
       const res = await tasksApi.confirm(confirmModal.taskId)
       if (res.data?.success === false) { setActionError(res.data?.message || 'Failed to confirm task'); return }
-      setConfirmModal(null); await loadTasks()
+      setConfirmModal(null); await loadTasks(page)
     } catch (err: any) { setActionError(err.response?.data?.message || 'Failed to confirm task') } finally { setActionLoading(false) }
   }
 
@@ -104,7 +165,7 @@ export default function MyPostedTasks() {
     setCancelLoading(true)
     try {
       const res = await tasksApi.cancel(cancelModal.taskId, 'Cancelled by creator')
-      setCancelMessage(DOMPurify.sanitize(res.data?.message || 'Task cancelled.', { ALLOWED_TAGS: [] })); await loadTasks()
+      setCancelMessage(DOMPurify.sanitize(res.data?.message || 'Task cancelled.', { ALLOWED_TAGS: [] })); await loadTasks(page)
     } catch { setCancelMessage('Failed to cancel task.') } finally { setCancelLoading(false) }
   }
 
@@ -113,51 +174,94 @@ export default function MyPostedTasks() {
     try {
       const r = await tasksApi.getPaymentUrl(taskId)
       const url = r.data?.data?.paymentUrl
-      if (!url || !isSafePaymentUrl(url)) { setError('Unable to create a secure Ozow payment link. Please try again.'); return }
+      if (!url || !isSafePaymentUrl(url)) { setError('Unable to create a secure Paystack payment link. Please try again.'); return }
       window.location.assign(url)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Unable to start the Ozow payment. Please try again.')
+      setError(err.response?.data?.message || 'Unable to start the Paystack payment. Please try again.')
     }
   }
-
-  if (loading) return <div className="loading-state"><div className="spinner" /><p>Loading your posted tasks...</p></div>
-
-  const sections: { key: Section; icon: string; label: string }[] = [
-    { key: 'pendingPayment', icon: 'fa-exclamation-circle', label: 'Pending Payment' },
-    { key: 'posted', icon: 'fa-bullhorn', label: 'Live on Browse Errands' },
-    { key: 'claimed', icon: 'fa-spinner', label: 'In Progress' },
-    { key: 'completed', icon: 'fa-clock', label: 'Awaiting Confirmation' },
-    { key: 'runnerPaid', icon: 'fa-check-circle', label: 'Completed' },
-  ]
 
   return (
     <>
       <div className="my-posted-page">
         <div className="page-header"><div className="container"><h1><i className="fas fa-list-check" /> My Posted Tasks</h1><p>Manage and track your posted tasks</p></div></div>
         <div className="container">
-          {error && <div className="alert alert-error mb-4"><i className="fas fa-exclamation-circle" /> {error}</div>}
-          {tasks.length === 0 ? <><div className="empty-state"><i className="fas fa-clipboard-list" /><h3>No Posted Tasks</h3><p>You haven't posted any tasks yet.</p><button className="btn btn-primary" onClick={handlePostErrand}>Post Your First Task</button></div>{ProfileIncompleteModal}</> : sections.map(({ key, icon, label }) => grouped[key].length > 0 && (
-            <div key={key} className="status-section">
-              <button className="status-heading" onClick={() => toggle(key)}><span><i className={`fas ${icon}`} /> {label} ({grouped[key].length})</span><i className={`fas fa-chevron-${expanded[key] ? 'up' : 'down'}`} /></button>
-              {expanded[key] && <div className="tasks-grid">{grouped[key].map(task => (
-                <TaskCard
-                  key={task.taskId || task.id}
-                  id={"posted-task-" + task.taskId}
-                  variant="posted"
-                  status={<span className={getStatusBadge(task.taskStatus)}>{task.taskStatus}</span>}
-                  amount={<>R{task.budget}</>}
-                  title={task.taskName || task.taskDescription}
-                  description={task.taskName ? task.taskDescription : undefined}
-                  meta={<><span>{task.category || "General"}</span><span>{new Date(task.createdAt).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" })}</span><span>{task.area?.length > 30 ? task.area.substring(0, 30) + "..." : task.area}</span></>}
-                  extra={task.helperName ? <div className="runner-info"><div className="runner-avatar">{getInitials(task.helperName)}</div><div><div className="runner-name">{task.helperName}</div><div className="runner-contact">{task.helperContact}</div></div></div> : <div className="runner-info runner-info--empty"><div className="runner-avatar runner-avatar--empty"><i className="fas fa-user" /></div><div className="runner-name">No runner yet</div></div>}
-                  actions={key === "pendingPayment" ? <div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => { handlePostErrand(); navigate("/tasks/post?edit=" + task.taskId) }}>Edit</button><button className="btn btn-danger btn-sm" onClick={() => { setCancelModal(task); setCancelMessage("") }}>Cancel</button><button className="btn btn-primary btn-sm" onClick={() => handlePayNow(task.taskId)}>Pay with Ozow</button></div> : key === "posted" ? <div className="action-col"><button className="btn btn-primary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-block btn-sm" onClick={() => { setCancelModal(task); setCancelMessage("") }}>Cancel Task</button></div> : key === "claimed" || key === "completed" ? <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate("/tasks/" + task.taskId + "/chat?title=" + encodeURIComponent(task.taskName || task.taskDescription || "Task Chat"))}>Chat</button>{task.helperContact && <a href={"tel:" + task.helperContact} className="btn btn-outline btn-sm">Call</a>}</div>{key === "completed" ? <button className="btn btn-primary btn-block btn-sm" onClick={() => setConfirmModal(task)}>Confirm & Pay Runner</button> : <div className="action-col"><button className="btn btn-secondary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-block btn-sm" onClick={() => { setCancelModal(task); setCancelMessage("") }}>Cancel Task</button></div>}</div> : <div className="action-row"><button className="btn btn-primary btn-sm" onClick={() => setDetailsModal(task)}>View Details</button>{!ratedTaskIds.has(task.taskId) && <button className="btn btn-outline btn-sm" onClick={() => { setRatingModal(task); setRatingReview(""); setRatingValue(5); setRatingError("") }}>Rate</button>}</div>}
-                />
-              ))}</div>}
+          {error && <div className="alert alert-error mb-4" role="alert"><i className="fas fa-exclamation-circle" /> {error} <button className="btn btn-secondary btn-sm" onClick={() => void loadTasks(page)}>Retry</button></div>}
+          {statusCounts.all > 0 && <div className="posted-task-tabs" role="tablist" aria-label="Task status">
+            {TASK_SECTIONS.map(({ key, icon, label }) => (
+              <button
+                key={key}
+                id={`posted-tab-${key}`}
+                className={`posted-task-tab ${activeSection === key ? 'active' : ''}`}
+                role="tab"
+                aria-selected={activeSection === key}
+                aria-controls="posted-task-panel"
+                onClick={() => { setActiveSection(key); setPage(1) }}
+                onKeyDown={event => {
+                  const currentIndex = TASK_SECTIONS.findIndex(section => section.key === key)
+                  const nextIndex = event.key === 'ArrowRight'
+                    ? (currentIndex + 1) % TASK_SECTIONS.length
+                    : event.key === 'ArrowLeft'
+                      ? (currentIndex - 1 + TASK_SECTIONS.length) % TASK_SECTIONS.length
+                      : event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? TASK_SECTIONS.length - 1
+                          : currentIndex
+                  if (nextIndex === currentIndex) return
+                  event.preventDefault()
+                  const nextSection = TASK_SECTIONS[nextIndex].key
+                  setActiveSection(nextSection)
+                  setPage(1)
+                  document.getElementById(`posted-tab-${nextSection}`)?.focus()
+                }}
+              >
+                <i className={`fas ${icon}`} />
+                <span>{label}</span>
+                <span className="posted-task-tab-count">{statusCounts[key]}</span>
+              </button>
+            ))}
+          </div>}
+          {loading ? <div className="loading-state"><div className="spinner" /><p>Loading your posted tasks...</p></div> : totalTasks === 0 && activeSection === 'all' ? <><div className="empty-state"><i className="fas fa-clipboard-list" /><h3>No Posted Tasks</h3><p>You haven't posted any tasks yet.</p><button className="btn btn-primary" onClick={handlePostErrand}>Post Your First Task</button></div>{ProfileIncompleteModal}</> : tasks.length === 0 ? (
+            <div className="empty-state posted-task-empty">
+              <i className={`fas ${TASK_SECTIONS.find(section => section.key === activeSection)?.icon || 'fa-list'}`} />
+              <h3>No {TASK_SECTIONS.find(section => section.key === activeSection)?.label} Tasks</h3>
+              <p>There are no tasks in this status right now.</p>
+              <button className="btn btn-outline" onClick={() => { setActiveSection('all'); setPage(1) }}>View All Tasks</button>
             </div>
-          ))}
+          ) : <div id="posted-task-panel" className="tasks-grid" role="tabpanel" aria-labelledby={`posted-tab-${activeSection}`}>
+            {tasks.map(task => {
+              const key = taskSection(task)
+              return (
+                <TaskCard id={`posted-task-${task.taskId}`} key={task.taskId || task.id} className="task-card">
+                  <div className="task-card-header"><span className={getStatusBadge(task.taskStatus)}>{task.taskStatus}</span><div className="task-budget">R{task.budget}</div></div>
+                  <div className="task-card-body">
+                    <h3 className="task-title">{task.taskName || task.taskDescription}</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '2.4em' }}>{task.taskName ? task.taskDescription : ''}</p>
+                    <div className="task-meta"><div className="task-meta-item"><i className="fas fa-tag" /><span>{task.category || 'General'}</span></div><div className="task-meta-item"><i className="fas fa-calendar" /><span>{new Date(task.createdAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div><div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{task.area?.length > 30 ? task.area.substring(0, 30) + '...' : task.area}</span></div></div>
+                    {key === 'completed' && <div className="alert alert-info mt-3"><i className="fas fa-clock" /> {confirmationTimeLeft(task.escrowHoldUntil) || 'You have 24 hours from completion to confirm or dispute. Silence automatically confirms the task.'}</div>}{task.helperName ? <div className="runner-info"><div className="runner-avatar">{getInitials(task.helperName)}</div><div><div className="runner-name">{task.helperName}</div><div className="runner-contact">{task.helperContact}</div></div></div> : <div className="runner-info runner-info--empty"><div className="runner-avatar runner-avatar--empty"><i className="fas fa-user" /></div><div className="runner-name" style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.8rem' }}>No runner yet</div></div>}
+                  </div>
+                  <div className="task-card-footer">
+                    {key === 'pendingPayment' && <div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => { handlePostErrand(); navigate(`/tasks/post?edit=${task.taskId}`) }}><i className="fas fa-edit" /> Edit</button><button className="btn btn-danger btn-sm" onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel</button><button className="btn btn-primary btn-sm" onClick={() => handlePayNow(task.taskId)}><i className="fas fa-credit-card" /> Pay with Paystack</button></div>}
+                    {key === 'posted' && <div className="action-col"><button className="btn btn-primary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel Task</button></div>}
+                    {(key === 'claimed' || key === 'completed') && <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/${task.taskId}/chat?title=${encodeURIComponent(task.taskName || task.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>{task.helperContact && <a href={`tel:${encodeURIComponent(task.helperContact)}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /> Call</a>}</div>{key === 'completed' && <button className="btn btn-primary btn-block btn-sm mt-2" onClick={() => setConfirmModal(task)}><i className="fas fa-check" /> Confirm & Pay Runner</button>}{key === 'claimed' && <div className="action-col mt-2"><button className="btn btn-secondary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)', flexDirection: 'column', gap: '0.1rem', lineHeight: 1.2 }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><span><i className="fas fa-times" /> Cancel Task</span></button></div>}</div>}
+                    {key === 'runnerPaid' && <div className="action-row"><button className="btn btn-primary btn-sm flex-1" onClick={() => setDetailsModal(task)}>View Details</button>{task.helperContact && <a href={`tel:${task.helperContact}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /></a>}{!ratedTaskIds.has(task.taskId) && <button className="btn btn-outline btn-sm" onClick={() => { setRatingModal(task); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate</button>}</div>}
+                  </div>
+                </TaskCard>
+              )
+            })}
+          </div>}
+          {!loading && <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalCount={totalTasks}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            label="posted tasks"
+          />}
         </div>
 
-        {confirmModal && <div className="modal-overlay" onClick={() => setConfirmModal(null)}><div className="modal-box" onClick={e => e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-check-circle" /> Confirm Task Completion</h3><button className="btn-close" onClick={() => setConfirmModal(null)}><i className="fas fa-times" /></button></div><div className="modal-body"><p>Are you satisfied with the completion of:</p><p className="mt-2"><strong>{confirmModal.taskDescription}</strong></p><div className="alert alert-info mt-3"><i className="fas fa-info-circle" /> Confirming will release the runner's 85% payout to their verified bank account through Ozow.</div></div>{actionError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{actionError}</p>}<div className="modal-footer"><button className="btn btn-secondary" onClick={() => { setConfirmModal(null); setActionError('') }}>Cancel</button><button className="btn btn-primary" onClick={handleConfirm} disabled={actionLoading}>{actionLoading ? <><span className="spinner spinner-sm" /> Processing...</> : 'Confirm & Release Payout'}</button></div></div></div>}
+        {confirmModal && <div className="modal-overlay" onClick={() => setConfirmModal(null)}><div className="modal-box" onClick={e => e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-check-circle" /> Confirm Task Completion</h3><button className="btn-close" onClick={() => setConfirmModal(null)}><i className="fas fa-times" /></button></div><div className="modal-body"><p>Are you satisfied with the completion of:</p><p className="mt-2"><strong>{confirmModal.taskDescription}</strong></p><div className="alert alert-info mt-3"><i className="fas fa-info-circle" /> You are confirming that the runner completed the task. This releases the runner's payout through Paystack. If there is a problem, close this dialog and raise a dispute instead. If you take no action for 24 hours, DFY automatically confirms the task.</div></div>{actionError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{actionError}</p>}<div className="modal-footer"><button className="btn btn-secondary" onClick={() => { setConfirmModal(null); setActionError('') }}>Cancel</button><button className="btn btn-primary" onClick={handleConfirm} disabled={actionLoading}>{actionLoading ? <><span className="spinner spinner-sm" /> Processing...</> : 'Confirm & Release Payout'}</button></div></div></div>}
 
         {cancelModal && <div className="modal-overlay" onClick={() => { if (!cancelLoading) { setCancelModal(null); setCancelMessage('') } }}><div className="modal-box" onClick={e => e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-times-circle" /> Cancel Task</h3><button className="btn-close" onClick={() => { setCancelModal(null); setCancelMessage('') }}><i className="fas fa-times" /></button></div><div className="modal-body">{cancelMessage ? <div className={`alert ${cancelMessage.includes('Failed') ? 'alert-error' : 'alert-success'}`}><i className={`fas fa-${cancelMessage.includes('Failed') ? 'exclamation-circle' : 'check-circle'}`} /> {cancelMessage}</div> : <><p style={{ fontWeight: 600, marginBottom: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{cancelModal.taskName || cancelModal.taskDescription}</p>{cancelModal.taskStatus?.toLowerCase() === 'pendingpayment' && <div className="alert alert-info"><i className="fas fa-info-circle" /> No payment was made. This task will be removed at no cost.</div>}{cancelModal.taskStatus?.toLowerCase() === 'posted' && <div className="alert alert-info"><i className="fas fa-info-circle" /> This task is paid and live. Cancellation/refund handling is controlled by DFY's payment policy.</div>}{cancelModal.taskStatus?.toLowerCase() === 'claimed' && <div className="alert alert-warning"><i className="fas fa-exclamation-triangle" /> A runner has already accepted this task. Cancellation may affect the escrow/payout state.</div>}</>}</div><div className="modal-footer">{cancelMessage && !cancelMessage.includes('Failed') ? <button className="btn btn-primary" onClick={() => { setCancelModal(null); setCancelMessage('') }}>Done</button> : <><button className="btn btn-secondary" onClick={() => { setCancelModal(null); setCancelMessage('') }} disabled={cancelLoading}>Keep Task</button><button className="btn btn-danger" onClick={handleCancel} disabled={cancelLoading}>{cancelLoading ? <><span className="spinner spinner-sm" /> Cancelling...</> : 'Yes, Cancel Task'}</button></>}</div></div></div>}
 

@@ -1,0 +1,28 @@
+name: Seed staging test tasks with Playwright
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chore/seed-staging-five-tasks
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Seed and verify five Browse Tasks through the real UI
+        env:
+          BASE_URL: https://dfy-fe-staging.onrender.com
+          DFY_CREATOR_EMAIL: ${{ secrets.DFY_CREATOR_EMAIL }}
+          DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
+          DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
+          DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
+        run: npx playwright test e2e/seed-staging-browse-tasks.spec.ts --project=chromium --workers=1

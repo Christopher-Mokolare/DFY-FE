@@ -5,6 +5,7 @@
 
 @media (max-width: 768px) {
   .bottom-nav {
+    --mobile-bottom-nav-height: calc(64px + env(safe-area-inset-bottom));
     display: flex;
     position: fixed;
     bottom: 0;

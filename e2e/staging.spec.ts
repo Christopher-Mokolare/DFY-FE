@@ -2,8 +2,12 @@ import { test, expect, Page, request } from '@playwright/test'
 
 const PASSWORD = 'Test@1234'
 
+// These smoke tests create persistent accounts in the configured API database.
+// Keep writes opt-in until CI points at a dedicated, isolated E2E database.
+const ALLOW_STAGING_REGISTRATION_WRITES = process.env.DFY_E2E_ALLOW_REGISTRATION_WRITES === 'true'
+
 function makeEmail(prefix: string) {
-  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '@test.dfy'
+  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '@example.com'
 }
 
 function makeIdentity() {
@@ -113,18 +117,21 @@ test('unauthenticated user is redirected from dashboard', async ({ page }) => {
 })
 
 test('poster can register', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster')
   await register(page, email, 'creator')
   await expect(page).toHaveURL(/login/i)
 })
 
 test('runner can register', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('runner')
   await register(page, email, 'runner')
   await expect(page).toHaveURL(/login/i)
 })
 
 test('poster can log in', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster-login')
   await register(page, email, 'creator')
   await login(page, email)
@@ -132,6 +139,7 @@ test('poster can log in', async ({ page }) => {
 })
 
 test('dashboard shows content after login', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster-dashboard')
   await register(page, email, 'creator')
   await login(page, email)
@@ -139,6 +147,7 @@ test('dashboard shows content after login', async ({ page }) => {
 })
 
 test('user can view profile page', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster-profile')
   await register(page, email, 'creator')
   await login(page, email)
@@ -147,14 +156,18 @@ test('user can view profile page', async ({ page }) => {
 })
 
 test('runner can browse available tasks', async ({ page }) => {
-  const email = makeEmail('runner-browse')
-  await register(page, email, 'runner')
-  await login(page, email)
+  // Browsing is public, so this smoke test must not register a persistent user
+  // or depend on account credentials. Assert the actual browse-page controls:
+  // the hero was intentionally removed, so a "Find a task" heading is no longer
+  // part of the page contract.
   await gotoWithRetry(page, '/tasks/browse')
-  await expect(page.getByRole('heading', { name: /find a task/i })).toBeVisible({ timeout: 15_000 })
+  await waitForAppReady(page)
+  await expect(page.getByRole('searchbox', { name: /search tasks/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('combobox')).toBeVisible({ timeout: 15_000 })
 })
 
 test('poster can access post errand page', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster-post')
   await register(page, email, 'creator')
   await login(page, email)
@@ -163,6 +176,7 @@ test('poster can access post errand page', async ({ page }) => {
 })
 
 test('poster can view my posted tasks', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster-posted')
   await register(page, email, 'creator')
   await login(page, email)
@@ -172,6 +186,7 @@ test('poster can view my posted tasks', async ({ page }) => {
 })
 
 test('legacy wallet route redirects to the dashboard', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('runner-wallet-route')
   await register(page, email, 'runner')
   await login(page, email)
@@ -181,6 +196,7 @@ test('legacy wallet route redirects to the dashboard', async ({ page }) => {
 })
 
 test('user can log out', async ({ page }) => {
+  test.skip(!ALLOW_STAGING_REGISTRATION_WRITES, 'This test creates persistent users; enable only against an isolated E2E database.')
   const email = makeEmail('poster-logout')
   await register(page, email, 'creator')
   await login(page, email)

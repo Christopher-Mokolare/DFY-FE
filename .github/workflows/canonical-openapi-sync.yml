@@ -1,0 +1,78 @@
+name: Sync canonical backend API contract
+
+on:
+  schedule:
+    - cron: '37 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: canonical-openapi-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Fetch canonical backend contract
+        env:
+          DFY_BE_READ_TOKEN: ${{ secrets.DFY_BE_READ_TOKEN }}
+        run: |
+          if [ -z "$DFY_BE_READ_TOKEN" ]; then
+            echo "::error::DFY_BE_READ_TOKEN is required (read-only Contents access to DoForYou-ZA/DFY-BE)."
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $DFY_BE_READ_TOKEN" \
+            -H "Accept: application/vnd.github.raw+json" \
+            "https://api.github.com/repos/DoForYou-ZA/DFY-BE/contents/docs/openapi.json?ref=main" \
+            -o /tmp/canonical-openapi.json
+          python -m json.tool /tmp/canonical-openapi.json >/dev/null
+      - name: Update contract snapshot and generated TypeScript declarations
+        id: update
+        run: |
+          if cmp -s contracts/openapi.json /tmp/canonical-openapi.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Client contract is already current."
+            exit 0
+          fi
+          cp /tmp/canonical-openapi.json contracts/openapi.json
+          npx --yes openapi-typescript@7.6.1 contracts/openapi.json -o /tmp/dfy-openapi.d.ts
+          cp /tmp/dfy-openapi.d.ts src/api/openapi.d.ts
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Open or refresh synchronization pull request
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B automation/canonical-openapi-sync
+          git add contracts/openapi.json src/api/openapi.d.ts
+          git commit -m "chore: sync canonical backend OpenAPI contract"
+          git push --force origin automation/canonical-openapi-sync
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head automation/canonical-openapi-sync \
+            --title "chore: sync canonical backend OpenAPI contract" \
+            --body 'Automated contract synchronization from DoForYou-ZA/DFY-BE main. Review generated API type changes and run the client checks before merging. Backend business rules remain authoritative.' \
+            || gh pr view automation/canonical-openapi-sync --repo "$GITHUB_REPOSITORY"
+          # GITHUB_TOKEN-created PR events do not automatically start other workflows.
+          # Explicitly dispatch the client CI against the synchronization branch.
+          gh workflow run ci.yml --ref automation/canonical-openapi-sync

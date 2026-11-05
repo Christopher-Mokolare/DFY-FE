@@ -169,6 +169,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, .35fr) auto;
   gap: .75rem;
+  width: 100%;
+  max-width: 680px;
 }
 
 .user-dashboard-content .search-wrapper {
@@ -2977,6 +2979,13 @@
   font-size: .72rem;
 }
 
+.user-workspace-shell .bank-account-verification-message {
+  flex-basis: 100%;
+  color: #b45309;
+  font-size: .72rem;
+  text-align: right;
+}
+
 .user-workspace-shell .bank-account-error {
   margin: 0;
   border-radius: 11px;
@@ -3986,9 +3995,16 @@
 }
 
 .user-workspace-shell .active-tasks-page .tasks-grid {
-  grid-template-columns: minmax(0, 760px);
-  justify-content: start;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  justify-content: stretch;
   gap: .7rem;
+}
+
+.user-workspace-shell .active-tasks-page .active-task-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .user-workspace-shell .active-task-card .task-card-header {
@@ -3997,6 +4013,7 @@
 }
 
 .user-workspace-shell .active-task-card .task-card-body {
+  flex: 1;
   padding: .65rem .75rem;
 }
 
@@ -4089,6 +4106,56 @@
 .user-workspace-shell .my-completed-page .tasks-grid,
 .user-workspace-shell .browse-page .tasks-grid {
   gap: .65rem;
+}
+
+.user-workspace-shell .completed-task-tabs {
+  display: flex;
+  gap: .4rem;
+  margin-bottom: .8rem;
+  padding: .35rem;
+  overflow-x: auto;
+  border: 1px solid #e7ebf1;
+  border-radius: 12px;
+  background: #fff;
+  scrollbar-width: thin;
+}
+
+.user-workspace-shell .completed-task-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: .45rem .7rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.user-workspace-shell .completed-task-tab:hover { background: #f5f7fa; }
+.user-workspace-shell .completed-task-tab.active { background: #fff3e5; color: var(--primary); }
+
+.user-workspace-shell .completed-task-tab-count {
+  min-width: 1.25rem;
+  padding: .08rem .28rem;
+  border-radius: 999px;
+  background: #eef1f5;
+  color: #526071;
+  text-align: center;
+  font-size: .64rem;
+  line-height: 1.4;
+}
+
+.user-workspace-shell .completed-task-tab.active .completed-task-tab-count {
+  background: #ffe2c2;
+  color: #a94c00;
 }
 
 .user-workspace-shell .my-posted-page .task-card,
@@ -5205,6 +5272,38 @@
   margin-inline: auto;
 }
 
+.user-workspace-shell .action-required-page > .container {
+  width: 100%;
+  max-width: 1320px;
+  padding: 0;
+}
+
+.user-workspace-shell .action-required-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+}
+
+.user-workspace-shell .action-required-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.user-workspace-shell .action-required-card .task-card-body {
+  flex: 1;
+}
+
+.user-workspace-shell .action-required-card .task-card-footer .action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.user-workspace-shell .action-required-card .task-card-footer .action-row .btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Mobile: the same system, not a separate squeezed design. */
 @media (max-width: 768px) {
   .user-workspace-main .admin-content {
@@ -5278,6 +5377,16 @@
 
   .user-workspace-shell .task-card-footer .action-row .btn {
     width: 100%;
+  }
+
+  .user-workspace-shell .action-required-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .user-workspace-shell .action-required-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .user-workspace-shell .filters-card {
@@ -5827,27 +5936,357 @@
 }
 
 
-/* Active tasks use the same three-column workspace grid as the dashboard task cards. */
-.user-workspace-shell .active-tasks-page .tasks-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .9rem;
-  align-items: start;
-}
 
-.user-workspace-shell .active-tasks-page .task-card {
+/* ==========================================================================
+   Responsive mobile workspace
+   Desktop keeps the persistent sidebar. Mobile uses a native bottom nav.
+   ========================================================================== */
+.user-workspace-shell,
+.user-workspace-shell .admin-main {
   width: 100%;
-  max-width: none;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
-@media (max-width: 900px) {
-  .user-workspace-shell .active-tasks-page .tasks-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.user-workspace-shell .admin-main,
+.user-workspace-shell .admin-content,
+.user-workspace-shell .admin-content > * {
+  min-width: 0;
+}
+
+.admin-mobile-logout { display: none; }
+
+.user-mobile-bottom-nav { display: none; }
+
+@media (max-width: 768px) {
+  .user-workspace-main .admin-topbar {
+    position: sticky; top: 0; z-index: 1000;
+    min-height: 60px; height: 60px; padding: 0 .85rem;
+    background: rgba(255,255,255,.97);
+    border-bottom: 1px solid #e7ebf1;
+    box-shadow: 0 2px 12px rgba(15,23,42,.04);
+  }
+  .user-workspace-main .admin-topbar-left { min-width: 0; gap: .65rem; }
+  .user-workspace-main .admin-mobile-menu { display: none !important; }
+  .user-workspace-main .user-workspace-topbar-context { min-width: 0; display: flex; flex-direction: column; }
+  .user-workspace-main .user-workspace-topbar-context .admin-breadcrumb {
+    display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #94a3b8; font-size: .61rem;
+  }
+  .user-workspace-main .user-workspace-topbar-context strong {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #172033; font-size: .78rem;
+  }
+  .user-workspace-main .admin-topbar-right { gap: .4rem; }
+  .user-workspace-main .admin-notification-button,
+  .user-workspace-main .admin-mobile-logout {
+    width: 38px; height: 38px; flex: 0 0 38px; border-radius: 10px;
+  }
+  .user-workspace-main .admin-mobile-logout {
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    background: #f8fafc;
+    color: #334155;
+    cursor: pointer;
+  }
+  .user-workspace-main .admin-mobile-logout:active {
+    transform: scale(.96);
+  }
+  .user-workspace-main .admin-live-status { display: none; }
+  .user-workspace-sidebar, .user-workspace-main .admin-sidebar-backdrop { display: none !important; }
+  .user-workspace-main .admin-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+    overflow-y: visible;
+    padding: 1rem .85rem 2rem;
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Reserve real document space for the fixed bottom navigation. Padding alone
+     can still allow the last painted section to sit behind a fixed toolbar. */
+  .user-workspace-main .admin-content::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+  .user-workspace-main .admin-content > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* Every authenticated mobile page gets real end-space for the fixed bottom nav. */
+  .user-workspace-main .admin-content > :last-child {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Dashboard is a direct content child. Keep its actual painted bottom above
+     the fixed navigation when the page is scrolled fully to the end. */
+  .user-workspace-main .admin-content > .admin-page.user-overview-page {
+    margin-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+  .user-workspace-main .admin-content img,
+  .user-workspace-main .admin-content table {
+    max-width: 100%;
+  }
+  .user-workspace-shell .page-header { margin-bottom: 1rem; }
+  .user-workspace-shell .page-header h1,
+  .user-workspace-shell .dashboard-header h1,
+  .user-workspace-shell .messages-hero h1 { font-size: 1.4rem; line-height: 1.2; }
+  .user-workspace-shell .page-header p,
+  .user-workspace-shell .dashboard-header p,
+  .user-workspace-shell .messages-hero p { font-size: .74rem; line-height: 1.5; }
+  .user-workspace-content .tasks-grid,
+  .user-dashboard-content .tasks-grid { grid-template-columns: 1fr; }
+  .user-dashboard-content .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .user-mobile-bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1400;
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-height: 64px;
+    padding: .4rem .45rem max(.4rem, env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.98);
+    border-top: 1px solid #e5e9f0;
+    box-shadow: 0 -8px 24px rgba(15,23,42,.08);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  }
+  .user-mobile-bottom-nav__item {
+    min-width: 0; min-height: 52px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: .2rem;
+    padding: .25rem .15rem; border-radius: 11px;
+    color: #64748b; text-decoration: none; font-size: .62rem; font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .user-mobile-bottom-nav__item:active { transform: scale(.97); }
+  .user-mobile-bottom-nav__item.active { color: #15803d; background: #f0fdf4; }
+  .user-mobile-bottom-nav__icon {
+    position: relative; width: 24px; height: 24px; display: grid;
+    place-items: center; font-size: 1rem;
+  }
+  .user-mobile-bottom-nav__label {
+    overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; line-height: 1;
+  }
+  .user-mobile-bottom-nav__badge {
+    position: absolute; top: -5px; right: -9px; min-width: 16px; height: 16px;
+    padding: 0 4px; display: grid; place-items: center; border-radius: 999px;
+    background: #dc2626; color: #fff; border: 2px solid #fff;
+    font-size: .48rem; font-weight: 700; line-height: 1;
   }
 }
 
-@media (max-width: 560px) {
-  .user-workspace-shell .active-tasks-page .tasks-grid {
+@media (max-width: 420px) {
+  .user-workspace-main .admin-topbar { padding-inline: .7rem; }
+  .user-workspace-main .admin-content {
+    padding-inline: .7rem;
+    padding-bottom: 2rem;
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .user-workspace-main .admin-content::after {
+    height: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+  .user-workspace-main .user-workspace-topbar-context .admin-breadcrumb { font-size: .57rem; }
+  .user-workspace-main .user-workspace-topbar-context strong { font-size: .74rem; }
+  .user-dashboard-content .stats-grid { grid-template-columns: 1fr; }
+  .user-mobile-bottom-nav { padding-inline: .3rem; }
+  .user-mobile-bottom-nav__item { font-size: .58rem; }
+}
+
+.user-workspace-shell .bank-account-row-test-fixture {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 340px);
+  align-items: center;
+  border-color: #f4d7a1;
+  background: #fffcf5;
+}
+
+.user-workspace-shell .bank-account-row-test-fixture .bank-account-row-icon {
+  background: #fff5df;
+  color: #a16207;
+}
+
+.user-workspace-shell .bank-account-row-test-fixture .bank-account-row-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: stretch;
+  gap: .45rem .65rem;
+}
+
+.user-workspace-shell .bank-account-row-test-fixture .bank-account-verification-message {
+  grid-column: 1 / -1;
+  text-align: left;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .user-workspace-shell .bank-account-row-test-fixture {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .user-workspace-shell .bank-account-row-test-fixture .bank-account-row-actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+  }
+}
+
+.user-workspace-shell .bank-account-list-card {
+  container-type: inline-size;
+}
+
+@container (max-width: 560px) {
+  .user-workspace-shell .bank-account-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .user-workspace-shell .bank-account-row-main {
+    width: 100%;
+  }
+
+  .user-workspace-shell .bank-account-row-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .user-workspace-shell .bank-account-verification-message {
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .user-workspace-shell .bank-account-row-test-fixture {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+/* ==========================================================================
+   Sidebar collapse
+   ========================================================================== */
+
+.sidebar-collapse-btn {
+  display: none;
+  margin-left: auto;
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border: none;
+  border-radius: 7px;
+  background: var(--primary, #ff8a00);
+  color: #0f1f3d;
+  cursor: pointer;
+  place-items: center;
+  font-size: .65rem;
+  transition: background 150ms;
+}
+
+.sidebar-collapse-btn:hover {
+  background: #e67a00;
+  color: #0f1f3d;
+}
+
+@media (min-width: 901px) {
+  .sidebar-collapse-btn { display: grid; }
+
+  /* Collapsed width — icons only */
+  .user-workspace-shell .admin-sidebar.is-collapsed {
+    width: 62px;
+    min-width: 62px;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-brand {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: .9rem .6rem;
+    gap: .5rem;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-brand-mark {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .sidebar-collapse-btn {
+    margin-left: 0;
+    margin-top: 0;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-sidebar-label,
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-sidebar-section-label {
+    min-height: 8px;
+    margin: .5rem 0 .2rem;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-nav-item {
+    justify-content: center;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border-radius: 10px;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-nav-item i {
+    font-size: .95rem;
+    margin: 0;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .user-workspace-post {
+    width: 40px;
+    height: 40px;
+    margin: .4rem auto .2rem;
+    justify-content: center;
+    box-shadow: none;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-sidebar-footer {
+    justify-content: center;
+    padding: .75rem .5rem;
+    gap: .5rem;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-profile-mini {
+    justify-content: center;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-avatar {
+    margin: 0;
+  }
+
+  /* Dot badge when collapsed */
+  .admin-nav-badge--dot {
+    min-width: 8px !important;
+    width: 8px;
+    height: 8px;
+    padding: 0 !important;
+    border-radius: 999px;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 0;
+  }
+
+  .user-workspace-shell .admin-sidebar.is-collapsed .admin-nav-item {
+    position: relative;
+  }
+
+  /* Push main content to fill the freed space */
+  .user-workspace-shell .admin-sidebar.is-collapsed ~ .admin-main {
+    margin-left: 0;
+  }
+
+  /* Hide breadcrumb/title text when sidebar is collapsed */
+  .user-workspace-shell:has(.admin-sidebar.is-collapsed) .user-workspace-topbar-context {
+    display: none;
   }
 }

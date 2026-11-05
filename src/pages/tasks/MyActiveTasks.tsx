@@ -1,7 +1,17 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import TaskCard from '../../components/workspace/TaskCard'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi, disputesApi, ratingsApi } from '../../api'
+import Pagination from '../../components/Pagination'
+import TaskCard from '../../components/workspace/TaskCard'
+
+const PAGE_SIZE = 10
+
+function formatRunnerPayout(value: unknown) {
+  if (value === null || value === undefined || value === '') return 'Payout unavailable'
+  const amount = Number(value)
+  if (!Number.isFinite(amount) || amount <= 0) return 'Payout unavailable'
+  return `R${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
 
 function getStatusBadge(status: string) {
   const s = status?.toLowerCase()
@@ -15,8 +25,13 @@ function getStatusBadge(status: string) {
 
 export default function MyActiveTasks() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalTasks, setTotalTasks] = useState(0)
   const [completeModal, setCompleteModal] = useState<any | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [disputeModal, setDisputeModal] = useState<any | null>(null)
@@ -32,16 +47,37 @@ export default function MyActiveTasks() {
   const [actionError, setActionError] = useState('')
   const [disputeError, setDisputeError] = useState('')
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async (targetPage = page, targetTaskId?: string) => {
+    setLoading(true)
+    setLoadError('')
     try {
-      const res = await tasksApi.getMyActive()
-      // API returns: { success, data: [ { id, taskId, title, description, category, location, budget, status, createdAt, dueDate, creatorName, creatorContact } ] }
-      const data = res.data?.data || []
-      setTasks(Array.isArray(data) ? data : [])
-    } catch { /* ignore */ } finally { setLoading(false) }
-  }
+      const res = await tasksApi.getMyActive(targetPage, PAGE_SIZE, targetTaskId)
+      const data = res.data?.data
+      const list = data?.tasks || data?.Tasks || (Array.isArray(data) ? data : [])
+      setTasks(Array.isArray(list) ? list : [])
+      setTotalTasks(Number(data?.count ?? list.length))
+      setTotalPages(Math.max(1, Number(data?.totalPages ?? 1)))
+      if (data?.page) setPage(Number(data.page))
+    } catch (err: any) {
+      setLoadError(err.response?.data?.message || 'Failed to load active tasks. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [page])
 
-  useEffect(() => { loadTasks() }, [])
+  const linkedTaskId = searchParams.get('taskId')
+  useEffect(() => {
+    void loadTasks(page, page === 1 ? linkedTaskId ?? undefined : undefined)
+  }, [linkedTaskId, loadTasks, page])
+
+  useEffect(() => {
+    if (!linkedTaskId || loading || !tasks.some(task => String(task.taskId) === linkedTaskId)) return
+    requestAnimationFrame(() => document.getElementById(`active-task-${linkedTaskId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    setSearchParams(params => {
+      params.delete('taskId')
+      return params
+    }, { replace: true })
+  }, [linkedTaskId, loading, tasks, setSearchParams])
 
   const handleComplete = async () => {
     if (!completeModal) return
@@ -50,7 +86,7 @@ export default function MyActiveTasks() {
       const res = await tasksApi.complete(completeModal.taskId)
       if (res.data?.success === false) { setActionError(res.data?.message || 'Failed to mark complete'); return }
       setCompleteModal(null)
-      await loadTasks()
+      await loadTasks(page)
     } catch (err: any) {
       setActionError(err.response?.data?.message || 'Failed to mark complete')
     } finally { setActionLoading(false) }
@@ -65,7 +101,7 @@ export default function MyActiveTasks() {
       setDisputeModal(null)
       setDisputeIssue('')
       setDisputeCategory('General')
-      await loadTasks()
+      await loadTasks(page)
     } catch (err: any) {
       setDisputeError(err.response?.data?.message || 'Failed to raise dispute')
     } finally { setDisputeLoading(false) }
@@ -93,14 +129,12 @@ export default function MyActiveTasks() {
     taskName: t.taskName || t.name || '',
     area: t.location || t.area || '',
     budget: t.budget || 0,
-    payoutAmount: t.payoutAmount ?? 0,
+    payoutAmount: t.payoutAmount ?? t.PayoutAmount ?? null,
     taskStatus: t.status || t.taskStatus || '',
     dateNeeded: t.dueDate || t.dateNeeded || '',
     userName: t.creatorName || t.userName || '',
     userContact: t.creatorContact || t.userContact || '',
   })
-
-  if (loading) return <div className="loading-state"><div className="spinner" /><p>Loading your active tasks...</p></div>
 
   return (
     <div className="my-active-page active-tasks-page">
@@ -111,7 +145,8 @@ export default function MyActiveTasks() {
         </div>
       </div>
       <div className="container">
-        {tasks.length === 0 ? (
+        {loadError && <div className="alert alert-error mb-4" role="alert">{loadError} <button className="btn btn-secondary btn-sm" onClick={() => void loadTasks(page)}>Retry</button></div>}
+        {loading ? <div className="loading-state"><div className="spinner" /><p>Loading your active tasks...</p></div> : tasks.length === 0 ? (
           <div className="empty-state">
             <i className="fas fa-tasks" />
             <h3>No Active Tasks</h3>
@@ -123,30 +158,60 @@ export default function MyActiveTasks() {
             {tasks.map(raw => {
               const t = norm(raw)
               return (
-                <TaskCard
-                  key={t.taskId}
-                  variant="active"
-                  className="active-task-card"
-                  status={<span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>}
-                  amount={<>R{Number(t.budget).toFixed(0)}</>}
-                  title={t.taskName || t.taskDescription}
-                  description={t.taskName ? t.taskDescription : undefined}
-                  meta={<><span><i className="fas fa-map-marker-alt" /> {t.area}</span>{t.dateNeeded && <span><i className="fas fa-calendar" /> {new Date(t.dateNeeded).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}<span><i className="fas fa-user" /> {t.userName}</span>{t.userContact && <span><i className="fas fa-phone" /> {t.userContact}</span>}</>}
-                  extra={<><div className="task-earnings"><span className="task-earnings-label">You earn</span><strong>R{Number(t.payoutAmount || t.budget * 0.85).toFixed(0)}</strong></div><div className="task-protection"><i className="fas fa-shield-alt" /><span>Protected payment · Direct bank payout</span></div></>}
-                  actions={<div className="active-task-actions">
-                    <div className="active-task-contact-actions">
-                      <button className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate('/tasks/' + t.taskId + '/chat?title=' + encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat'))}><i className="fas fa-comment" /> Chat</button>
-                      {t.userContact && <a href={'tel:' + t.userContact} className="btn btn-outline btn-sm active-task-contact-btn"><i className="fas fa-phone" /> Call</a>}
+                <TaskCard id={`active-task-${t.taskId}`} key={t.taskId} className="task-card active-task-card">
+                  <div className="task-card-header">
+                    <span className={getStatusBadge(t.taskStatus)}>{t.taskStatus}</span>
+                    <div className="task-budget">
+                      {formatRunnerPayout(t.payoutAmount)}
+                      <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>payout</small>
                     </div>
-                    {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && <button className="btn btn-primary btn-block btn-sm" onClick={() => setCompleteModal(raw)}><i className="fas fa-check" /> Mark as Complete</button>}
-                    {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && <button className="btn btn-outline btn-block btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={() => setDisputeModal(raw)}><i className="fas fa-exclamation-triangle" /> Raise Dispute</button>}
-                    {['runnerpaid', 'runner_paid', 'completed'].includes(t.taskStatus?.toLowerCase()) && !ratedTaskIds.has(t.taskId) && <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(raw); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate Creator</button>}
-                  </div>}
-                />
+                  </div>
+                  <div className="task-card-body">
+                    <h3 className="task-title">{t.taskName || t.taskDescription}</h3>
+                    {t.taskName && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.taskDescription}</p>}
+                    <div className="task-meta">
+                      <div className="task-meta-item"><i className="fas fa-map-marker-alt" /><span>{t.area}</span></div>
+                      {t.dateNeeded && <div className="task-meta-item"><i className="fas fa-calendar" /><span>{new Date(t.dateNeeded).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
+                      <div className="task-meta-item"><i className="fas fa-user" /><span>{t.userName}</span></div>
+                      {t.userContact && <div className="task-meta-item"><i className="fas fa-phone" /><span>{t.userContact}</span></div>}
+                    </div>
+                  </div>
+                  <div className="task-card-footer">
+                    <div className="active-task-actions">
+                      <div className="active-task-contact-actions">
+                        <button className="btn btn-outline btn-sm active-task-contact-btn" onClick={() => navigate(`/tasks/${t.taskId}/chat?title=${encodeURIComponent(t.taskName || t.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>
+                        {t.userContact && <a href={`tel:${t.userContact}`} className="btn btn-outline btn-sm active-task-contact-btn"><i className="fas fa-phone" /> Call</a>}
+                      </div>
+                      {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
+                        <button className="btn btn-primary btn-block btn-sm" onClick={() => setCompleteModal(raw)}>
+                          <i className="fas fa-check" /> Mark as Complete
+                        </button>
+                      )}
+                      {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
+                        <button className="btn btn-outline btn-block btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={() => setDisputeModal(raw)}>
+                          <i className="fas fa-exclamation-triangle" /> Raise Dispute
+                        </button>
+                      )}
+                      {['runnerpaid', 'runner_paid', 'completed'].includes(t.taskStatus?.toLowerCase()) && !ratedTaskIds.has(t.taskId) && (
+                        <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(raw); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
+                          <i className="fas fa-star" /> Rate Creator
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </TaskCard>
               )
             })}
           </div>
         )}
+        {!loading && <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalCount={totalTasks}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          label="active tasks"
+        />}
       </div>
 
       {completeModal && (

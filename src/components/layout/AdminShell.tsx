@@ -8,10 +8,11 @@ const navigation = [
   { label: 'Users', to: '/admin/users', icon: 'fa-users', section: 'OPERATIONS' },
   { label: 'Disputes', to: '/admin/disputes', icon: 'fa-gavel', section: 'OPERATIONS' },
   { label: 'Payments', to: '/admin/payments', icon: 'fa-credit-card', section: 'FINANCE' },
+  { label: 'Testimonials', to: '/admin/testimonials', icon: 'fa-quote-left', section: 'CONTENT' },
   { label: 'Audit Log', to: '/admin/audit-log', icon: 'fa-shield-halved', section: 'SYSTEM' },
 ]
 
-const sections = ['WORKSPACE', 'OPERATIONS', 'FINANCE', 'SYSTEM'] as const
+const sections = ['WORKSPACE', 'OPERATIONS', 'FINANCE', 'CONTENT', 'SYSTEM'] as const
 
 export default function AdminShell() {
   const { user, logout } = useAuth()

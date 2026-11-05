@@ -1,29 +1,24 @@
+import { Link } from 'react-router-dom'
+import { usePageMetadata } from '../hooks/usePageMetadata'
+import './LegacyMarketingPages.css'
+
+const taskImage = new URL('../assets/images/image1.jpeg', import.meta.url).href
+const runnerImage = new URL('../assets/images/image2.jpeg', import.meta.url).href
+const completionImage = new URL('../assets/images/image3.jpeg', import.meta.url).href
+
 export default function About() {
-  return (
-    <div style={{ paddingBottom: '3rem' }}>
-      <div className="page-header"><div className="container"><h1>About DoForYou</h1><p>Connecting South Africans through meaningful tasks</p></div></div>
-      <div className="container" style={{ maxWidth: 800, paddingTop: '2rem' }}>
-        <div className="section-card">
-          <h2 style={{ marginBottom: '1rem' }}>Our Mission</h2>
-          <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '1rem' }}>DoForYou is a freelance platform that allows ordinary South Africans to perform tasks for each other, providing an opportunity to earn extra cash while helping their community.</p>
-          <p style={{ color: 'var(--text-muted)', lineHeight: 1.8 }}>Whether you need groceries picked up, a package delivered, or help with household tasks — DoForYou connects you with trusted people in your area who can get it done.</p>
-        </div>
-        <div className="section-card">
-          <h2 style={{ marginBottom: '1rem' }}>How It Works</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {[
-              { icon: 'fa-plus-circle', title: 'Post a Task', desc: 'Describe what you need done, set your budget, and post your task.' },
-              { icon: 'fa-search', title: 'Find a Runner', desc: 'A qualified runner in your area accepts your task.' },
-              { icon: 'fa-check-circle', title: 'Get It Done', desc: 'The runner completes the task. Confirm and release payment securely.' },
-            ].map((s, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--primary-gradient)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><i className={`fas ${s.icon}`} /></div>
-                <div><h4 style={{ marginBottom: '0.25rem' }}>{s.title}</h4><p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{s.desc}</p></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  usePageMetadata('About DoForYou | South African Task Marketplace', 'Meet DoForYou, a South African task marketplace connecting people who need everyday tasks done with local runners looking for flexible earning opportunities.')
+  return <div className="marketing-page premium-marketing-page legacy-marketing-page about-page">
+    <header className="premium-page-hero"><div className="container premium-hero-grid">
+      <div className="premium-hero-copy"><span className="marketing-kicker">A LITTLE HELP GOES A LONG WAY</span><h1>Good things happen when people <em>help people.</em></h1><p>DoForYou connects people who need everyday tasks done with local runners ready to put their time and skills to work—right here in South Africa.</p><div className="marketing-actions"><Link className="btn btn-primary btn-lg" to="/how-it-works">See how it works <span aria-hidden="true">→</span></Link><Link className="btn btn-secondary btn-lg" to="/tasks/browse">Explore tasks</Link></div><div className="premium-trust-line"><span><i aria-hidden="true">✓</i> Built around everyday tasks</span><span><i aria-hidden="true">✓</i> Clear expectations</span><span><i aria-hidden="true">✓</i> Local earning opportunities</span></div></div>
+      <div className="premium-hero-visual"><img className="premium-hero-photo" src={runnerImage} alt="A person preparing to help with an everyday task" /><div className="hero-image-caption"><span className="hero-caption-dot" /> Local people. Practical help. Shared progress.</div></div>
+    </div></header>
+    <section className="premium-section"><div className="container"><div className="premium-section-heading"><span className="marketing-kicker">WHY DOFORYOU EXISTS</span><h2>Make everyday life a little easier—and opportunity a little closer.</h2><p>Sometimes you need an extra pair of hands. Sometimes you have the time and skills to lend yours. DoForYou brings those needs together through a task marketplace designed around clear details and mutual respect.</p></div><div className="legacy-card-grid">
+      <article className="legacy-info-card"><span className="legacy-info-icon" aria-hidden="true">◎</span><h3>For people who need a hand</h3><p>Post a task with a clear outcome, practical details, timing, and budget so runners can understand what you need.</p></article>
+      <article className="legacy-info-card"><span className="legacy-info-icon" aria-hidden="true">↗</span><h3>For people ready to help</h3><p>Explore available tasks, choose work that suits your skills and schedule, and clarify expectations before accepting.</p></article>
+      <article className="legacy-info-card"><span className="legacy-info-icon" aria-hidden="true">✓</span><h3>For a clearer finish</h3><p>Task status and a defined completion review help both sides understand what happens next.</p></article>
+    </div></div></section>
+    <section className="legacy-split-section"><div className="container legacy-split-grid"><img className="legacy-split-image" src={taskImage} alt="Planning and organising an everyday task" loading="lazy" /><div className="legacy-section-heading"><span className="marketing-kicker">HOW WE THINK ABOUT TASKS</span><h2>Clarity is part of doing the job well.</h2><p>A good experience starts before anyone accepts a task. The brief, budget, location, timing, and expected outcome should be clear enough for both sides to make an informed decision.</p><ul className="legacy-check-list"><li><span aria-hidden="true">✓</span><div><strong>Start with the outcome.</strong><br />Describe what success looks like, not just the activity.</div></li><li><span aria-hidden="true">✓</span><div><strong>Agree on practical details.</strong><br />Discuss timing, access, scope, and budget before work begins.</div></li><li><span aria-hidden="true">✓</span><div><strong>Review completion fairly.</strong><br />After a runner marks a task complete, the creator has 24 hours to confirm or raise a dispute.</div></li></ul></div></div></section>
+    <section className="legacy-split-section"><div className="container legacy-split-grid"><div className="legacy-section-heading"><span className="marketing-kicker">FROM START TO FINISH</span><h2>Progress should be easy to understand.</h2><p>DoForYou is a task marketplace, not a courier tracking service. We focus on the agreement between the creator and runner, the progress of the work, and the creator's chance to review the result.</p><div className="marketing-actions"><Link className="btn btn-primary" to="/for-creators">For task creators</Link><Link className="btn btn-secondary" to="/for-runners">For runners</Link></div></div><img className="legacy-split-image" src={completionImage} alt="A task result being checked and reviewed" loading="lazy" /></div></section>
+  </div>
 }

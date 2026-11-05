@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { bankingApi } from '../../api'
+import { bankingApi, authApi } from '../../api'
 
 interface BankOption {
+  bankCode: string
   bankGroupId: string
   name: string
   branchCode: string
@@ -10,10 +11,13 @@ interface BankOption {
 interface BankAccount {
   id: number
   bankName: string
+  bankCode?: string | null
   accountNumber: string
   accountHolderName: string
   accountType: string
   isVerified: boolean
+  isDefaultPayout: boolean
+  verificationMessage?: string | null
   createdAt: string
 }
 
@@ -23,15 +27,16 @@ export default function BankAccounts() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [verifyingId, setVerifyingId] = useState<number | null>(null)
+  const [removingId, setRemovingId] = useState<number | null>(null)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
   const [banksError, setBanksError] = useState('')
   const [accountsError, setAccountsError] = useState('')
   const [form, setForm] = useState({
-    bankGroupId: '',
+    bankCode: '',
     accountNumber: '',
     accountHolderName: '',
-    accountType: 'Savings',
+    accountType: 'personal',
   })
 
   const load = async () => {
@@ -40,9 +45,10 @@ export default function BankAccounts() {
     setBanksError('')
     setAccountsError('')
 
-    const [banksResult, accountsResult] = await Promise.allSettled([
+    const [banksResult, accountsResult, profileResult] = await Promise.allSettled([
       bankingApi.getBanks(),
       bankingApi.getBankAccounts(),
+      authApi.getProfile(),
     ])
 
     if (banksResult.status === 'fulfilled') {
@@ -63,6 +69,12 @@ export default function BankAccounts() {
       setAccountsError(err.response?.data?.message || 'Unable to load your bank accounts. Please try again.')
     }
 
+    if (profileResult.status === 'fulfilled' && !form.accountHolderName) {
+      const profile = profileResult.value.data?.data ?? profileResult.value.data
+      const profileName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim()
+      if (profileName) setForm(prev => ({ ...prev, accountHolderName: profileName }))
+    }
+
     setLoading(false)
   }
 
@@ -79,10 +91,11 @@ export default function BankAccounts() {
     setSuccess('')
 
     try {
-      const selectedBank = banks.find(bank => bank.bankGroupId === form.bankGroupId)
+      const selectedBank = banks.find(bank => (bank.bankCode || bank.bankGroupId) === form.bankCode)
       if (!selectedBank) throw new Error('Please select a supported bank.')
 
       const response = await bankingApi.addBankAccount({
+        bankCode: selectedBank.bankCode || selectedBank.bankGroupId,
         bankGroupId: selectedBank.bankGroupId,
         bankName: selectedBank.name,
         accountNumber: form.accountNumber,
@@ -92,15 +105,16 @@ export default function BankAccounts() {
       })
 
       const payload = response.data
+      await load()
       if (payload?.success === false) {
         setError(payload.message || 'Bank account verification failed.')
         return
       }
 
       setSuccess(payload?.message || 'Bank account added and verified successfully.')
-      setForm({ bankGroupId: '', accountNumber: '', accountHolderName: '', accountType: 'Savings' })
-      await load()
+      setForm({ bankCode: '', accountNumber: '', accountHolderName: '', accountType: 'personal' })
     } catch (err: any) {
+      await load()
       setError(err.response?.data?.message || err.message || 'Unable to add bank account.')
     } finally {
       setSaving(false)
@@ -113,18 +127,68 @@ export default function BankAccounts() {
     setSuccess('')
     try {
       const response = await bankingApi.verifyBankAccount(id)
+      await load()
       if (response.data?.success === false) {
         setError(response.data?.message || 'Bank verification failed.')
         return
       }
       setSuccess(response.data?.message || 'Bank account verified successfully.')
-      await load()
     } catch (err: any) {
+      await load()
       setError(err.response?.data?.message || 'Unable to verify the bank account.')
     } finally {
       setVerifyingId(null)
     }
   }
+
+  const removeAccount = async (account: BankAccount) => {
+    if (!window.confirm(`Remove ${account.bankName} account ${account.accountNumber} from your payout settings?`))
+      return
+
+    setRemovingId(account.id)
+    setError('')
+    setSuccess('')
+    try {
+      const response = await bankingApi.removeBankAccount(account.id)
+      await load()
+      setSuccess(response.data?.message || 'Bank account removed.')
+    } catch (err: any) {
+      await load()
+      const status = err.response?.status
+      const message = err.response?.data?.message
+      setError(message || (status === 404 || status === 405
+        ? 'Bank-account removal is not available on this backend version yet. Deploy the backend update, then try again.'
+        : status === 409
+          ? 'This account is linked to a payout in progress and cannot be removed yet.'
+          : 'Unable to remove the bank account. Please try again.'))
+    } finally {
+      setRemovingId(null)
+    }
+  }
+
+  const setDefaultPayoutAccount = async (account: BankAccount) => {
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    try {
+      const response = await bankingApi.setDefaultPayoutAccount(account.id)
+      await load()
+      setSuccess(response.data?.message || 'Default payout account updated.')
+    } catch (err: any) {
+      await load()
+      setError(err.response?.data?.message || 'Unable to update the default payout account.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const payoutReadyCount = accounts.filter(account => account.isVerified).length
+  const displayedAccounts = [...accounts].sort(
+    (left, right) => Number(right.isDefaultPayout) - Number(left.isDefaultPayout),
+  )
+  const isTestFixture = (account: BankAccount) =>
+    account.bankCode?.toUpperCase() === 'DFY-E2E' ||
+    account.bankName.toLowerCase() === 'dfy e2e test bank'
 
   return (
     <div className="bank-accounts-page admin-page">
@@ -136,7 +200,7 @@ export default function BankAccounts() {
         </div>
         <div className="bank-page-heading-meta">
           <span><i className="fas fa-lock" /> Secure verification</span>
-          <span><i className="fas fa-building-columns" /> Direct Ozow payouts</span>
+          <span><i className="fas fa-building-columns" /> Direct Paystack payouts</span>
         </div>
       </section>
 
@@ -153,7 +217,7 @@ export default function BankAccounts() {
             <div className="bank-account-card-icon"><i className="fas fa-plus" /></div>
           </div>
 
-          <p className="bank-panel-description">Your details are securely verified before DFY releases a direct payout through Ozow.</p>
+          <p className="bank-panel-description">Your details are securely verified before DFY releases a direct payout through Paystack.</p>
 
           <div className="bank-security-note"><i className="fas fa-lock" /><span>Your banking information is encrypted and used only for payout verification and settlement.</span></div>
 
@@ -169,22 +233,22 @@ export default function BankAccounts() {
             <div className="bank-form-grid">
               <div className="form-group">
                 <label className="form-label">Bank</label>
-                <select className="form-input" value={form.bankGroupId} onChange={set('bankGroupId')} required disabled={loading || saving}>
+                <select className="form-input" value={form.bankCode} onChange={set('bankCode')} required disabled={loading || saving}>
                   <option value="">Select your bank</option>
-                  {banks.map(bank => <option key={bank.bankGroupId} value={bank.bankGroupId}>{bank.name}</option>)}
+                  {banks.map(bank => <option key={bank.bankCode || bank.bankGroupId} value={bank.bankCode || bank.bankGroupId}>{bank.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Account Type</label>
+                <label className="form-label">Payout Account Type</label>
                 <select className="form-input" value={form.accountType} onChange={set('accountType')} disabled={saving}>
-                  <option value="Savings">Savings</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Current">Current</option>
+                  <option value="personal">Personal</option>
                 </select>
+                <small className="form-help">DFY currently supports personal South African accounts for runner payouts.</small>
               </div>
               <div className="form-group">
                 <label className="form-label">Account Holder Name</label>
-                <input className="form-input" value={form.accountHolderName} onChange={set('accountHolderName')} required disabled={saving} />
+                <input className="form-input" value={form.accountHolderName} onChange={set('accountHolderName')} required disabled={saving} autoComplete="name" />
+                <small className="form-help">Enter the name exactly as registered with your bank and matching your South African ID.</small>
               </div>
               <div className="form-group">
                 <label className="form-label">Account Number</label>
@@ -207,9 +271,12 @@ export default function BankAccounts() {
               <span className="admin-panel-kicker">Settlement accounts</span>
               <h2>Your bank accounts</h2>
             </div>
-            <span className="bank-account-count">{accounts.length}</span>
+            <span className="bank-account-count" aria-label={`${accounts.length} active bank accounts`}>{accounts.length}</span>
           </div>
-          <p className="bank-panel-description">Verified accounts available for direct runner payouts.</p>
+          <p className="bank-panel-description">
+            {payoutReadyCount} of {accounts.length} active {accounts.length === 1 ? 'account is' : 'accounts are'} verified and ready for payouts.
+          </p>
+          <p className="bank-panel-description">Choose which verified account receives new payouts. Existing payouts keep their original destination.</p>
 
           {loading ? (
             <div className="admin-empty"><i className="fas fa-spinner fa-spin" /><p>Loading bank accounts...</p></div>
@@ -219,8 +286,8 @@ export default function BankAccounts() {
             <div className="admin-empty"><i className="fas fa-building-columns" /><p>No active bank accounts have been added yet.</p><span>Add an account above to enable direct payouts.</span></div>
           ) : (
             <div className="bank-account-list">
-              {accounts.map(account => (
-                <div key={account.id} className="bank-account-row">
+              {displayedAccounts.map(account => (
+                <div key={account.id} className={`bank-account-row${isTestFixture(account) ? ' bank-account-row-test-fixture' : ''}`}>
                   <div className="bank-account-row-main">
                     <div className="bank-account-row-icon"><i className="fas fa-building-columns" /></div>
                     <div>
@@ -231,9 +298,15 @@ export default function BankAccounts() {
                   </div>
                   <div className="bank-account-row-actions">
                     <span className={`admin-status ${account.isVerified ? 'success' : 'warning'}`}>
-                      <i className={`fas ${account.isVerified ? 'fa-circle-check' : 'fa-clock'}`} /> {account.isVerified ? 'Verified' : 'Verification required'}
+                      <i className={`fas ${account.isVerified ? 'fa-circle-check' : 'fa-triangle-exclamation'}`} /> {account.isVerified ? account.isDefaultPayout ? 'Default payout account' : 'Ready for payouts' : isTestFixture(account) ? 'E2E test account' : 'Not verified for payouts'}
                     </span>
-                    {!account.isVerified && <button type="button" className="btn btn-secondary btn-sm" onClick={() => retryVerification(account.id)} disabled={verifyingId === account.id}>{verifyingId === account.id ? 'Verifying...' : 'Verify'}</button>}
+                    {!account.isVerified && !isTestFixture(account) && <button type="button" className="btn btn-secondary btn-sm" onClick={() => retryVerification(account.id)} disabled={verifyingId === account.id || removingId === account.id}>{verifyingId === account.id ? 'Verifying...' : 'Retry verification'}</button>}
+                    {account.isVerified && !account.isDefaultPayout && <button type="button" className="btn btn-secondary btn-sm" onClick={() => void setDefaultPayoutAccount(account)} disabled={saving || removingId === account.id}>Make default</button>}
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void removeAccount(account)} disabled={removingId === account.id || verifyingId === account.id}>
+                      {removingId === account.id ? 'Removing...' : 'Remove'}
+                    </button>
+                    {isTestFixture(account) && <small className="bank-account-verification-message">Seeded for lifecycle tests; it has no real bank details or Paystack recipient. Remove this test record.</small>}
+                    {account.verificationMessage && <small className="bank-account-verification-message">{account.verificationMessage}</small>}
                   </div>
                 </div>
               ))}

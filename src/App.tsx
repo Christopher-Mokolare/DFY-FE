@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { RequireAuth, RequireAdmin, RequireRunnerAccess } from './context/Guards'
@@ -8,6 +9,12 @@ import Home from './pages/Home'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
+import HowItWorks from './pages/HowItWorks'
+import ForCreators from './pages/ForCreators'
+import ForRunners from './pages/ForRunners'
+import FAQ from './pages/FAQ'
+import Payments from './pages/Payments'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/Dashboard'
@@ -29,24 +36,40 @@ import AdminTasks from './pages/admin/AdminTasks'
 import AdminPayments from './pages/admin/AdminPayments'
 import AdminDisputes from './pages/admin/AdminDisputes'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
+import AdminTestimonials from './pages/admin/AdminTestimonials'
 import { PaymentSuccess, PaymentCancelled } from './pages/PaymentPages'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
+          <ScrollToTop />
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/for-creators" element={<ForCreators />} />
+              <Route path="/for-runners" element={<ForRunners />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/payments-and-completion" element={<Payments />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/tasks/browse" element={<BrowseErrands />} />
               <Route path="/payments/success" element={<PaymentSuccess />} />
               <Route path="/payments/cancelled" element={<PaymentCancelled />} />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+              <Route path="/payment/cancelled" element={<PaymentCancelled />} />
 
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
               <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
@@ -67,6 +90,7 @@ export default function App() {
               <Route path="/admin/payments" element={<RequireAdmin><AdminPayments /></RequireAdmin>} />
               <Route path="/admin/disputes" element={<RequireAdmin><AdminDisputes /></RequireAdmin>} />
               <Route path="/admin/audit-log" element={<RequireAdmin><AdminAuditLog /></RequireAdmin>} />
+              <Route path="/admin/testimonials" element={<RequireAdmin><AdminTestimonials /></RequireAdmin>} />
 
               <Route path="/browse-errands" element={<Navigate to="/tasks/browse" replace />} />
               <Route path="/post-errand" element={<Navigate to="/tasks/post" replace />} />

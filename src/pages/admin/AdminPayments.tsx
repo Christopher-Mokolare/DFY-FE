@@ -7,6 +7,16 @@ export default function AdminPayments() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations'>('payments')
+  const [operations, setOperations] = useState<any>(null)
+  const [settlementReport, setSettlementReport] = useState<any>(null)
+  const [ledgerReport, setLedgerReport] = useState<any>(null)
+  const [operationsLoading, setOperationsLoading] = useState(false)
+  const [settlementLoading, setSettlementLoading] = useState(false)
+  const [ledgerLoading, setLedgerLoading] = useState(false)
+  const [operationsError, setOperationsError] = useState('')
+  const [settlementError, setSettlementError] = useState('')
+  const [ledgerError, setLedgerError] = useState('')
 
   const loadAll = () => Promise.all([
     adminApi.getPayments(),
@@ -16,7 +26,55 @@ export default function AdminPayments() {
     setBankAccounts(bankRes.data?.data || [])
   }).catch(() => {}).finally(() => setLoading(false))
 
+  const loadOperations = async () => {
+    setOperationsLoading(true)
+    setOperationsError('')
+    try {
+      const response = await adminApi.getPaymentOperations({ days: 30, limit: 100 })
+      setOperations(response.data?.data || response.data)
+    } catch (error: any) {
+      setOperationsError(error?.response?.data?.message || 'Unable to load the payment operations queue.')
+    } finally {
+      setOperationsLoading(false)
+    }
+  }
+
+  const runSettlementReconciliation = async () => {
+    setSettlementLoading(true)
+    setSettlementError('')
+    try {
+      const to = new Date()
+      const from = new Date(to)
+      from.setDate(from.getDate() - 30)
+      const response = await adminApi.getPaystackSettlementReconciliation({
+        from: from.toISOString(),
+        to: to.toISOString(),
+        maxSettlements: 25,
+      })
+      setSettlementReport(response.data?.data || response.data)
+    } catch (error: any) {
+      setSettlementError(error?.response?.data?.message || 'Unable to retrieve Paystack settlement records. Check the staging configuration and try again.')
+      setSettlementReport(error?.response?.data?.data || null)
+    } finally {
+      setSettlementLoading(false)
+    }
+  }
+
+  const runLedgerReconciliation = async () => {
+    setLedgerLoading(true)
+    setLedgerError('')
+    try {
+      const response = await adminApi.getFinancialReconciliation({ days: 30, limit: 250 })
+      setLedgerReport(response.data?.data || response.data)
+    } catch (error: any) {
+      setLedgerError(error?.response?.data?.message || 'Unable to load the DFY ledger consistency report.')
+    } finally {
+      setLedgerLoading(false)
+    }
+  }
+
   useEffect(() => { loadAll() }, [])
+  useEffect(() => { void loadOperations() }, [])
 
   const handleVerifyBank = async (id: number) => {
     setVerifyingId(id)
@@ -59,7 +117,7 @@ export default function AdminPayments() {
       <div className="page-header">
         <div className="container">
           <h1><i className="fas fa-credit-card" /> Payments Overview</h1>
-          <p>Ozow collections, direct runner payouts and bank verification</p>
+          <p>Paystack collections, direct runner payouts and bank verification</p>
         </div>
       </div>
 
@@ -85,7 +143,167 @@ export default function AdminPayments() {
           </div>
         )}
 
-        {recentPayments.length > 0 && (
+        <div className="section-card" style={{ marginBottom: '1.5rem' }}>
+          <div className="section-header">
+            <div>
+              <h2><i className="fas fa-shield-halved" /> Financial controls</h2>
+              <p style={{ margin: '0.35rem 0 0', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                Read-only checks against DFY records and Paystack settlement data. No payouts or refunds are triggered here.
+              </p>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={() => void loadOperations()} disabled={operationsLoading}>
+              <i className="fas fa-rotate" /> Refresh operations
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <button className={financeView === 'payments' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('payments')}>Payments overview</button>
+            <button className={financeView === 'reconciliation' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('reconciliation')}>Reconciliation</button>
+            <button className={financeView === 'operations' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('operations')}>Operations queue</button>
+          </div>
+          {financeView === 'reconciliation' && (
+            <div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <button className="btn btn-primary btn-sm" onClick={() => void runSettlementReconciliation()} disabled={settlementLoading}>
+                  {settlementLoading ? <><span className="spinner spinner-sm" /> Retrieving Paystack data…</> : <><i className="fas fa-arrows-rotate" /> Run Paystack settlement reconciliation</>}
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => void runLedgerReconciliation()} disabled={ledgerLoading}>
+                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Checking ledger…</> : 'Run DFY ledger check'}
+                </button>
+              </div>
+              {settlementError && <div className="alert alert-warning" role="alert">{settlementError}</div>}
+              {settlementReport && (
+                <div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    {settlementReport.message || (settlementReport.reconciliationComplete ? 'Provider data retrieved.' : 'Provider data may be incomplete.')}
+                  </p>
+                  <div className="stats-grid" style={{ marginBottom: '1rem' }}>
+                    <div className="stat-card"><div className="stat-content"><h3>{settlementReport.settlementCount ?? settlementReport.settlements?.length ?? 0}</h3><p>Settlement batches</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{settlementReport.transactionCount ?? settlementReport.transactions?.length ?? 0}</h3><p>Settlement transactions</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{settlementReport.transactionFindings ?? 0}</h3><p>Transaction findings</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{settlementReport.reconciliationComplete === false ? 'Partial' : settlementReport.providerRecordsRetrieved === false ? 'Unavailable' : 'Retrieved'}</h3><p>Provider data status</p></div></div>
+                  </div>
+                  {(settlementReport.settlementTotalsByCurrency || []).length > 0 && (
+                    <div className="admin-table-wrap" style={{ marginBottom: '1rem' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                        <thead><tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>{['Currency', 'Gross processed', 'Settlement amount', 'Effective amount', 'Provider fees'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
+                        <tbody>{settlementReport.settlementTotalsByCurrency.map((row: any) => (
+                          <tr key={row.currency} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.currency}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.grossProcessed?.toFixed?.(2) ?? row.grossProcessed}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.settlementAmount?.toFixed?.(2) ?? row.settlementAmount}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.effectiveAmount?.toFixed?.(2) ?? row.effectiveAmount}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.providerFees?.toFixed?.(2) ?? row.providerFees}</td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
+                  {(settlementReport.transactions || []).length > 0 && (
+                    <div className="admin-table-wrap">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                        <thead><tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>{['Reference', 'Task', 'Status', 'Currency', 'Amount', 'Provider fee', 'Findings'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
+                        <tbody>{settlementReport.transactions.slice(0, 100).map((row: any, i: number) => (
+                          <tr key={row.reference || i} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '0.65rem 0.5rem', fontFamily: 'monospace', overflowWrap: 'anywhere' }}>{row.reference || '—'}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.matchedTaskIds?.join(', ') || 'Unmatched'}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.status}</td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>{row.currency}</td>
+                            <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>{row.providerAmount?.toFixed?.(2) ?? row.providerAmount}</td>
+                            <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>{row.providerFees?.toFixed?.(2) ?? row.providerFees ?? '—'}</td>
+                            <td style={{ padding: '0.65rem 0.5rem', color: row.findings?.length ? 'var(--danger)' : 'var(--success)' }}>{row.findings?.join(' ') || 'Consistent'}</td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+              {(settlementReport.localSuccessfulAttemptsNotMatchedByReturnedSettlementReference || []).length > 0 && (
+                <div style={{ marginTop: '1rem' }}>
+                  <h3>Local successful payments not matched in this settlement window</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    These are review candidates, not confirmed missing settlements. Payment and settlement dates can differ.
+                  </p>
+                  <div className="admin-table-wrap">
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                      <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Reference', 'Task', 'Amount', 'Status', 'Completed'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
+                      <tbody>{settlementReport.localSuccessfulAttemptsNotMatchedByReturnedSettlementReference.map((row: any) => (
+                        <tr key={row.reference} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '0.65rem 0.5rem', fontFamily: 'monospace', overflowWrap: 'anywhere' }}>{row.reference}</td>
+                          <td style={{ padding: '0.65rem 0.5rem' }}>{row.taskId}</td>
+                          <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>R{Number(row.amount || 0).toFixed(2)}</td>
+                          <td style={{ padding: '0.65rem 0.5rem' }}>{row.status}</td>
+                          <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>{row.completedAt ? new Date(row.completedAt).toLocaleString('en-ZA') : '—'}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              {settlementReport.providerError && <div className="alert alert-warning" role="alert" style={{ marginTop: '1rem' }}>{settlementReport.providerError}</div>}
+              {ledgerError && <div className="alert alert-warning" role="alert" style={{ marginTop: '1rem' }}>{ledgerError}</div>}
+              {ledgerReport && (
+                <div style={{ marginTop: '1rem' }}>
+                  <h3>DFY ledger consistency</h3>
+                  <div className="stats-grid">
+                    <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.returnedTaskCount ?? 0}</h3><p>Tasks checked</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.tasksWithFindings ?? 0}</h3><p>Tasks with findings</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.findingCount ?? 0}</h3><p>Total findings</p></div></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {financeView === 'operations' && (
+            <div>
+              {operationsError && <div className="alert alert-warning" role="alert">{operationsError}</div>}
+              {operationsLoading ? <div className="loading-state"><div className="spinner" /></div> : operations && (
+                <>
+                  <div className="stats-grid" style={{ marginBottom: '1rem' }}>
+                    {[
+                      ['Pending/processing payouts', operations.summary?.pendingOrProcessingPayouts ?? 0],
+                      ['Stale payouts', operations.summary?.stalePayouts ?? 0],
+                      ['Unresolved refunds', operations.summary?.unresolvedRefunds ?? 0],
+                      ['Open disputes', operations.summary?.openDisputes ?? 0],
+                      ['Failed payment attempts', operations.summary?.failedPaymentAttempts ?? 0],
+                    ].map(([label, value]) => <div className="stat-card" key={label}><div className="stat-content"><h3>{value}</h3><p>{label}</p></div></div>)}
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{operations.note}</p>
+                  <h3>Payout queue</h3>
+                  {(operations.payouts || []).length === 0 ? <p className="text-muted">No payout records in this view.</p> : (
+                    <div className="admin-table-wrap" style={{ marginBottom: '1rem' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                      <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Amount', 'Status', 'Attempts', 'Last updated', 'Next retry', 'Reference'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
+                      <tbody>{operations.payouts.map((row: any) => <tr key={row.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.65rem 0.5rem' }}>{row.taskReference}</td><td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>R{Number(row.amount || 0).toFixed(2)}</td><td style={{ padding: '0.65rem 0.5rem' }}>{row.status}</td><td style={{ padding: '0.65rem 0.5rem' }}>{row.attemptCount}</td><td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>{row.updatedAt ? new Date(row.updatedAt).toLocaleString('en-ZA') : '—'}</td><td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>{row.nextAttemptAt ? new Date(row.nextAttemptAt).toLocaleString('en-ZA') : '—'}</td><td style={{ padding: '0.65rem 0.5rem', fontFamily: 'monospace' }}>{row.merchantReference}</td>
+                      </tr>)}</tbody>
+                    </table></div>
+                  )}
+                  <h3>Refund queue</h3>
+                  {(operations.refunds || []).length === 0 ? <p className="text-muted">No refund records in this view.</p> : (
+                    <div className="admin-table-wrap" style={{ marginBottom: '1rem' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                      <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Amount', 'Status', 'Refund reference', 'Last reconciled'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
+                      <tbody>{operations.refunds.map((row: any) => <tr key={row.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.65rem 0.5rem' }}>{row.taskReference}</td><td style={{ padding: '0.65rem 0.5rem' }}>R{Number(row.amount || 0).toFixed(2)}</td><td style={{ padding: '0.65rem 0.5rem' }}>{row.status}</td><td style={{ padding: '0.65rem 0.5rem', fontFamily: 'monospace' }}>{row.refundId}</td><td style={{ padding: '0.65rem 0.5rem' }}>{row.lastReconciledAt ? new Date(row.lastReconciledAt).toLocaleString('en-ZA') : '—'}</td>
+                      </tr>)}</tbody>
+                    </table></div>
+                  )}
+                  <h3>Disputes</h3>
+                  {(operations.disputes || []).length === 0 ? <p className="text-muted">No disputes in this view.</p> : (
+                    <div className="admin-table-wrap"><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                      <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Category', 'Status', 'Created'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
+                      <tbody>{operations.disputes.map((row: any) => <tr key={row.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.65rem 0.5rem' }}>{row.taskReference}</td><td style={{ padding: '0.65rem 0.5rem' }}>{row.category}</td><td style={{ padding: '0.65rem 0.5rem' }}>{row.status}</td><td style={{ padding: '0.65rem 0.5rem' }}>{new Date(row.createdAt).toLocaleString('en-ZA')}</td>
+                      </tr>)}</tbody>
+                    </table></div>
+                  )}
+                  {operations.summary?.chargebackCaseTrackingAvailable === false && <p className="alert alert-warning" style={{ marginTop: '1rem' }}>Paystack chargeback case/deadline tracking is not yet represented in DFY's data model. Do not treat this queue as a chargeback deadline monitor.</p>}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {financeView === 'payments' && recentPayments.length > 0 && (
           <div className="section-card" style={{ marginBottom: '1.5rem' }}>
             <div className="section-header">
               <h2><i className="fas fa-history" /> Recent Payments</h2>
@@ -124,6 +342,7 @@ export default function AdminPayments() {
           </div>
         )}
 
+        {financeView === 'payments' && (
         <div className="section-card" style={{ marginTop: '1.5rem' }}>
           <div className="section-header">
             <h2><i className="fas fa-university" /> Bank Account Verification</h2>
@@ -155,6 +374,7 @@ export default function AdminPayments() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   )

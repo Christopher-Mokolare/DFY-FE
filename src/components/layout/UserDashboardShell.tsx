@@ -11,6 +11,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('dfy:sidebar') === '1')
   const [awaitConfirmationCount, setAwaitConfirmationCount] = useState(0)
   const [paymentRequiredCount, setPaymentRequiredCount] = useState(0)
   const [completedCount, setCompletedCount] = useState(0)
@@ -30,17 +31,16 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
       const conversations = Array.isArray(res.data?.data) ? res.data.data : []
       setConversationUnreadCount(conversations.reduce((sum: number, conversation: any) => sum + Number(conversation.unreadCount || 0), 0))
     }).catch(() => {})
-    if (isCreator) tasksApi.getMyPosted().then(res => {
+    if (isCreator) tasksApi.getMyPostedAll().then(raw => {
       if (!active) return
-      const raw = res.data?.data?.tasks || res.data?.data?.Tasks || []
       const normalized = raw.map((t: any) => String(t.taskStatus || '').toLowerCase())
       setAwaitConfirmationCount(normalized.filter((status: string) => status === 'completed').length)
       setPaymentRequiredCount(normalized.filter((status: string) => status === 'pendingpayment').length)
     }).catch(() => {})
     if (isRunner) tasksApi.getMyCompleted().then(res => {
       if (!active) return
-      const raw = Array.isArray(res.data?.data) ? res.data.data : []
-      setCompletedCount(raw.length)
+      const data = res.data?.data
+      setCompletedCount(Number(data?.count ?? (Array.isArray(data) ? data.length : 0)))
     }).catch(() => {})
     return () => { active = false }
   }, [isCreator, isRunner])
@@ -59,16 +59,27 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'COMMUNICATION' },
   ].filter(item => item.show)
 
+
+  const mobileNavigation = [
+    { label: 'Home', to: '/dashboard', icon: 'fa-house' },
+    { label: 'Browse', to: '/tasks/browse', icon: 'fa-magnifying-glass' },
+    { label: 'Tasks', to: isRunner ? '/tasks/my-active' : '/tasks/my-posted', icon: 'fa-list-check' },
+    { label: 'Payments', to: '/tasks/action-required?filter=payments', icon: 'fa-credit-card', badge: paymentRequiredCount },
+    { label: 'Profile', to: '/user/profile', icon: 'fa-user' },
+  ]
+
   const renderNavigation = (items: typeof navigation) => items.map(item => (
-    <NavLink key={item.section + item.to} to={item.to} onClick={() => setMobileOpen(false)} end={item.to === '/dashboard'} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+    <NavLink key={item.section + item.to} to={item.to} onClick={() => setMobileOpen(false)} end={item.to === '/dashboard'} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`} title={collapsed ? item.label : undefined}>
       <i className={`fas ${item.icon}`} />
-      <span>{item.label}</span>
-      {!!item.badge && <span className="admin-nav-badge">{item.badge}</span>}
+      {!collapsed && <span>{item.label}</span>}
+      {collapsed && !!item.badge && <span className="admin-nav-badge admin-nav-badge--dot" />}
+      {!collapsed && !!item.badge && <span className="admin-nav-badge">{item.badge}</span>}
     </NavLink>
   ))
 
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
+  const toggleCollapse = () => setCollapsed(v => { localStorage.setItem('dfy:sidebar', v ? '0' : '1'); return !v })
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -83,44 +94,41 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
 
   return (
     <div className="admin-shell user-workspace-shell">
-      <aside className={`admin-sidebar user-workspace-sidebar ${mobileOpen ? 'is-open' : ''}`}>
+      <aside className={`admin-sidebar user-workspace-sidebar ${mobileOpen ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
         <div className="admin-brand">
           <img className="admin-brand-mark" src="/DFY.png" alt="DoForYou" />
-          <div>
-            <strong>DoForYou<span>.</span></strong>
-            <small>{roleLabel}</small>
-          </div>
+          {!collapsed && <div><strong>DoForYou<span>.</span></strong><small>{roleLabel}</small></div>}
+          <button type="button" className="sidebar-collapse-btn" onClick={toggleCollapse} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <i className={`fas fa-chevron-${collapsed ? 'right' : 'left'}`} />
+          </button>
         </div>
 
-        <div className="admin-sidebar-label">Workspace</div>
+        <div className="admin-sidebar-label">{!collapsed && 'Workspace'}</div>
         <nav className="admin-nav" aria-label="User navigation">
           {renderNavigation(navigation.filter(item => item.section === 'WORKSPACE'))}
-          {navigation.some(item => item.section === 'ACTION REQUIRED') && <div className="admin-sidebar-section-label">ACTION REQUIRED</div>}
+          {navigation.some(item => item.section === 'ACTION REQUIRED') && <div className="admin-sidebar-section-label">{!collapsed && 'ACTION REQUIRED'}</div>}
           {renderNavigation(navigation.filter(item => item.section === 'ACTION REQUIRED'))}
-          <div className="admin-sidebar-section-label">TASKS</div>
+          <div className="admin-sidebar-section-label">{!collapsed && 'TASKS'}</div>
           {renderNavigation(navigation.filter(item => item.section === 'TASKS'))}
-          <div className="admin-sidebar-section-label">COMMUNICATION</div>
+          <div className="admin-sidebar-section-label">{!collapsed && 'COMMUNICATION'}</div>
           {renderNavigation(navigation.filter(item => item.section === 'COMMUNICATION'))}
-          <div className="admin-sidebar-section-label">ACCOUNT</div>
+          <div className="admin-sidebar-section-label">{!collapsed && 'ACCOUNT'}</div>
           {renderNavigation(navigation.filter(item => item.section === 'ACCOUNT'))}
         </nav>
 
         <div className="admin-sidebar-spacer" />
 
         {isCreator && (
-          <NavLink className="user-workspace-post admin-nav-item" to="/tasks/post" onClick={() => setMobileOpen(false)}>
+          <NavLink className="user-workspace-post admin-nav-item" to="/tasks/post" onClick={() => setMobileOpen(false)} title={collapsed ? 'Post an Errand' : undefined}>
             <i className="fas fa-plus" />
-            <span>POST AN ERRAND</span>
+            {!collapsed && <span>POST AN ERRAND</span>}
           </NavLink>
         )}
 
         <div className="admin-sidebar-footer">
           <NavLink to="/user/profile" className="admin-profile-mini admin-profile-link" onClick={() => setMobileOpen(false)} aria-label="Open my profile">
             <div className="admin-avatar">{displayName.charAt(0).toUpperCase()}</div>
-            <div>
-              <strong>{displayName}</strong>
-              <span>{roleLabel}</span>
-            </div>
+            {!collapsed && <div><strong>{displayName}</strong><span>{roleLabel}</span></div>}
           </NavLink>
           <button type="button" className="admin-logout" onClick={logout} title="Sign out" aria-label="Sign out">
             <i className="fas fa-arrow-right-from-bracket" />
@@ -146,6 +154,9 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
               <i className="fas fa-bell" />
               {unreadNotifications > 0 && <span className="admin-topbar-badge" aria-label={unreadNotifications + ' unread notifications'}>{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
             </NavLink>
+            <button type="button" className="admin-icon-button admin-mobile-logout" onClick={logout} title="Sign out" aria-label="Sign out">
+              <i className="fas fa-arrow-right-from-bracket" />
+            </button>
             <div className="admin-live-status">
               <span />
               Account active
@@ -154,6 +165,24 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
         </header>
 
         <main className="admin-content user-dashboard-content">{children}</main>
+
+        <nav className="user-mobile-bottom-nav" aria-label="Primary mobile navigation">
+          {mobileNavigation.map(item => (
+            <NavLink
+              key={item.label}
+              to={item.to}
+              end={item.to === '/dashboard' || item.to === '/user/profile'}
+              className={({ isActive }) => `user-mobile-bottom-nav__item ${isActive ? 'active' : ''}`}
+              aria-label={item.badge ? `${item.label}, ${item.badge} pending` : item.label}
+            >
+              <span className="user-mobile-bottom-nav__icon">
+                <i className={`fas ${item.icon}`} />
+                {!!item.badge && <span className="user-mobile-bottom-nav__badge">{item.badge > 99 ? '99+' : item.badge}</span>}
+              </span>
+              <span className="user-mobile-bottom-nav__label">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </div>
   )

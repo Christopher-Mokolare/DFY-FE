@@ -1,20 +1,17 @@
 import type { ReactNode } from 'react'
-import './WorkspaceCard.css'
 
-interface WorkspaceCardProps {
+type WorkspaceCardProps = {
   children: ReactNode
-  header?: ReactNode
-  footer?: ReactNode
+  as?: 'div' | 'article' | 'section'
   className?: string
   id?: string
 }
 
-export default function WorkspaceCard({ children, header, footer, className = '', id }: WorkspaceCardProps) {
+export default function WorkspaceCard({ children, as = 'section', className = '', id }: WorkspaceCardProps) {
+  const Element = as
   return (
-    <section id={id} className={`workspace-card ${className}`.trim()}>
-      {header && <div className="workspace-card__header">{header}</div>}
-      <div className="workspace-card__body">{children}</div>
-      {footer && <div className="workspace-card__footer">{footer}</div>}
-    </section>
+    <Element id={id} className={`workspace-card ${className}`.trim()}>
+      {children}
+    </Element>
   )
 }

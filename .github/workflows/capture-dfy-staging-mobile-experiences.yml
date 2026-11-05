@@ -1,0 +1,97 @@
+name: Capture DFY staging mobile experiences
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/capture-dfy-staging-mobile-experiences.yml
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPO_PUBLIC_DFY_API_URL: http://127.0.0.1:8081/api/v1
+      EXPO_PUBLIC_DFY_SIGNALR_URL: https://dfy-be-staging.onrender.com
+      DFY_CREATOR_EMAIL: ${{ secrets.DFY_CREATOR_EMAIL }}
+      DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
+      DFY_RUNNER_EMAIL: ${{ secrets.DFY_RUNNER_EMAIL }}
+      DFY_RUNNER_PASSWORD: ${{ secrets.DFY_RUNNER_PASSWORD }}
+      DFY_MOBILE_READ_TOKEN: ${{ secrets.DFY_MOBILE_READ_TOKEN }}
+      CI: "1"
+    steps:
+      - name: Check out workflow repository
+        uses: actions/checkout@v4
+
+      - name: Validate mobile repository access token
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$DFY_MOBILE_READ_TOKEN" ]] || {
+            echo "::error::DFY_MOBILE_READ_TOKEN is missing. Add a fine-grained PAT with Contents: Read access to DoForYou-ZA/dfy-mobile as a DFY-FE Actions secret."
+            exit 1
+          }
+
+      - name: Check out mobile app screenshot branch
+        uses: actions/checkout@v4
+        with:
+          repository: DoForYou-ZA/dfy-mobile
+          ref: fix/marketing-screenshots-api-proxy
+          path: dfy-mobile
+          token: ${{ secrets.DFY_MOBILE_READ_TOKEN }}
+
+      - name: Validate staging target and existing-account secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPO_PUBLIC_DFY_API_URL" == "http://127.0.0.1:8081/api/v1" ]] || {
+            echo "Refusing to run without the local staging-only API proxy"; exit 1;
+          }
+          [[ -n "$DFY_CREATOR_EMAIL" && -n "$DFY_CREATOR_PASSWORD" ]] || {
+            echo "DFY_CREATOR_EMAIL and DFY_CREATOR_PASSWORD must be configured in DFY-FE Actions secrets"; exit 1;
+          }
+          [[ -n "$DFY_RUNNER_EMAIL" && -n "$DFY_RUNNER_PASSWORD" ]] || {
+            echo "DFY_RUNNER_EMAIL and DFY_RUNNER_PASSWORD must be configured in DFY-FE Actions secrets"; exit 1;
+          }
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dfy-mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: dfy-mobile
+        run: npm ci
+
+      - name: Install Expo Web dependencies
+        working-directory: dfy-mobile
+        run: npx expo install react-dom react-native-web
+
+      - name: Install Playwright
+        working-directory: dfy-mobile
+        run: npm install --no-save @playwright/test
+
+      - name: Install Chromium
+        working-directory: dfy-mobile
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture existing creator and runner experiences
+        working-directory: dfy-mobile
+        run: npx playwright test --config=playwright.marketing.config.ts e2e/marketing-screenshots
+
+      - name: Upload website-ready screenshots and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfy-staging-mobile-marketing-screenshots
+          path: |
+            dfy-mobile/website-assets/mobile-app/*.png
+            dfy-mobile/test-results/marketing-screenshots/**/test-failed-*.png
+          if-no-files-found: warn
+          retention-days: 14

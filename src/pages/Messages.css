@@ -6,8 +6,9 @@
 .messages-hero-stat{min-width:92px;text-align:center;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);border-radius:18px}
 .messages-hero-stat strong{display:block;font-size:1.7rem}.messages-hero-stat span{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;opacity:.65}
 .messages-toolbar{padding:1.1rem 0}
-.messages-search{display:flex;align-items:center;gap:.65rem;padding:.8rem 1rem;background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:14px;box-shadow:0 4px 16px rgba(15,23,42,.04)}
-.messages-search i{color:#94a3b8}.messages-search input{flex:1;border:0;outline:0;background:transparent;color:var(--text-dark,#111827);font:inherit}.messages-search button{border:0;background:transparent;color:#94a3b8;cursor:pointer}
+.messages-search{display:flex;align-items:center;gap:.65rem;width:100%;max-width:680px;min-height:46px;padding:.7rem 1rem;background:#fff;border:1px solid #dfe4ec;border-radius:11px;box-shadow:0 2px 8px rgba(15,23,42,.035);transition:border-color .18s ease,box-shadow .18s ease}
+.messages-search:focus-within{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.13)}
+.messages-search i{color:#8a94a6}.messages-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text-dark,#111827);font:inherit}.messages-search button{border:0;background:transparent;color:#8a94a6;cursor:pointer}
 .conversation-list{display:flex;flex-direction:column;gap:.7rem}
 .conversation-card{position:relative;display:flex;align-items:center;gap:.85rem;width:100%;padding:1rem 1.05rem;text-align:left;border:1px solid var(--border,#e5e7eb);background:var(--surface,#fff);border-radius:18px;cursor:pointer;box-shadow:0 4px 14px rgba(15,23,42,.035);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
 .conversation-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,23,42,.08);border-color:#cbd5e1}.conversation-card:focus-visible{outline:3px solid rgba(37,99,235,.2);outline-offset:2px}.conversation-card.has-unread{border-color:#bfdbfe}

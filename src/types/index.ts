@@ -59,39 +59,24 @@ export interface ChangePasswordModel {
 }
 
 // Task types
-export type PaymentStatus = 'Pending' | 'EscrowHeld' | 'Completed' | 'DisputePending' | 'RefundPending' | 'Refunded' | 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
+export type PaymentStatus =
+  | 'Pending' | 'EscrowHeld' | 'EscrowReleased' | 'PayoutPending' | 'Processing'
+  | 'RunnerPaid' | 'PayoutReturned' | 'PayoutCancelled' | 'PayoutFailed'
+  | 'Completed' | 'DisputePending' | 'RefundPending' | 'Refunded' | 'Failed' | 'Expired'
+  | 'pending' | 'verified' | 'failed' | 'expired' | 'refunded' | 'escrow_held'
 export type TaskStatus =
-  | 'draft'
-  | 'posted'
-  | 'claimed'
-  | 'in_progress'
-  | 'completed'
-  | 'confirmed'
-  | 'runner_paid'
-  | 'cancelled'
-  | 'disputed'
-  | 'payout_pending'
-  | 'refund_pending'
-  | 'PendingPayment'
-  | 'Posted'
-  | 'Claimed'
-  | 'Completed'
-  | 'PayoutPending'
-  | 'RunnerPaid'
-  | 'Cancelled'
-  | 'RefundPending'
-  | 'PayoutReturned'
-  | 'PayoutCancelled'
-  | 'PayoutFailed'
-  | 'Processing'
-  | 'AwaitingFunds'
-  | 'AwaitingBankDetails'
+  | 'draft' | 'posted' | 'claimed' | 'in_progress' | 'completed' | 'awaiting_confirmation'
+  | 'confirmed' | 'runner_paid' | 'cancelled' | 'disputed' | 'payout_pending' | 'refund_pending'
+  | 'PendingPayment' | 'Posted' | 'Claimed' | 'InProgress' | 'Completed' | 'AwaitingConfirmation'
+  | 'Confirmed' | 'RunnerPaid' | 'PayoutPending' | 'PayoutFailed' | 'PayoutReturned'
+  | 'PayoutCancelled' | 'Processing' | 'AwaitingFunds' | 'AwaitingBankDetails'
+  | 'Cancelled' | 'DisputePending' | 'RefundPending'
 export type Priority = 'standard' | 'urgent' | 'low'
 
 export interface Task {
   id: number
   taskId: string
-  timestamp: string
+  timestamp?: string
   userName: string
   userContact: string
   createdByUserId: number
@@ -110,13 +95,20 @@ export interface Task {
   priority: Priority
   category?: string
   createdAt: string
-  updatedAt: string
+  updatedAt?: string
   completedAt?: string
   commissionPercentage?: number
   commissionAmount?: number
   payoutAmount?: number
   escrowStatus?: 'none' | 'pending' | 'held' | 'released' | 'refunded' | 'disputed' | 'refund_pending'
   escrowHoldUntil?: string
+  canAccept?: boolean
+  canEdit?: boolean
+  canComplete?: boolean
+  canCancel?: boolean
+  canConfirm?: boolean
+  canMessage?: boolean
+  canDispute?: boolean
   // legacy aliases
   task_description?: string
   area_suburb?: string

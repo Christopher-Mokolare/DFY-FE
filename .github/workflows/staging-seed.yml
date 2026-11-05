@@ -1,0 +1,43 @@
+name: Staging Browse Tasks Seed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: ${{ vars.DFY_E2E_BASE_URL || 'https://dfy-fe-staging.onrender.com' }}
+      DFY_API_URL: ${{ vars.DFY_E2E_API_URL || 'https://dfy-be-staging.onrender.com/api/v1' }}
+      DFY_CREATOR_EMAIL: ${{ secrets.DFY_CREATOR_EMAIL }}
+      DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
+      DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
+      DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run staging Browse Tasks seed
+        run: npm test -- e2e/seed-staging-browse-tasks.spec.ts
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-seed-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

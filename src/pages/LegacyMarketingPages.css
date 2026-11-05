@@ -1,0 +1,76 @@
+/* Shared premium presentation for the remaining public information pages. */
+.legacy-marketing-page{background:#F8FAFC;color:#1F2937;overflow:hidden}
+.legacy-marketing-page .premium-page-hero{position:relative;isolation:isolate;overflow:hidden;margin:0;padding:clamp(3.5rem,7vw,6rem) 0;background:#1F2937;color:#fff}
+.legacy-marketing-page .premium-page-hero::before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(circle at 12% 15%,rgba(255,138,0,.2),transparent 36%),linear-gradient(120deg,rgba(17,24,39,.98),rgba(31,41,55,.92) 60%,rgba(31,41,55,.82));pointer-events:none}
+.legacy-marketing-page .premium-hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.85fr);align-items:center;gap:clamp(2rem,6vw,5rem)}
+.legacy-marketing-page .premium-hero-copy{min-width:0;max-width:700px}
+.legacy-marketing-page .marketing-kicker{display:inline-flex;margin:0 0 1rem;color:#FFAB40;font-size:.73rem;font-weight:850;letter-spacing:.14em}
+.legacy-marketing-page .premium-hero-copy h1{margin:0 0 1.2rem;color:#fff;font-size:clamp(2.5rem,5.3vw,4.35rem);font-weight:850;line-height:1.04;letter-spacing:-.06em;text-wrap:balance}
+.legacy-marketing-page .premium-hero-copy h1 em{color:#FF8A00;font-style:normal}
+.legacy-marketing-page .premium-hero-copy>p{max-width:620px;margin:0;color:#E5E7EB;font-size:clamp(1rem,1.5vw,1.12rem);line-height:1.8}
+.legacy-marketing-page .marketing-actions{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.6rem}
+.legacy-marketing-page .premium-trust-line{display:flex;flex-wrap:wrap;gap:.7rem 1.1rem;margin-top:1.5rem}
+.legacy-marketing-page .premium-trust-line span{display:inline-flex;align-items:center;gap:.45rem;color:#F3F4F6;font-size:.8rem;font-weight:650}
+.legacy-marketing-page .premium-trust-line i{display:grid;place-items:center;width:19px;height:19px;border-radius:50%;background:rgba(255,138,0,.16);color:#FFAB40;font-style:normal}
+.legacy-marketing-page .premium-hero-visual{position:relative;min-width:0;padding:0 0 1.2rem 1.2rem}
+.legacy-marketing-page .premium-hero-visual::before{content:"";position:absolute;z-index:-1;inset:1rem 0 0;border:1px solid rgba(255,138,0,.6);border-radius:22px;transform:rotate(2deg)}
+.legacy-marketing-page .premium-hero-photo{display:block;width:100%;height:clamp(260px,34vw,410px);object-fit:cover;object-position:center;border-radius:20px;box-shadow:0 24px 65px rgba(0,0,0,.28)}
+.legacy-marketing-page .hero-image-caption{position:absolute;left:2rem;right:.8rem;bottom:0;display:flex;align-items:center;gap:.55rem;width:fit-content;max-width:calc(100% - 3rem);padding:.7rem .9rem;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(17,24,39,.94);color:#F9FAFB;font-size:.76rem;font-weight:650;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.legacy-marketing-page .hero-caption-dot{width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:#FF8A00}
+.legacy-marketing-page .premium-section{padding:clamp(3.5rem,6vw,5.5rem) 0}
+.legacy-marketing-page .premium-section-heading{max-width:760px;margin:0 auto clamp(2rem,4vw,3rem);text-align:center}
+.legacy-marketing-page .premium-section-heading h2,.legacy-marketing-page .legacy-section-heading h2{margin:.2rem 0 .85rem;color:#1F2937;font-size:clamp(1.8rem,3.4vw,2.7rem);font-weight:850;letter-spacing:-.045em;line-height:1.12;text-wrap:balance}
+.legacy-marketing-page .premium-section-heading>p,.legacy-marketing-page .legacy-section-heading>p{margin:0;color:#596273;font-size:1rem;line-height:1.8}
+.legacy-marketing-page .legacy-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.1rem}
+.legacy-marketing-page .legacy-info-card{min-width:0;padding:1.5rem;border:1px solid #E5E7EB;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(31,41,55,.045)}
+.legacy-marketing-page .legacy-info-icon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:1rem;border:1px solid #FFE0B2;border-radius:14px;background:#FFF4E5;color:#B85E00;font-size:1.25rem;font-weight:800}
+.legacy-marketing-page .legacy-info-card h3{margin:0 0 .65rem;color:#1F2937;font-size:1.08rem;font-weight:800;line-height:1.35}
+.legacy-marketing-page .legacy-info-card p{margin:0;color:#596273;font-size:.92rem;line-height:1.75}
+.legacy-marketing-page .legacy-split-section{padding:clamp(3rem,6vw,5rem) 0;background:#fff;border-top:1px solid #EEF0F4;border-bottom:1px solid #EEF0F4}
+.legacy-marketing-page .legacy-split-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(2rem,6vw,5rem)}
+.legacy-marketing-page .legacy-split-image{display:block;width:100%;height:clamp(260px,36vw,430px);object-fit:cover;border-radius:20px;box-shadow:0 18px 44px rgba(31,41,55,.12)}
+.legacy-marketing-page .legacy-section-heading{max-width:720px}
+.legacy-marketing-page .legacy-check-list{display:grid;gap:1rem;margin:1.5rem 0 0;padding:0;list-style:none}
+.legacy-marketing-page .legacy-check-list li{display:flex;gap:.85rem;align-items:flex-start;color:#4B5563;line-height:1.7}
+.legacy-marketing-page .legacy-check-list li>span{display:grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#FFF0DE;color:#A65300;font-size:.8rem;font-weight:900}
+.legacy-marketing-page .legacy-bottom-cta{padding:clamp(2.5rem,5vw,4rem) 0;background:#1F2937;color:#fff}
+.legacy-marketing-page .legacy-bottom-cta-inner{display:flex;align-items:center;justify-content:space-between;gap:2rem}
+.legacy-marketing-page .legacy-bottom-cta h2{margin:0 0 .7rem;color:#fff;font-size:clamp(1.7rem,3vw,2.4rem);font-weight:850;letter-spacing:-.04em}
+.legacy-marketing-page .legacy-bottom-cta p{max-width:650px;margin:0;color:#D1D5DB;line-height:1.75}
+.legacy-marketing-page .legacy-bottom-cta .marketing-kicker{margin-bottom:.6rem}
+.legacy-marketing-page .legacy-bottom-cta .marketing-actions{flex:0 0 auto;margin-top:0}
+.legacy-marketing-page .payment-step-number{display:inline-flex;margin-bottom:1rem;color:#B85E00;font-size:.76rem;font-weight:850;letter-spacing:.12em}
+.legacy-marketing-page .payment-note{margin-top:1.5rem;padding:1rem 1.1rem;border:1px solid #F3D8B4;border-radius:12px;background:#FFF8EF;color:#62401E;font-size:.9rem;line-height:1.7}
+.legacy-marketing-page .contact-main{padding:clamp(2rem,5vw,4rem) 0 clamp(3rem,6vw,5rem)}
+.legacy-marketing-page .contact-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;gap:clamp(1.5rem,4vw,3rem)}
+.legacy-marketing-page .contact-intro h2{margin:0 0 .7rem;color:#1F2937;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:850;letter-spacing:-.04em}
+.legacy-marketing-page .contact-intro>p{margin:0 0 1.5rem;color:#596273;line-height:1.8}
+.legacy-marketing-page .contact-methods{display:grid;gap:.8rem}
+.legacy-marketing-page .contact-method-card{display:flex;align-items:center;gap:1rem;min-width:0;padding:1rem 1.1rem;border:1px solid #E5E7EB;border-radius:14px;background:#fff;color:#1F2937;text-decoration:none;box-shadow:0 6px 20px rgba(31,41,55,.035);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.legacy-marketing-page .contact-method-card:hover{transform:translateY(-2px);border-color:#F4B66D;box-shadow:0 12px 25px rgba(31,41,55,.08)}
+.legacy-marketing-page .contact-method-icon{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;border-radius:13px;background:#FFF0DE;color:#B85E00;font-size:1.05rem}
+.legacy-marketing-page .contact-method-content{min-width:0}
+.legacy-marketing-page .contact-method-content h3{margin:0 0 .2rem;color:#1F2937;font-size:.95rem;font-weight:800}
+.legacy-marketing-page .contact-method-content p{margin:0;color:#596273;font-size:.88rem;line-height:1.6;overflow-wrap:anywhere}
+.legacy-marketing-page .contact-form-card{padding:clamp(1.25rem,3vw,2rem);border:1px solid #E5E7EB;border-radius:20px;background:#fff;box-shadow:0 14px 38px rgba(31,41,55,.07)}
+.legacy-marketing-page .contact-form-card h2{margin:0 0 .45rem;color:#1F2937;font-size:1.35rem;font-weight:850}
+.legacy-marketing-page .contact-form-card>p{margin:0 0 1.5rem;color:#596273;font-size:.92rem;line-height:1.7}
+.legacy-marketing-page .contact-form-card .form-group{margin:0}
+.legacy-marketing-page .contact-form-card .form-input,.legacy-marketing-page .contact-form-card .form-textarea{width:100%;box-sizing:border-box;border-radius:10px;border-color:#D9DEE7}
+.legacy-marketing-page .contact-form-card .form-textarea{resize:vertical;min-height:140px}
+.legacy-marketing-page .contact-form-card .btn{min-height:48px;border-radius:10px;font-weight:750}
+.legacy-marketing-page .contact-safety-note{margin-top:1rem;color:#6B7280;font-size:.8rem;line-height:1.65}
+.legacy-marketing-page a:focus-visible,.legacy-marketing-page button:focus-visible,.legacy-marketing-page input:focus-visible,.legacy-marketing-page textarea:focus-visible{outline:3px solid #FFAB40;outline-offset:3px}
+@media(max-width:900px){.legacy-marketing-page .premium-hero-grid{grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);gap:2rem}.legacy-marketing-page .legacy-card-grid{grid-template-columns:1fr}.legacy-marketing-page .legacy-info-card{padding:1.3rem}.legacy-marketing-page .legacy-bottom-cta-inner{align-items:flex-start;flex-direction:column}.legacy-marketing-page .legacy-bottom-cta .marketing-actions{margin-top:.2rem}.legacy-marketing-page .contact-layout{grid-template-columns:1fr}}
+@media(max-width:680px){.legacy-marketing-page .premium-page-hero{padding:3.25rem 0 3rem}.legacy-marketing-page .premium-hero-grid,.legacy-marketing-page .legacy-split-grid{grid-template-columns:1fr;gap:2rem}.legacy-marketing-page .premium-hero-copy h1{font-size:clamp(2.45rem,9vw,3.7rem)}.legacy-marketing-page .premium-hero-visual{width:min(100%,560px);padding-left:.6rem}.legacy-marketing-page .premium-hero-photo{height:clamp(230px,58vw,340px)}.legacy-marketing-page .premium-hero-visual::before{inset:.7rem 0 0 .1rem}.legacy-marketing-page .hero-image-caption{left:1rem;max-width:calc(100% - 1.8rem);font-size:.72rem}.legacy-marketing-page .premium-trust-line{display:grid;grid-template-columns:1fr;gap:.65rem}.legacy-marketing-page .marketing-actions{width:100%}.legacy-marketing-page .marketing-actions .btn{flex:1;justify-content:center}.legacy-marketing-page .legacy-split-image{height:clamp(220px,65vw,340px)}.legacy-marketing-page .legacy-bottom-cta .marketing-actions{display:grid;grid-template-columns:1fr;width:100%}.legacy-marketing-page .contact-method-card{align-items:flex-start}.legacy-marketing-page .contact-method-icon{flex-basis:42px;width:42px;height:42px}}
+@media(prefers-reduced-motion:reduce){.legacy-marketing-page *{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* Terms page */
+.terms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.terms-footer-note { max-width: 720px; margin: 0 auto; text-align: center; }
+.terms-footer-note h2 { margin: .4rem 0 1rem; color: #1F2937; font-size: clamp(1.8rem, 3.4vw, 2.7rem); font-weight: 850; letter-spacing: -.045em; }
+.terms-footer-note p { color: #596273; line-height: 1.8; margin: 0 0 .75rem; }
+.terms-footer-note a { color: #B85E00; font-weight: 700; text-decoration: none; }
+.terms-footer-note a:hover { color: #1F2937; }
+.terms-last-updated { font-size: .82rem; color: #9CA3AF !important; margin-top: 1.5rem !important; }
+@media (max-width: 640px) { .terms-grid { grid-template-columns: 1fr; } }

@@ -32,15 +32,13 @@ export default function Header() {
 
   const close = () => { setDropdownOpen(false); setMenuOpen(false) }
   const handleLogout = () => {
-    // Mark this as an explicit logout so the next login always starts at the
-    // user's dashboard instead of replaying a previously protected URL.
     sessionStorage.setItem('dfy:loggedOut', '1')
     logout()
     navigate('/', { replace: true })
     close()
   }
   const displayName = user ? (user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.name ?? '') : ''
-  const canViewActiveTasks = user?.userType === 'runner' || user?.userType === 'both'
+  const canViewActiveTasks = user?.userType?.toLowerCase() === 'runner' || user?.userType?.toLowerCase() === 'both'
 
   const UserMenuItems = ({ onClose }: { onClose: () => void }) => (
     <>
@@ -64,20 +62,32 @@ export default function Header() {
     </>
   )
 
+  const PublicNavLinks = () => <>
+    <li><NavLink to="/tasks/browse" onClick={close}>Browse tasks</NavLink></li>
+    <li><NavLink to="/how-it-works" onClick={close}>How it works</NavLink></li>
+    <li><NavLink to="/for-creators" onClick={close}>For creators</NavLink></li>
+    <li><NavLink to="/for-runners" onClick={close}>For runners</NavLink></li>
+    <li><NavLink to="/faq" onClick={close}>Help</NavLink></li>
+  </>
+
   return <>
-    <nav className="navbar"><div className="container navbar-inner">
-      <Link to="/" className="navbar-brand" onClick={close}><img src="/DFY.png" alt="DoForYou" className="navbar-logo" /><span className="brand-text">DoForYou</span><span className="dot"><b>.</b></span></Link>
+    <nav className="navbar" aria-label="Main navigation"><div className="container navbar-inner">
+      <Link to="/" className="navbar-brand" onClick={close}><img src="/DFY.png" alt="" className="navbar-logo" /><span className="brand-text">DoForYou</span><span className="dot"><b>.</b></span></Link>
       <div className="nav-menu"><ul className="nav-links">
-        <li><NavLink to="/" end onClick={close}>Home</NavLink></li><li><NavLink to="/about" onClick={close}>About</NavLink></li><li><NavLink to="/tasks/browse" onClick={close}>Browse</NavLink></li><li><NavLink to="/contact" onClick={close}>Contact</NavLink></li>
-        {!isAuthenticated() ? <><li><NavLink to="/login" onClick={close}>Login</NavLink></li><li><NavLink to="/register" onClick={close}>Register</NavLink></li></> : <>
+        {!isAuthenticated() && <PublicNavLinks />}
+        {!isAuthenticated() ? <><li><NavLink to="/login" onClick={close}>Log in</NavLink></li><li><NavLink to="/register" onClick={close} className="nav-primary-link">Get started</NavLink></li></> : <>
           <li><NavLink to="/notifications" className="nav-bell-link" onClick={close} aria-label="Notifications"><i className="fas fa-bell" />{unreadCount > 0 && <span className="bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}</NavLink></li>
           <li className="nav-dropdown" ref={dropdownRef}><button className="dropdown-trigger" onClick={() => setDropdownOpen(!dropdownOpen)}><span className="user-avatar-sm">{displayName.charAt(0).toUpperCase()}</span>{displayName}<i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} /></button>{dropdownOpen && <ul className="dropdown-menu"><UserMenuItems onClose={close} /></ul>}</li>
         </>}
-      </ul>{isAuthenticated() && !isAdmin() && <button className="btn-post-errand" onClick={handlePostErrand}>POST AN ERRAND <span className="pulse-dot" /></button>}</div>
-      <div className="navbar-actions">{isAuthenticated() && <NavLink to="/notifications" className="nav-bell-link" aria-label="Notifications"><i className="fas fa-bell" />{unreadCount > 0 && <span className="bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}</NavLink>}<button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu"><span className="hamburger-line" /><span className="hamburger-line" /><span className="hamburger-line" /></button></div>
+      </ul>{isAuthenticated() && !isAdmin() && <button className="btn-post-errand" onClick={handlePostErrand}>Post a task <span className="pulse-dot" /></button>}</div>
+      <div className="navbar-actions">{isAuthenticated() && <NavLink to="/notifications" className="nav-bell-link" aria-label="Notifications"><i className="fas fa-bell" />{unreadCount > 0 && <span className="bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}</NavLink>}<button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}><span className="hamburger-line" /><span className="hamburger-line" /><span className="hamburger-line" /></button></div>
     </div></nav>
     <div className={`nav-backdrop ${menuOpen ? 'open' : ''}`} onClick={close} />
-    <div className={`nav-drawer ${menuOpen ? 'open' : ''}`}><ul className="nav-links"><li><NavLink to="/" end onClick={close}>Home</NavLink></li><li><NavLink to="/about" onClick={close}>About</NavLink></li><li><NavLink to="/tasks/browse" onClick={close}>Browse Errands</NavLink></li><li><NavLink to="/contact" onClick={close}>Contact</NavLink></li>{!isAuthenticated() ? <><li><NavLink to="/login" onClick={close}>Login</NavLink></li><li><NavLink to="/register" onClick={close}>Register</NavLink></li></> : <li className="nav-dropdown" ref={drawerDropdownRef}><button className="dropdown-trigger" onClick={() => setDropdownOpen(!dropdownOpen)}><span className="user-avatar-sm">{displayName.charAt(0).toUpperCase()}</span>{displayName}<i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} /></button>{dropdownOpen && <ul className="dropdown-menu"><UserMenuItems onClose={close} /></ul>}</li>}</ul>{isAuthenticated() && !isAdmin() && <button className="btn-post-errand" onClick={() => { handlePostErrand(); close() }}>POST AN ERRAND <span className="pulse-dot" /></button>}</div>
+    <div className={`nav-drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen}><ul className="nav-links">
+      {!isAuthenticated() && <><li><NavLink to="/" end onClick={close}>Home</NavLink></li><PublicNavLinks />
+      <li><NavLink to="/about" onClick={close}>About DoForYou</NavLink></li><li><NavLink to="/contact" onClick={close}>Contact</NavLink></li></>}
+      {!isAuthenticated() ? <><li><NavLink to="/login" onClick={close}>Log in</NavLink></li><li><NavLink to="/register" onClick={close}>Get started</NavLink></li></> : <li className="nav-dropdown" ref={drawerDropdownRef}><button className="dropdown-trigger" onClick={() => setDropdownOpen(!dropdownOpen)}><span className="user-avatar-sm">{displayName.charAt(0).toUpperCase()}</span>{displayName}<i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} /></button>{dropdownOpen && <ul className="dropdown-menu"><UserMenuItems onClose={close} /></ul>}</li>}
+    </ul>{isAuthenticated() && !isAdmin() && <button className="btn-post-errand" onClick={() => { handlePostErrand(); close() }}>Post a task <span className="pulse-dot" /></button>}</div>
     {ProfileIncompleteModal}
   </>
 }

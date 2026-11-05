@@ -150,6 +150,7 @@ export default function AdminDashboardPage() {
             <Link to="/admin/users"><span className="admin-action-icon blue"><i className="fas fa-users" /></span><span><strong>Manage users</strong><small>Accounts, roles and verification</small></span><i className="fas fa-chevron-right" /></Link>
             <Link to="/admin/payments"><span className="admin-action-icon green"><i className="fas fa-credit-card" /></span><span><strong>Payments</strong><small>Collections and payouts</small></span><i className="fas fa-chevron-right" /></Link>
             <Link to="/admin/disputes"><span className="admin-action-icon red"><i className="fas fa-gavel" /></span><span><strong>Disputes</strong><small>Cases requiring review</small></span><i className="fas fa-chevron-right" /></Link>
+            <Link to="/admin/testimonials"><span className="admin-action-icon slate"><i className="fas fa-quote-left" /></span><span><strong>Testimonials</strong><small>Manage homepage community stories</small></span><i className="fas fa-chevron-right" /></Link>
             <Link to="/admin/audit-log"><span className="admin-action-icon slate"><i className="fas fa-shield-halved" /></span><span><strong>Audit log</strong><small>Trace administrative activity</small></span><i className="fas fa-chevron-right" /></Link>
           </div>
         </aside>

@@ -1,12 +1,15 @@
 import api from './client'
-import type { LoginModel, RegisterModel, AuthResponse } from '../types'
+import type { LoginModel, RegisterModel, AuthResponse, Task } from '../types'
+import type { BackendTaskPage, BackendClaimTaskRequest, BackendBooleanResponse, BackendCreateTaskRequest, BackendUpdateTaskRequest } from './contract'
 
 export const publicApi = {
   getStats: () => api.get('/public/stats'),
+  getTestimonials: () => api.get('/testimonials'),
 }
 
 export const authApi = {
   login: (data: LoginModel) => api.post<AuthResponse>('/auth/login', data),
+  refresh: () => api.post<AuthResponse>('/auth/refresh'),
   register: (data: RegisterModel) => api.post<AuthResponse>('/auth/register', data),
   changePassword: (data: object) => api.post('/auth/change-password', data),
   getProfile: () => api.get('/user/profile'),
@@ -21,17 +24,36 @@ export const messagesApi = {
 export const tasksApi = {
   getAvailable: (page = 1, pageSize = 10, filters: Record<string, string> = {}) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...filters })
-    return api.get(`/tasks/available?${params}`)
+    return api.get<BackendTaskPage>(`/tasks/available?${params}`)
   },
-  getMyPosted: () => api.get('/tasks/my-posted'),
-  getMyActive: () => api.get('/tasks/my-active'),
-  getMyCompleted: () => api.get('/tasks/my-completed'),
+  getMyPosted: (page = 1, pageSize = 10, taskId?: string, status?: string) => api.get('/tasks/my-posted', { params: { page, pageSize, taskId, status } }),
+  getMyPostedAll: async (): Promise<Task[]> => {
+    const firstResponse = await api.get('/tasks/my-posted', { params: { page: 1, pageSize: 50 } })
+    const firstPage = firstResponse.data?.data
+    const tasks: Task[] = firstPage?.tasks || firstPage?.Tasks || []
+    const totalPages = Math.max(1, Number(firstPage?.totalPages ?? 1))
+    const remainingPages = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) =>
+        api.get('/tasks/my-posted', { params: { page: index + 2, pageSize: 50 } }),
+      ),
+    )
+    for (const response of remainingPages) {
+      const pageTasks = response.data?.data?.tasks || response.data?.data?.Tasks || []
+      tasks.push(...pageTasks)
+    }
+    return tasks
+  },
+  getMyActive: (page = 1, pageSize = 10, taskId?: string) => api.get('/tasks/my-active', { params: { page, pageSize, taskId } }),
+  getMyCompleted: (page = 1, pageSize = 10, taskId?: string, status?: string) => api.get('/tasks/my-completed', { params: { page, pageSize, taskId, status } }),
   getById: (id: string) => api.get(`/tasks/${id}`),
-  create: (data: object) => api.post('/tasks', data),
-  update: (id: string, data: object) => api.put(`/tasks/${id}`, data),
-  claim: (id: string, helperName: string, helperContact: string, termsAccepted = false) => api.post(`/tasks/${id}/claim`, { HelperName: helperName, HelperContact: helperContact, TermsAccepted: termsAccepted }),
-  complete: (id: string) => api.post(`/tasks/${id}/complete`, {}),
-  confirm: (id: string) => api.post(`/tasks/${id}/confirm`, {}),
+  create: (data: BackendCreateTaskRequest) => api.post('/tasks', data),
+  update: (id: string, data: BackendUpdateTaskRequest) => api.put(`/tasks/${id}`, data),
+  claim: (id: string, helperName: string, helperContact: string, termsAccepted = false) => {
+    const body: BackendClaimTaskRequest = { helperName, helperContact, termsAccepted }
+    return api.post<BackendBooleanResponse>(`/tasks/${id}/claim`, body)
+  },
+  complete: (id: string) => api.post<BackendBooleanResponse>(`/tasks/${id}/complete`, {}),
+  confirm: (id: string) => api.post<BackendBooleanResponse>(`/tasks/${id}/confirm`, {}),
   cancel: (id: string, reason: string) => api.post(`/tasks/${id}/cancel`, { reason }),
   getMessages: (id: string, params?: object) => api.get(`/tasks/${id}/messages`, { params }),
   sendMessage: (id: string, content: string) => api.post(`/tasks/${id}/messages`, { content }),
@@ -50,6 +72,8 @@ export const bankingApi = {
   getBanks: () => api.get('/banking/banks'),
   addBankAccount: (data: object) => api.post('/banking/accounts', data),
   verifyBankAccount: (id: number) => api.post(`/banking/bank-accounts/${id}/verify`, {}),
+  setDefaultPayoutAccount: (id: number) => api.put(`/banking/bank-accounts/${id}/default`, {}),
+  removeBankAccount: (id: number) => api.delete(`/banking/bank-accounts/${id}`),
 }
 
 export const supportApi = {
@@ -61,6 +85,9 @@ export const supportApi = {
 export const adminApi = {
   getDashboard: () => api.get('/admin/dashboard'),
   getPayments: () => api.get('/admin/payments'),
+  getFinancialReconciliation: (params?: object) => api.get('/admin/financial-reconciliation', { params }),
+  getPaystackSettlementReconciliation: (params?: object) => api.get('/admin/financial-reconciliation/paystack-settlements', { params }),
+  getPaymentOperations: (params?: object) => api.get('/admin/payment-operations', { params }),
   getTasks: (params?: object) => api.get('/admin/tasks', { params }),
   verifyPayment: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/verify`, { reason }),
   unverifyPayment: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/unverify`, { reason }),
@@ -77,7 +104,14 @@ export const adminApi = {
   resolveDispute: (id: number, resolution: string, action: string, reason: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action, reason }),
   deleteTask: (taskId: string) => api.delete(`/admin/tasks/${taskId}`),
   deleteUser: (userId: number) => api.delete(`/admin/users/${userId}`),
+  restoreUser: (userId: number) => api.post(`/admin/users/${userId}/restore`),
   getTaskMessages: (taskId: string) => api.get(`/admin/tasks/${taskId}/messages`),
+  getTestimonials: () => api.get('/testimonials/admin'),
+  createTestimonial: (data: object) => api.post('/testimonials', data),
+  updateTestimonial: (id: number, data: object) => api.put(`/testimonials/${id}`, data),
+  setTestimonialPublished: (id: number, isPublished: boolean) => api.patch(`/testimonials/${id}/publish`, { isPublished }),
+  reorderTestimonial: (id: number, sortOrder: number) => api.patch(`/testimonials/${id}/reorder`, { sortOrder }),
+  deleteTestimonial: (id: number) => api.delete(`/testimonials/${id}`),
 }
 
 export const disputesApi = {

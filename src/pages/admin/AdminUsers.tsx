@@ -18,10 +18,11 @@ export default function AdminUsers() {
   const [actionError, setActionError] = useState('')
 
   const [totalCount, setTotalCount] = useState(0)
+  const [includeArchived, setIncludeArchived] = useState(false)
 
   const load = (p = page, s = search, silent = false) => {
     if (!silent) setLoading(true)
-    const params: any = { page: p, pageSize: 10 }
+    const params: any = { page: p, pageSize: 10, includeArchived }
     if (s) params.search = s
     adminApi.getUsers(params)
       .then(r => {
@@ -34,8 +35,8 @@ export default function AdminUsers() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [page])
-  useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, search, true) }, 400); return () => clearTimeout(t) }, [search])
+  useEffect(() => { load() }, [page, includeArchived])
+  useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, search, true) }, 400); return () => clearTimeout(t) }, [search, includeArchived])
 
   const regularUserCount = users.filter(u => !u.role?.includes('Admin')).length
   const isAdmin = (u: any) => u.role?.includes('Admin')
@@ -80,15 +81,38 @@ export default function AdminUsers() {
     } catch { /* ignore */ } finally { setHistoryLoading(false) }
   }
 
-  /* User deletion is intentionally disabled by the API to preserve audit history. */
+  const archiveUser = async (u: any) => {
+    if (!window.confirm(`Archive ${u.name} (${u.email})? They will no longer be able to sign in, and their audit/task history will be retained.`)) return
+    setActionLoading(true); setActionError('')
+    try {
+      const r = await adminApi.deleteUser(u.id)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to archive user'); return }
+      load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to archive user')
+    } finally { setActionLoading(false) }
+  }
+
+  const restoreUser = async (u: any) => {
+    if (!window.confirm(`Restore ${u.name} (${u.email}) and allow them to sign in again?`)) return
+    setActionLoading(true); setActionError('')
+    try {
+      const r = await adminApi.restoreUser(u.id)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to restore user'); return }
+      load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to restore user')
+    } finally { setActionLoading(false) }
+  }
+
   const fetchAllUsers = async () => {
-    const r = await adminApi.getUsers({ page: 1, pageSize: 10000 })
+    const r = await adminApi.getUsers({ page: 1, pageSize: 10000, includeArchived })
     return r.data?.data?.users || []
   }
-  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', new Date(u.createdAt).toLocaleDateString('en-ZA')]
+  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
-  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Joined'], fetchAllUsers, mapUserRow)
-  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -101,7 +125,11 @@ export default function AdminUsers() {
               onKeyDown={e => e.key === 'Enter' && load(1, search)}
               style={{ flex: 1 }} />
             <button className="btn btn-secondary btn-sm" onClick={() => load(1, search)}><i className="fas fa-search" /></button>
-            <span className="text-muted text-sm admin-toolbar-label">{totalCount} users</span>
+            <label className="text-muted text-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+              <input type="checkbox" checked={includeArchived} onChange={e => { setIncludeArchived(e.target.checked); setPage(1) }} />
+              Include archived
+            </label>
+            <span className="text-muted text-sm admin-toolbar-label">{totalCount} {includeArchived ? 'users (including archived)' : 'active users'}</span>
             <div className="admin-toolbar-actions">
               <button className="btn btn-secondary btn-sm" onClick={exportUsersCSV} disabled={users.length === 0}><i className="fas fa-file-csv" /><span> CSV</span></button>
               <button className="btn btn-secondary btn-sm" onClick={exportUsersPDF} disabled={users.length === 0}><i className="fas fa-file-pdf" /><span> PDF</span></button>
@@ -122,10 +150,11 @@ export default function AdminUsers() {
                   </thead>
                   <tbody>
                     {users.map((u: any) => (
-                      <tr key={u.id} style={{ borderBottom: '1px solid var(--border)', background: isAdmin(u) ? 'rgba(239,68,68,0.04)' : undefined }}>
+                      <tr key={u.id} style={{ borderBottom: '1px solid var(--border)', background: u.isArchived ? 'rgba(100,116,139,0.08)' : isAdmin(u) ? 'rgba(239,68,68,0.04)' : undefined }}>
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500 }}>
                           {isAdmin(u) && <i className="fas fa-shield-alt" style={{ color: '#EF4444', marginRight: '0.375rem', fontSize: '0.75rem' }} />}
                           {u.name}
+                          {u.isArchived && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Archived</span>}
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-info'}`}>{u.role || 'User'}</span></td>
@@ -135,11 +164,18 @@ export default function AdminUsers() {
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${u.isVerified ? 'badge-verified' : 'badge-warning'}`}>{u.isVerified ? 'Yes' : 'No'}</span></td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           <div className="admin-table-actions">
-                            <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
-                              {u.isVerified ? 'Unverify' : 'Verify'}
-                            </button>
-                            <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)}><i className="fas fa-user-tag" /></button>
-                            <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)}><i className="fas fa-history" /></button>
+                            {!u.isArchived && <>
+                              <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
+                                {u.isVerified ? 'Unverify' : 'Verify'}
+                              </button>
+                              <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
+                              <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
+                              <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>
+                            </>}
+                            {u.isArchived && <>
+                              <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View retained history"><i className="fas fa-history" /></button>
+                              <button className="btn btn-sm btn-primary" onClick={() => restoreUser(u)} disabled={actionLoading}>Restore</button>
+                            </>}
                           </div>
                         </td>
                       </tr>
@@ -173,15 +209,19 @@ export default function AdminUsers() {
                       </div>
                     </div>
                     <div className="admin-task-card-footer">
-                      <span className={`badge ${u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
-                        <i className={`fas fa-${u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isVerified ? 'Verified' : 'Unverified'}
+                      <span className={`badge ${u.isArchived ? 'badge-warning' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
+                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : u.isVerified ? 'Verified' : 'Unverified'}
                       </span>
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
-                        <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)}><i className="fas fa-user-tag" /></button>
-                        <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)}><i className="fas fa-history" /></button>
-                        <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
-                          {u.isVerified ? 'Unverify' : 'Verify'}
-                        </button>
+                        <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
+                        {!u.isArchived && <>
+                          <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
+                          <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
+                            {u.isVerified ? 'Unverify' : 'Verify'}
+                          </button>
+                          <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>
+                        </>}
+                        {u.isArchived && <button className="btn btn-sm btn-primary" onClick={() => restoreUser(u)} disabled={actionLoading}>Restore</button>}
                       </div>
                     </div>
                   </div>

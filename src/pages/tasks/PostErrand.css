@@ -336,6 +336,15 @@
   }
 }
 
+@media (max-width: 768px) {
+  /* Reserve scroll space so the fixed mobile navigation never covers the end of the form. */
+  .user-dashboard-content .post-page::after {
+    content: '';
+    display: block;
+    height: calc(120px + env(safe-area-inset-bottom));
+  }
+}
+
 @media (max-width: 560px) {
   .post-page-heading {
     margin-bottom: 1rem;

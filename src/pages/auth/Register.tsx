@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { authApi } from '../../api'
 import './Auth.css'
 
@@ -16,6 +16,9 @@ function extractDobFromId(id: string): string {
 
 export default function Register() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const returnToTaskId = (location.state as any)?.returnToTaskId || searchParams.get('returnToTaskId') || null
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -54,7 +57,10 @@ export default function Register() {
         dateOfBirth: form.dateOfBirth, address: form.address,
         password: form.password,
       })
-      if (res.data.success) navigate('/login', { state: { registered: true } })
+      if (res.data.success) {
+        const query = returnToTaskId ? `?returnToTaskId=${encodeURIComponent(returnToTaskId)}` : ''
+        navigate(`/login${query}`, { state: { registered: true, returnToTaskId } })
+      }
       else setError(res.data.message || 'Registration failed')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.')
@@ -179,7 +185,13 @@ export default function Register() {
             )}
           </form>
 
-          <p className="auth-switch">Already have an account? <Link to="/login">Sign In</Link></p>
+          <p className="auth-switch">
+            Already have an account?{' '}
+            <Link
+              to={returnToTaskId ? `/login?returnToTaskId=${encodeURIComponent(returnToTaskId)}` : '/login'}
+              state={returnToTaskId ? { returnToTaskId } : undefined}
+            >Sign In</Link>
+          </p>
         </div>
       </div>
     </div>

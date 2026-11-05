@@ -1,5 +1,50 @@
 .my-posted-page { padding-bottom: 3rem; }
 
+.posted-task-tabs {
+  display: flex;
+  gap: .4rem;
+  margin-bottom: 1rem;
+  padding: .35rem;
+  overflow-x: auto;
+  border: 1px solid #e7ebf1;
+  border-radius: 12px;
+  background: #fff;
+  scrollbar-width: thin;
+}
+.posted-task-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: .55rem .8rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.posted-task-tab:hover { background: #f5f7fa; color: var(--text-dark); }
+.posted-task-tab.active { background: #fff3e5; color: var(--primary); }
+.posted-task-tab-count {
+  min-width: 1.35rem;
+  padding: .1rem .3rem;
+  border-radius: 999px;
+  background: #eef1f5;
+  color: #526071;
+  text-align: center;
+  font-size: .68rem;
+  line-height: 1.4;
+}
+.posted-task-tab.active .posted-task-tab-count { background: #ffe2c2; color: #a94c00; }
+.posted-task-empty { margin-top: 1rem; }
+
 .status-section { margin-bottom: 1.5rem; }
 .status-heading {
   width: 100%; display: flex; justify-content: space-between; align-items: center;

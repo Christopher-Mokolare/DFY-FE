@@ -1,21 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-ZA">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#FF8A00" />
+    <meta name="color-scheme" content="light" />
+    <meta name="description" content="Post a task, connect with local runners, and get everyday jobs done with DoForYou — South Africa's task marketplace." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DoForYou" />
+    <meta property="og:title" content="DoForYou — Let's Get It Done" />
+    <meta property="og:description" content="Post a task, connect with local runners, and get everyday jobs done with DoForYou — South Africa's task marketplace." />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="DoForYou — Let's Get It Done" />
+    <meta name="twitter:description" content="Post a task, connect with local runners, and get everyday jobs done with DoForYou — South Africa's task marketplace." />
     <link rel="icon" type="image/png" href="/DFY.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="theme-color" content="#FF8A00" />
-    <title>DoForYou - Let's Get It Done</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="preload" as="image" href="/head.jpeg" fetchpriority="high" />
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      .skip-link { position: fixed; z-index: 2000; top: .75rem; left: .75rem; padding: .75rem 1rem; transform: translateY(-180%); border-radius: .5rem; background: #111827; color: #fff; font: 600 1rem/1.4 Inter, sans-serif; }
+      .skip-link:focus { transform: translateY(0); outline: 3px solid #FF8A00; outline-offset: 3px; }
+      :focus-visible { outline: 3px solid #B45309; outline-offset: 3px; }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+    </style>
+    <title>DoForYou — Let's Get It Done</title>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
