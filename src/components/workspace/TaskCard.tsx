@@ -1,16 +1,14 @@
-import type { ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import WorkspaceCard from './WorkspaceCard'
 
-type TaskCardProps = {
+type TaskCardProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode
   as?: 'div' | 'article' | 'section'
-  className?: string
-  id?: string
 }
 
-export default function TaskCard({ children, as = 'div', className, id }: TaskCardProps) {
+export default function TaskCard({ children, as = 'div', ...attributes }: TaskCardProps) {
   return (
-    <WorkspaceCard as={as} id={id} className={className}>
+    <WorkspaceCard as={as} {...attributes}>
       {children}
     </WorkspaceCard>
   )
