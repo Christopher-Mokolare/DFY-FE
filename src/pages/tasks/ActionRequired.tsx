@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify'
 import { tasksApi } from '../../api'
 import type { Task } from '../../types'
 import Pagination from '../../components/Pagination'
+import TaskCard from '../../components/workspace/TaskCard'
 
 const PAGE_SIZE = 10
 
@@ -90,7 +91,7 @@ export default function ActionRequired() {
               const awaitingConfirmation = normStatus(task.taskStatus) === 'awaitingconfirmation'
               const pendingPayment = normStatus(task.taskStatus) === 'pendingpayment' || normStatus(task.paymentStatus) === 'pending'
               return (
-                <div id={`action-task-${task.taskId}`} key={task.taskId} className="task-card action-required-card" style={{ border: '1px solid var(--border)' }}>
+                <TaskCard id={`action-task-${task.taskId}`} key={task.taskId} className="task-card action-required-card" style={{ border: '1px solid var(--border)' }}>
                   <div className="task-card-header">
                     <span className={`badge ${awaitingConfirmation ? 'badge-completed' : 'badge-draft'}`}>
                       {awaitingConfirmation ? 'Awaiting Your Confirmation' : 'Payment Required'}
@@ -119,7 +120,7 @@ export default function ActionRequired() {
                       {task.helperContact && awaitingConfirmation && <a className="btn btn-outline btn-sm" href={`tel:${task.helperContact}`}><i className="fas fa-phone" /> Call</a>}
                     </div>
                   </div>
-                </div>
+                </TaskCard>
               )
             })}
           </div>

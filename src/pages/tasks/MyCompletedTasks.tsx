@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { tasksApi, ratingsApi, disputesApi } from '../../api'
 import Pagination from '../../components/Pagination'
+import TaskCard from '../../components/workspace/TaskCard'
 
 const PAGE_SIZE = 10
 type CompletedSection = 'all' | 'awaitingCreator' | 'payoutIssue' | 'processing' | 'paid'
@@ -183,7 +184,7 @@ export default function MyCompletedTasks() {
         ) : (
           <div id="completed-task-panel" className="tasks-grid" role="tabpanel" aria-labelledby={`completed-tab-${activeSection}`}>
             {tasks.map((t: any) => (
-              <div id={`completed-task-${t.taskId}`} key={t.taskId} className="task-card">
+              <TaskCard id={`completed-task-${t.taskId}`} key={t.taskId} className="task-card">
                 <div className="task-card-header">
                   {(() => { const state = lifecycle(t); return <span className={`badge ${state.tone}`}>{state.label}</span> })()}
                   <div className="task-budget">
@@ -221,7 +222,7 @@ export default function MyCompletedTasks() {
                     <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}><i className="fas fa-check" /> Rated</span>
                   )}
                 </div>
-              </div>
+              </TaskCard>
             ))}
           </div>
         )}
