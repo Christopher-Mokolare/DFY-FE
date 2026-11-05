@@ -175,7 +175,7 @@ export default function Login() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gap: '.75rem', margin: '1.25rem 0', textAlign: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem', margin: '1.25rem 0' }}>
             <div className="text-muted text-sm">or</div>
             <GoogleIdentityButton onCredential={handleGoogleCredential} disabled={loading} />
           </div>

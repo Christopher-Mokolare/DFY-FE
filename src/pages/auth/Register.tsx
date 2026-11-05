@@ -177,7 +177,7 @@ export default function Register() {
                   Continue <i className="fas fa-arrow-right" />
                 </button>
                 {!googleIdToken && (
-                  <div style={{ display: 'grid', gap: '.75rem', marginTop: '1.25rem', textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem', marginTop: '1.25rem' }}>
                     <div className="text-muted text-sm">or</div>
                     <GoogleIdentityButton mode="signup" onCredential={handleGoogleCredential} disabled={loading} />
                   </div>

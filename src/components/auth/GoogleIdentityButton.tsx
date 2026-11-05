@@ -106,7 +106,7 @@ export default function GoogleIdentityButton({ onCredential, mode = 'signin', di
   }
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
       <div
         ref={host}
         aria-label={mode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
