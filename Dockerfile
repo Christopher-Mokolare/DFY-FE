@@ -11,6 +11,7 @@ ARG DFY_MOBILE_APK_URL=https://github.com/DoForYou-ZA/dfy-mobile/releases/downlo
 ARG VITE_API_URL
 ARG VITE_SIGNALR_URL
 ARG VITE_APP_NAME=DoForYou
+ARG VITE_GOOGLE_CLIENT_ID
 
 RUN if [ "$DFY_DEPLOY_ENV" = "production" ]; then \
       case "$VITE_API_URL" in https://dfy-be-production.onrender.com/api/v1) ;; *) echo "Production build requires VITE_API_URL=https://dfy-be-production.onrender.com/api/v1" >&2; exit 1 ;; esac; \
@@ -28,6 +29,7 @@ RUN apk add --no-cache curl \
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_SIGNALR_URL=$VITE_SIGNALR_URL
 ENV VITE_APP_NAME=$VITE_APP_NAME
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN npm run build
 
 FROM nginx:alpine
