@@ -1,5 +1,7 @@
 import { test, expect, Page, request } from '@playwright/test'
 
+const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
+
 test.use({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 1,
@@ -62,19 +64,44 @@ function requireTestAccounts() {
   }
 }
 
-async function login(page: Page, email: string, password: string) {
+type AuthenticatedSession = { token: string; user: unknown }
+
+async function createAuthenticatedSession(email: string, password: string): Promise<AuthenticatedSession> {
   await waitForApiReady()
-  await gotoWithRetry(page, '/login')
-  const loginRequest = page.waitForResponse((res) =>
-    res.url().includes('/auth/login') && res.request().method() === 'POST',
-    { timeout: 30_000 }
-  )
-  await page.getByPlaceholder('Email Address').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
-  const response = await loginRequest
-  if (!response.ok()) throw new Error('Configured test account login failed: ' + response.status() + ' ' + await response.text())
-  await expect(page).toHaveURL(/dashboard/i, { timeout: 30_000 })
+  const api = await request.newContext()
+  try {
+    const response = await api.post(`${API_BASE_URL}/auth/login`, {
+      headers: { 'Content-Type': 'application/json' },
+      data: { email, password },
+      timeout: 30_000,
+    })
+    if (!response.ok()) {
+      const retryAfter = response.headers()['retry-after']
+      const rateLimitReset = response.headers()['x-ratelimit-reset']
+      throw new Error(
+        'Configured mobile E2E account login failed: ' + response.status() +
+        ' ' + await response.text() +
+        (retryAfter ? ' (Retry-After: ' + retryAfter + ')' : '') +
+        (rateLimitReset ? ' (Rate limit reset: ' + rateLimitReset + ')' : '')
+      )
+    }
+
+    const body = await response.json()
+    if (!body?.success || !body?.token || !body?.user) {
+      throw new Error('Configured mobile E2E account login returned no usable session.')
+    }
+    return { token: String(body.token), user: body.user }
+  } finally {
+    await api.dispose()
+  }
+}
+
+async function installAuthenticatedSession(page: Page, session: AuthenticatedSession) {
+  // AuthProvider restores both values synchronously before protected-route guards run.
+  await page.addInitScript(({ token, user }) => {
+    localStorage.setItem('token', token)
+    localStorage.setItem('currentUser', JSON.stringify(user))
+  }, session)
 }
 
 async function assertMobileLayout(page: Page, route: string) {
@@ -246,9 +273,15 @@ test.describe('mobile responsiveness - public screens', () => {
 })
 
 test.describe('mobile responsiveness - creator screens', () => {
-  test.beforeEach(async ({ page }) => {
+  let creatorSession: AuthenticatedSession
+
+  test.beforeAll(async () => {
     requireTestAccounts()
-    await login(page, CREATOR_EMAIL!, CREATOR_PASSWORD!)
+    creatorSession = await createAuthenticatedSession(CREATOR_EMAIL!, CREATOR_PASSWORD!)
+  })
+
+  test.beforeEach(async ({ page }) => {
+    await installAuthenticatedSession(page, creatorSession)
   })
 
   for (const route of [
@@ -270,9 +303,15 @@ test.describe('mobile responsiveness - creator screens', () => {
 })
 
 test.describe('mobile responsiveness - runner screens', () => {
-  test.beforeEach(async ({ page }) => {
+  let runnerSession: AuthenticatedSession
+
+  test.beforeAll(async () => {
     requireTestAccounts()
-    await login(page, RUNNER_EMAIL!, RUNNER_PASSWORD!)
+    runnerSession = await createAuthenticatedSession(RUNNER_EMAIL!, RUNNER_PASSWORD!)
+  })
+
+  test.beforeEach(async ({ page }) => {
+    await installAuthenticatedSession(page, runnerSession)
   })
 
   for (const route of ['/dashboard', '/activity', '/tasks/browse', '/tasks/my-active', '/tasks/my-completed', '/messages', '/notifications', '/user/profile', '/user/bank-accounts']) {
