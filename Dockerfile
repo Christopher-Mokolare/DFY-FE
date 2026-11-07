@@ -7,7 +7,7 @@ COPY . .
 # Keep staging downloads as the default. Production must opt in explicitly and
 # use the latest versioned production APK release asset.
 ARG DFY_DEPLOY_ENV=staging
-ARG DFY_MOBILE_APK_URL=https://github.com/DoForYou-ZA/dfy-mobile/releases/download/mobile-staging-latest/dfy-mobile.apk
+ARG DFY_MOBILE_APK_URL=https://github.com/DoForYou-ZA/dfy-mobile/releases/download/mobile-staging-branch-latest/dfy-mobile.apk
 ARG VITE_API_URL
 ARG VITE_SIGNALR_URL
 ARG VITE_APP_NAME=DoForYou
