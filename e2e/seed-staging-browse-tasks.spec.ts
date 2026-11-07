@@ -142,7 +142,9 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 
   for (const [name] of tasks) {
-    await expect(page.getByText(name, { exact: true })).toBeVisible({ timeout: 30_000 })
+    // Seed data may already exist from another PR's staging E2E run. Match the
+    // first exact task heading instead of failing strict mode on duplicate cards.
+    await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible({ timeout: 30_000 })
   }
 
   console.log('DFY STAGING PLAYWRIGHT SEED COMPLETE: 5/5 tasks created, verified, and visible in Browse Tasks.')

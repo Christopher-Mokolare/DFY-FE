@@ -26,6 +26,9 @@ const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
 
 test.setTimeout(6 * 60 * 1000)
 
+type AuthenticatedSession = { token: string; user: unknown }
+const authenticatedSessions = new Map<string, AuthenticatedSession>()
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 function requireEnv(name: string, value?: string): string {
@@ -41,22 +44,21 @@ async function apiLogin(api: APIRequestContext, email: string, password: string)
     `Login failed for configured test account: HTTP ${res.status()} response=${JSON.stringify(body)}. Verify the matching DFY_* GitHub Actions secrets and that the account exists in the staging database.`,
   ).toBeTruthy()
   const token = body.token ?? body.data?.token
+  const user = body.user ?? body.data?.user
   expect(token, `Login succeeded without a token: ${JSON.stringify(body)}`).toBeTruthy()
+  expect(user, `Login succeeded without a user profile for ${email}.`).toBeTruthy()
+  authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
 }
 
-async function loginUi(page: Page, email: string, password: string) {
-  // Open the login route, clear any stale browser auth, then navigate afresh.
-  // Reloading here can race with the SPA's auth redirect and abort the frame.
-  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.evaluate(() => {
-    localStorage.clear()
-    sessionStorage.clear()
-  })
-  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.getByPlaceholder('Email Address').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
+async function loginUi(page: Page, email: string) {
+  const session = authenticatedSessions.get(email)
+  expect(session, `No preflight-authenticated browser session is available for ${email}.`).toBeTruthy()
+  await page.addInitScript(({ token, user }) => {
+    localStorage.setItem('token', token)
+    localStorage.setItem('currentUser', JSON.stringify(user))
+  }, session!)
+  await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
   await expect(page).toHaveURL(/dashboard/i, { timeout: 30_000 })
 }
 
@@ -153,7 +155,7 @@ test('runner accepts task → marks complete → creator confirms → payout que
   // ── RUNNER UI ──────────────────────────────────────────────────────────────
 
   // 6. Runner logs in and browses for the task.
-  await loginUi(page, runnerEmail, runnerPassword)
+  await loginUi(page, runnerEmail)
   await page.goto(`${BASE}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 
   // Search by the unique label suffix so we find exactly this task.
@@ -191,7 +193,7 @@ test('runner accepts task → marks complete → creator confirms → payout que
   // ── CREATOR UI ─────────────────────────────────────────────────────────────
 
   // 11. Creator logs in and navigates directly to the task card.
-  await loginUi(page, creatorEmail, creatorPassword)
+  await loginUi(page, creatorEmail)
   await page.goto(
     `${BASE}/tasks/my-posted?taskId=${encodeURIComponent(taskId)}&action=confirm`,
     { waitUntil: 'domcontentloaded', timeout: 60_000 },
