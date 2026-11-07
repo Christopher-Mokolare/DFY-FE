@@ -205,8 +205,13 @@ async function assertMobileLayout(page: Page, route: string) {
         let childClearance = 0
         if (lastChild) {
           const childStyles = getComputedStyle(lastChild)
+          // The dashboard intentionally adds a bottom margin to keep its
+          // final painted section above the fixed mobile navigation. That
+          // margin is empty clearance, not content, so exclude it from this
+          // painted-content boundary measurement.
           childClearance =
             (parseFloat(childStyles.paddingBottom) || 0) +
+            (parseFloat(childStyles.marginBottom) || 0) +
             spacerHeight(lastChild)
         }
 
