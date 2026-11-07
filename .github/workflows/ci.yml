@@ -1,5 +1,11 @@
 name: CI
 
+# The staging API has a shared per-client-IP authentication budget.
+# Serialize full CI workflows so PRs cannot consume the same staging budget concurrently.
+concurrency:
+  group: dfy-staging-api-ci
+  cancel-in-progress: false
+
 on:
   push:
     branches: [dev, main, staging]
