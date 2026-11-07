@@ -15,11 +15,12 @@ function requireEnv(name: string, value?: string) {
   return value
 }
 
-async function login(page: Page, email: string, password: string) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.getByPlaceholder('Email Address').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
+async function installAuthenticatedSession(page: Page, token: string, user: unknown) {
+  await page.addInitScript(({ authToken, currentUser }) => {
+    localStorage.setItem('token', authToken)
+    localStorage.setItem('currentUser', JSON.stringify(currentUser))
+  }, { authToken: token, currentUser: user })
+  await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 60_000 })
   await expect(page).toHaveURL(/dashboard/i, { timeout: 30_000 })
 }
 
@@ -62,7 +63,9 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
       `Runner preflight authentication failed: HTTP ${runnerLogin.status()} response=${JSON.stringify(runnerBody)}. Check DFY_RUNNER_EMAIL/PASSWORD and confirm this account exists in the staging database.`,
     ).toBeTruthy()
     const runnerToken = runnerBody.token || runnerBody.data?.token
+    const runnerUser = runnerBody.user || runnerBody.data?.user
     expect(runnerToken, 'Runner login succeeded without returning a token.').toBeTruthy()
+    expect(runnerUser, 'Runner login succeeded without returning a user profile.').toBeTruthy()
     await ensureRunnerBank(api, String(runnerToken))
 
     // Authenticate creator and admin before any task is created.
@@ -74,6 +77,10 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
       creatorPreflight.ok() && creatorPreflightBody.success,
       `Creator preflight authentication failed: HTTP ${creatorPreflight.status()} response=${JSON.stringify(creatorPreflightBody)}. Check DFY_CREATOR_EMAIL/PASSWORD and the staging database.`,
     ).toBeTruthy()
+    const creatorToken = creatorPreflightBody.token || creatorPreflightBody.data?.token
+    const creatorUser = creatorPreflightBody.user || creatorPreflightBody.data?.user
+    expect(creatorToken, 'Creator login succeeded without returning a token.').toBeTruthy()
+    expect(creatorUser, 'Creator login succeeded without returning a user profile.').toBeTruthy()
 
     const adminLogin = await api.post(API_BASE_URL + '/auth/login', {
       data: { email: adminEmail, password: adminPassword },
@@ -87,9 +94,9 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
     expect(adminToken, 'Admin login succeeded without returning a token.').toBeTruthy()
 
     // 1. Creator creates a brand-new task through the real API.
-    await login(page, creatorEmail, creatorPassword)
-    const creatorToken = await getToken(page)
-    expect(creatorToken).toBeTruthy()
+    await installAuthenticatedSession(page, String(creatorToken), creatorUser)
+    const browserCreatorToken = await getToken(page)
+    expect(browserCreatorToken).toBe(creatorToken)
 
     const create = await api.post(API_BASE_URL + '/tasks', {
       headers: { Authorization: 'Bearer ' + creatorToken },
@@ -138,7 +145,7 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
     // 3. Runner uses the actual Browse Tasks UI and accepts this new task.
     const runnerPage = await browser.newPage()
     try {
-      await login(runnerPage, runnerEmail, runnerPassword)
+      await installAuthenticatedSession(runnerPage, String(runnerToken), runnerUser)
       await runnerPage.goto('/tasks/browse', { waitUntil: 'domcontentloaded', timeout: 60_000 })
       const search = runnerPage.getByPlaceholder('Search tasks...')
       // The backend's available-task search matches task description and area,
