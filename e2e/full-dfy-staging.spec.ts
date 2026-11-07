@@ -12,6 +12,9 @@ const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
 
 test.setTimeout(4 * 60 * 1000)
 
+type AuthenticatedSession = { token: string; user: unknown }
+const authenticatedSessions = new Map<string, AuthenticatedSession>()
+
 function requireEnv(name: string, value?: string) {
   if (!value) throw new Error(name + ' GitHub Actions secret is required for this staging E2E.')
   return value
@@ -26,7 +29,10 @@ async function apiLogin(api: APIRequestContext, email: string, password: string)
   const body = await response.json()
   expect(body.success, `Login returned success=false for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
   const token = body.token || body.data?.token
+  const user = body.user || body.data?.user
   expect(token, `Login response did not contain a token for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+  expect(user, `Login response did not contain a user profile for ${email}.`).toBeTruthy()
+  authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
 }
 
@@ -36,13 +42,14 @@ async function useConfiguredCreator(api: APIRequestContext) {
   const token = await apiLogin(api, email, password)
   return { email, password, token }
 }
-async function loginUi(page: Page, email: string, password: string) {
-  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.evaluate(() => localStorage.clear())
-  await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.getByPlaceholder('Email Address').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
+async function loginUi(page: Page, email: string) {
+  const session = authenticatedSessions.get(email)
+  expect(session, `No preflight-authenticated browser session is available for ${email}.`).toBeTruthy()
+  await page.addInitScript(({ token, user }) => {
+    localStorage.setItem('token', token)
+    localStorage.setItem('currentUser', JSON.stringify(user))
+  }, session!)
+  await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
   await expect(page).toHaveURL(/dashboard/i, { timeout: 30_000 })
 }
 
@@ -152,7 +159,7 @@ test.describe('DFY escrow and dispute workflow', () => {
     await adminVerify(request, adminToken, created.taskId)
 
     // Runner accepts and completes through the real UI.
-    await loginUi(page, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    await loginUi(page, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL))
     await page.goto('/tasks/browse', { waitUntil: 'domcontentloaded', timeout: 60_000 })
     await page.getByPlaceholder('Search tasks...').fill(created.taskDescription.split(' ').pop()!)
     await page.getByPlaceholder('Search tasks...').press('Enter')
@@ -172,7 +179,7 @@ test.describe('DFY escrow and dispute workflow', () => {
       .toBe('awaitingconfirmation')
 
     // Creator confirms via the actual My Posted Tasks UI.
-    await loginUi(page, creatorEmail, creatorPassword)
+    await loginUi(page, creatorEmail)
     await page.goto(`/tasks/my-posted?taskId=${encodeURIComponent(created.taskId)}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
     const postedCard = page.locator('#posted-task-' + created.taskId)
     await expect(postedCard).toBeVisible({ timeout: 30_000 })
@@ -209,7 +216,7 @@ test.describe('DFY escrow and dispute workflow', () => {
     // Runner raises the dispute through the real Completed Tasks UI.
     const runnerPage = await browser.newPage()
     try {
-      await loginUi(runnerPage, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+      await loginUi(runnerPage, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL))
       await runnerPage.goto(`/tasks/my-completed?taskId=${encodeURIComponent(created.taskId)}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
       const disputeCard = runnerPage.locator('#completed-task-' + created.taskId)
       await expect(disputeCard).toBeVisible({ timeout: 30_000 })
