@@ -135,10 +135,11 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
     await verifyTask(request, adminToken, tasks[i][0], taskIds[i])
   }
 
-  // Only the final assertion uses the real UI. Authentication is performed
-  // through the same /auth/login endpoint as the application so a loading,
-  // placeholder, or markup change on /login cannot falsely fail the seed.
-  await setBrowserSession(page, creatorToken)
+  // Browse Tasks is the runner-facing marketplace. The creator who posted
+  // these tasks should not be used to verify their own listings in the UI.
+  // Authenticate as the configured runner through the real login endpoint.
+  const runnerToken = await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)
+  await setBrowserSession(page, runnerToken)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 
   for (const [name] of tasks) {
