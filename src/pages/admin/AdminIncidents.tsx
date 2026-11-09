@@ -87,9 +87,15 @@ export default function AdminIncidents() {
       if (res.data?.success === false) throw new Error(res.data?.message || 'Action was not completed')
       setNotice(res.data?.message || 'Incident updated.')
       setReason('')
-      await load()
-      const updated = rows.find(r => r.id === selected.id)
-      if (updated) await selectIncident({ ...updated, status: action === 'review' ? reviewStatus : updated.status })
+      const refreshed = await adminApi.getTaskIncidents({ status: filter || undefined, page: 1, pageSize: 100 })
+      const freshRows: Incident[] = refreshed.data?.data?.incidents || []
+      setRows(freshRows)
+      const freshSelected = freshRows.find(row => row.id === selected.id)
+      if (freshSelected) {
+        setSelected(freshSelected)
+        setNotes(freshSelected.adminNotes || '')
+        setReviewStatus(freshSelected.status === 'Open' ? 'UnderReview' : freshSelected.status)
+      }
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Action failed')
     } finally { setSaving(false) }
