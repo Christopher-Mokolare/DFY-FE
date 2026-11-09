@@ -152,6 +152,8 @@ export const incidentsApi = {
   report: (taskId: string, data: { category: string; description: string; evidenceMessageIds?: number[] }) =>
     api.post(`/tasks/${encodeURIComponent(taskId)}/incidents`, data),
   getMy: () => api.get('/incidents/my'),
+  getAdmin: (params?: { status?: string; page?: number; pageSize?: number }) => api.get('/admin/incidents', { params }),
+  review: (id: number, status: string, adminNotes: string) => api.patch(`/admin/incidents/${id}`, { status, adminNotes }),
 }
 
 export const ratingsApi = {
