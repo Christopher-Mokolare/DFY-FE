@@ -282,7 +282,7 @@ export default function AdminDisputes() {
                     <p className="text-muted text-sm">Escrow hold placed {new Date(incident.escrowHoldPlacedAt).toLocaleString('en-ZA')}. Reason: {incident.escrowHoldReason}</p>
                   )}
                   {incident.escrowHoldReleasedAt && (
-                    <p className="text-muted text-sm">Escrow hold released {new Date(incident.escrowHoldReleasedAt).toLocaleString('en-ZA')}. Reason: {incident.escrowHoldReleaseReason}</p>
+                    <p className="text-muted text-sm">Incident hold ended {new Date(incident.escrowHoldReleasedAt).toLocaleString('en-ZA')}. Reason: {incident.escrowHoldReleaseReason}</p>
                   )}
                 </article>
               ))}
