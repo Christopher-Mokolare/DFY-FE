@@ -154,6 +154,8 @@ export const incidentsApi = {
   getMy: () => api.get('/incidents/my'),
   getAdmin: (params?: { status?: string; page?: number; pageSize?: number }) => api.get('/admin/incidents', { params }),
   review: (id: number, status: string, adminNotes: string) => api.patch(`/admin/incidents/${id}`, { status, adminNotes }),
+  placeEscrowHold: (id: number, reason: string) => api.post(`/admin/incidents/${id}/hold-escrow`, { reason }),
+  releaseEscrowHold: (id: number, reason: string) => api.post(`/admin/incidents/${id}/release-escrow-hold`, { reason }),
 }
 
 export const ratingsApi = {
