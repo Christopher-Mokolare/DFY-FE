@@ -13,6 +13,7 @@
  */
 
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { runnerSecondFactorCode } from './helpers/runner-totp'
 
 const API  = (process.env.DFY_API_URL  || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const BASE = process.env.BASE_URL       || 'https://dfy-fe-staging.onrender.com'
@@ -37,11 +38,17 @@ function requireEnv(name: string, value?: string): string {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string): Promise<string> {
-  const res  = await api.post(`${API}/auth/login`, { data: { email, password } })
-  const body = await res.json()
+  let res = await api.post(`${API}/auth/login`, { data: { email, password } })
+  let body = await res.json()
+  if (!res.ok() && body?.requiresTwoFactor === true && email === RUNNER_EMAIL) {
+    res = await api.post(`${API}/auth/login`, {
+      data: { email, password, secondFactorCode: await runnerSecondFactorCode() },
+    })
+    body = await res.json()
+  }
   expect(
     res.ok() && body.success !== false,
-    `Login failed for configured test account: HTTP ${res.status()} response=${JSON.stringify(body)}. Verify the matching DFY_* GitHub Actions secrets and that the account exists in the staging database.`,
+    `Login failed for configured test account: HTTP ${res.status()} response=${JSON.stringify(body)}. Verify DFY_* credentials and DFY_RUNNER_TOTP_SECRET for the eligible runner account.`,
   ).toBeTruthy()
   const token = body.token ?? body.data?.token
   const user = body.user ?? body.data?.user
