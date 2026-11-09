@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react'
 import { adminApi, incidentsApi } from '../../api'
 
+function parseEvidenceIds(value?: string | null): number[] {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter(id => Number.isInteger(Number(id))).map(Number) : []
+  } catch { return [] }
+}
+
 export default function AdminDisputes() {
   const [disputes, setDisputes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +32,10 @@ export default function AdminDisputes() {
   const [holdReason, setHoldReason] = useState('')
   const [holdError, setHoldError] = useState('')
   const [holdSaving, setHoldSaving] = useState(false)
+  const [evidenceModal, setEvidenceModal] = useState<any | null>(null)
+  const [evidenceMessages, setEvidenceMessages] = useState<any[]>([])
+  const [evidenceLoading, setEvidenceLoading] = useState(false)
+  const [evidenceError, setEvidenceError] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -45,6 +57,25 @@ export default function AdminDisputes() {
 
   useEffect(() => { load() }, [filter])
   useEffect(() => { loadIncidents() }, [incidentFilter])
+
+  const openIncidentEvidence = async (incident: any) => {
+    const ids = parseEvidenceIds(incident.evidenceMessageIdsJson)
+    if (!ids.length) return
+    setEvidenceModal(incident)
+    setEvidenceMessages([])
+    setEvidenceLoading(true)
+    setEvidenceError('')
+    try {
+      const response = await adminApi.getTaskMessages(String(incident.taskId))
+      if (response.data?.success === false) throw new Error(response.data.message || 'Unable to load task chat')
+      const messages = response.data?.data || []
+      setEvidenceMessages(messages.filter((message: any) => ids.includes(Number(message.id))))
+    } catch (error: any) {
+      setEvidenceError(error?.response?.data?.message || error?.message || 'Unable to load task chat evidence')
+    } finally {
+      setEvidenceLoading(false)
+    }
+  }
 
   const saveEscrowHold = async () => {
     if (!holdModal || holdReason.trim().length < 10) {
@@ -228,7 +259,11 @@ export default function AdminDisputes() {
                   <div className="admin-task-card-body">
                     <span className="badge badge-info">{incident.category}</span>
                     <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{incident.description}</p>
-                    {incident.evidenceMessageIdsJson && <p className="text-muted text-sm">Chat evidence message IDs: {JSON.parse(incident.evidenceMessageIdsJson).join(', ')}</p>}
+                    {parseEvidenceIds(incident.evidenceMessageIdsJson).length > 0 && (
+                      <button className="btn btn-outline btn-sm" onClick={() => openIncidentEvidence(incident)}>
+                        <i className="fas fa-paperclip" /> View {parseEvidenceIds(incident.evidenceMessageIdsJson).length} chat evidence message(s)
+                      </button>
+                    )}
                     {incident.adminNotes && <p className="text-muted text-sm">Review notes: {incident.adminNotes}</p>}
                     <div className="text-muted text-sm">Reported {new Date(incident.createdAt).toLocaleString('en-ZA')}</div>
                   </div>
@@ -255,6 +290,37 @@ export default function AdminDisputes() {
           )}
         </div>
       </div>
+
+      {evidenceModal && (
+        <div className="modal-overlay" onClick={() => setEvidenceModal(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-comments" /> Chat Hub evidence · {evidenceModal.taskReference}</h3>
+              <button className="btn-close" onClick={() => setEvidenceModal(null)}><i className="fas fa-times" /></button>
+            </div>
+            <div className="modal-body" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+              {evidenceLoading ? <div className="loading-state"><div className="spinner" /></div> : evidenceError ? (
+                <p style={{ color: 'var(--danger)' }}>{evidenceError}</p>
+              ) : evidenceMessages.length === 0 ? (
+                <div className="empty-state"><p>No referenced messages were returned by the task chat API.</p></div>
+              ) : (
+                <div style={{ display: 'grid', gap: '.75rem' }}>
+                  {evidenceMessages.map((message: any) => (
+                    <article key={message.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '.75rem', background: 'var(--background)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '.5rem', fontSize: '.75rem', color: 'var(--text-muted)' }}>
+                        <strong>{message.senderName || `User #${message.senderId}`}</strong>
+                        <span>{new Date(message.timestamp).toLocaleString('en-ZA')}</span>
+                      </div>
+                      <p style={{ whiteSpace: 'pre-wrap', margin: '.5rem 0 0', lineHeight: 1.5 }}>{message.content}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setEvidenceModal(null)}>Close</button></div>
+          </div>
+        </div>
+      )}
 
       {holdModal && (
         <div className="modal-overlay" onClick={() => !holdSaving && setHoldModal(null)}>
