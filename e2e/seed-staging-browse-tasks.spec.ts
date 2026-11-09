@@ -149,9 +149,10 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
   // Verify the backend source of truth before asserting the rendered cards.
   // A task can be moderation-approved but still absent from Browse Tasks until
   // its payment is marked received and escrow-held.
+  const runnerToken = await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)
   await expect.poll(async () => {
     const response = await request.get(`${API_BASE_URL}/tasks/available?page=1&pageSize=100`, {
-      headers: { Authorization: `Bearer ${await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)}` },
+      headers: { Authorization: `Bearer ${runnerToken}` },
     })
     if (!response.ok()) return false
     const body = await response.json()
@@ -161,9 +162,8 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
     )
   }, { timeout: 45_000, intervals: [1000, 2000, 3000] }).toBe(true)
 
-  // Browse Tasks is the runner-facing marketplace. Use the configured runner
-  // account to verify the same paid/escrow-held listings in the actual UI.
-  const runnerToken = await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)
+  // Browse Tasks is the runner-facing marketplace. Use the same configured
+  // runner session to verify the paid/escrow-held listings in the actual UI.
   await setBrowserSession(page, runnerToken)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 
