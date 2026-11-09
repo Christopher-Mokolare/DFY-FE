@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import * as signalR from '@microsoft/signalr'
 import DOMPurify from 'dompurify'
-import { tasksApi } from '../../api'
+import { incidentsApi, tasksApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
 import type { ChatMessage } from '../../types'
@@ -59,6 +59,12 @@ export default function TaskChat() {
   const [error, setError] = useState('')
   const [connected, setConnected] = useState(false)
   const [taskInfo, setTaskInfo] = useState<any>(null)
+  const [incidentOpen, setIncidentOpen] = useState(false)
+  const [incidentCategory, setIncidentCategory] = useState('Scope change')
+  const [incidentDescription, setIncidentDescription] = useState('')
+  const [incidentSubmitting, setIncidentSubmitting] = useState(false)
+  const [incidentError, setIncidentError] = useState('')
+  const [incidentSuccess, setIncidentSuccess] = useState('')
 
   const taskTitle = taskInfo?.taskName || taskInfo?.taskDescription || searchParams.get('title') || 'Task conversation'
   const taskStatus = taskInfo?.taskStatus || ''
@@ -259,6 +265,30 @@ export default function TaskChat() {
     }
   }
 
+  const handleReportIncident = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!taskId || incidentSubmitting || incidentDescription.trim().length < 20) return
+    setIncidentSubmitting(true)
+    setIncidentError('')
+    setIncidentSuccess('')
+    try {
+      const response = await incidentsApi.report(taskId, {
+        category: incidentCategory,
+        description: incidentDescription.trim(),
+      })
+      if (response.data?.success === false) throw new Error(response.data.message || 'Unable to submit report')
+      setIncidentDescription('')
+      setIncidentOpen(false)
+      setIncidentSuccess('Your report has been sent to DoForYou support. Reporting an incident does not automatically change escrow or payout status.')
+      setTimeout(() => setIncidentSuccess(''), 7000)
+    } catch (err: any) {
+      setIncidentError(err?.response?.data?.message || err?.message || 'Unable to submit incident report.')
+    } finally {
+      setIncidentSubmitting(false)
+    }
+  }
+
+
   let lastDate = ''
   return (
     <div className="chat-page">
@@ -276,6 +306,9 @@ export default function TaskChat() {
             <span className="chat-live"><i className="fas fa-circle" /> {connected ? 'Live' : 'Syncing'}</span>
           </div>
         </div>
+        {!chatClosed && <button className="chat-report-btn" onClick={() => { setIncidentOpen(true); setIncidentError('') }} title="Report a task incident">
+          <i className="fas fa-flag" /><span>Report issue</span>
+        </button>}
         <button className="chat-task-btn" onClick={() => navigate(`${taskInfo?.createdByUserId === user?.id ? '/tasks/my-posted' : ['claimed','in_progress'].includes(String(taskStatus).toLowerCase()) ? '/tasks/my-active' : '/tasks/my-completed'}?taskId=${encodeURIComponent(taskId || '')}`)} title="Open task">
           <i className="fas fa-arrow-up-right-from-square" />
           <span>Task</span>
@@ -286,6 +319,32 @@ export default function TaskChat() {
         <div><i className="fas fa-shield-halved" /><span>Keep communication on DoForYou</span></div>
         <span className="chat-context-id">{taskId}</span>
       </div>
+
+      {incidentSuccess && <div className="chat-incident-success" role="status">{incidentSuccess}</div>}
+      {incidentOpen && (
+        <div className="chat-incident-overlay" role="presentation" onClick={() => !incidentSubmitting && setIncidentOpen(false)}>
+          <form className="chat-incident-dialog" onSubmit={handleReportIncident} onClick={e => e.stopPropagation()}>
+            <div className="chat-incident-heading">
+              <div><strong>Report a task incident</strong><p>Use Chat Hub to resolve routine issues first. Send this report to DFY if you need support.</p></div>
+              <button type="button" onClick={() => setIncidentOpen(false)} aria-label="Close incident report" disabled={incidentSubmitting}>×</button>
+            </div>
+            <label>Incident category
+              <select value={incidentCategory} onChange={e => setIncidentCategory(e.target.value)} disabled={incidentSubmitting}>
+                {['Scope change','Task information','Access or location','Creator unresponsive','Safety concern','Threats or harassment','Cancellation or lost costs','Other'].map(category => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </label>
+            <label>What happened? <span>At least 20 characters</span>
+              <textarea value={incidentDescription} onChange={e => setIncidentDescription(e.target.value)} rows={5} minLength={20} maxLength={2000} required placeholder="Describe what happened, when it happened, and what help you need." />
+            </label>
+            <p className="chat-incident-note">This report is reviewed by DoForYou. Submitting it does not automatically freeze escrow or stop a payout.</p>
+            {incidentError && <p className="chat-incident-error" role="alert">{incidentError}</p>}
+            <div className="chat-incident-actions">
+              <button type="button" className="chat-incident-cancel" onClick={() => setIncidentOpen(false)} disabled={incidentSubmitting}>Cancel</button>
+              <button type="submit" className="chat-incident-submit" disabled={incidentSubmitting || incidentDescription.trim().length < 20}>{incidentSubmitting ? 'Submitting…' : 'Send report'}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="chat-body" ref={messagesContainerRef} onScroll={handleScroll}>
         {loading && (
