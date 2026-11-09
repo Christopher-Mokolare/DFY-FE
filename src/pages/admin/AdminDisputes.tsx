@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { adminApi } from '../../api'
+import { adminApi, incidentsApi } from '../../api'
 
 export default function AdminDisputes() {
   const [disputes, setDisputes] = useState<any[]>([])
@@ -11,6 +11,14 @@ export default function AdminDisputes() {
   const [action, setAction] = useState('none')
   const [actionLoading, setActionLoading] = useState(false)
   const [resolveError, setResolveError] = useState('')
+  const [incidents, setIncidents] = useState<any[]>([])
+  const [incidentsLoading, setIncidentsLoading] = useState(true)
+  const [incidentFilter, setIncidentFilter] = useState('')
+  const [incidentReview, setIncidentReview] = useState<any | null>(null)
+  const [incidentStatus, setIncidentStatus] = useState('UnderReview')
+  const [incidentNotes, setIncidentNotes] = useState('')
+  const [incidentError, setIncidentError] = useState('')
+  const [incidentSaving, setIncidentSaving] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -22,7 +30,36 @@ export default function AdminDisputes() {
       .finally(() => setLoading(false))
   }
 
+  const loadIncidents = () => {
+    setIncidentsLoading(true)
+    incidentsApi.getAdmin({ status: incidentFilter || undefined, page: 1, pageSize: 50 })
+      .then(r => setIncidents(r.data?.data?.incidents || []))
+      .catch(() => setIncidents([]))
+      .finally(() => setIncidentsLoading(false))
+  }
+
   useEffect(() => { load() }, [filter])
+  useEffect(() => { loadIncidents() }, [incidentFilter])
+
+  const saveIncidentReview = async () => {
+    if (!incidentReview || incidentNotes.trim().length < 5) {
+      setIncidentError('Add review notes of at least 5 characters.')
+      return
+    }
+    setIncidentSaving(true)
+    setIncidentError('')
+    try {
+      const res = await incidentsApi.review(incidentReview.id, incidentStatus, incidentNotes.trim())
+      if (res.data?.success === false) throw new Error(res.data.message || 'Unable to update incident')
+      setIncidentReview(null)
+      setIncidentNotes('')
+      loadIncidents()
+    } catch (error: any) {
+      setIncidentError(error?.response?.data?.message || error?.message || 'Unable to update incident')
+    } finally {
+      setIncidentSaving(false)
+    }
+  }
 
   const resolve = async () => {
     if (!resolveModal || !resolution.trim() || reason.trim().length < 5 || action === 'none') {
@@ -133,6 +170,87 @@ export default function AdminDisputes() {
           )}
         </div>
       </div>
+
+      <div className="container" style={{ marginTop: '1.5rem' }}>
+        <div className="section-card">
+          <div className="admin-toolbar">
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}><i className="fas fa-flag" /> Task Incidents</h2>
+              <p className="text-muted text-sm" style={{ margin: '.25rem 0 0' }}>Operational reports are reviewed separately from formal payment disputes.</p>
+            </div>
+            <select className="form-select" style={{ maxWidth: 200 }} value={incidentFilter} onChange={e => setIncidentFilter(e.target.value)}>
+              <option value="">All incidents</option>
+              <option value="Open">Open</option>
+              <option value="UnderReview">Under review</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Dismissed">Dismissed</option>
+            </select>
+          </div>
+          {incidentsLoading ? <div className="loading-state"><div className="spinner" /></div> : incidents.length === 0 ? (
+            <div className="empty-state"><i className="fas fa-flag" /><p>No task incidents found</p></div>
+          ) : (
+            <div style={{ display: 'grid', gap: '.8rem' }}>
+              {incidents.map((incident: any) => (
+                <article key={incident.id} className="admin-task-card">
+                  <div className="admin-task-card-header">
+                    <div style={{ flex: 1 }}>
+                      <strong>Task {incident.taskReference}</strong>
+                      <div className="text-muted text-sm">Incident #{incident.id} · Reporter user #{incident.reporterUserId}</div>
+                    </div>
+                    <span className={`badge ${incident.status === 'Open' ? 'badge-danger' : incident.status === 'Resolved' ? 'badge-success' : 'badge-info'}`}>{incident.status}</span>
+                  </div>
+                  <div className="admin-task-card-body">
+                    <span className="badge badge-info">{incident.category}</span>
+                    <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>{incident.description}</p>
+                    {incident.evidenceMessageIdsJson && <p className="text-muted text-sm">Chat evidence message IDs: {JSON.parse(incident.evidenceMessageIdsJson).join(', ')}</p>}
+                    {incident.adminNotes && <p className="text-muted text-sm">Review notes: {incident.adminNotes}</p>}
+                    <div className="text-muted text-sm">Reported {new Date(incident.createdAt).toLocaleString('en-ZA')}</div>
+                  </div>
+                  {!['Resolved','Dismissed'].includes(incident.status) && (
+                    <div className="admin-task-card-footer">
+                      <button className="btn btn-primary btn-sm" onClick={() => { setIncidentReview(incident); setIncidentStatus('UnderReview'); setIncidentNotes(incident.adminNotes || ''); setIncidentError('') }}>Review incident</button>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {incidentReview && (
+        <div className="modal-overlay" onClick={() => !incidentSaving && setIncidentReview(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-flag" /> Review task incident #{incidentReview.id}</h3>
+              <button className="btn-close" onClick={() => setIncidentReview(null)} disabled={incidentSaving}><i className="fas fa-times" /></button>
+            </div>
+            <div className="modal-body">
+              <p><strong>Task:</strong> {incidentReview.taskReference}</p>
+              <p><strong>Category:</strong> {incidentReview.category}</p>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{incidentReview.description}</p>
+              {incidentReview.evidenceMessageIdsJson && <p className="text-muted text-sm">Chat evidence IDs: {JSON.parse(incidentReview.evidenceMessageIdsJson).join(', ')}</p>}
+              <div className="form-group">
+                <label className="form-label">Review status</label>
+                <select className="form-select" value={incidentStatus} onChange={e => setIncidentStatus(e.target.value)}>
+                  <option value="UnderReview">Under review</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Dismissed">Dismissed</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Admin notes (required)</label>
+                <textarea className="form-textarea" rows={4} maxLength={1000} value={incidentNotes} onChange={e => setIncidentNotes(e.target.value)} placeholder="Record what was reviewed and any support action taken." />
+              </div>
+            </div>
+            {incidentError && <p style={{ color: 'var(--danger)', padding: '0 1.5rem' }}>{incidentError}</p>}
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIncidentReview(null)} disabled={incidentSaving}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveIncidentReview} disabled={incidentSaving || incidentNotes.trim().length < 5}>{incidentSaving ? 'Saving…' : 'Save review'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Resolve Modal */}
       {resolveModal && (
