@@ -200,38 +200,90 @@ test.describe('DFY escrow and dispute workflow', () => {
     })
   })
 
-  test('runner dispute freezes escrow -> admin resolves dispute -> payout path is re-opened', async ({ browser, page, request }) => {
-    // Preflight all existing privileged/test accounts before creating a creator or task.
+  test('runner reports incident in Chat Hub -> admin holds escrow -> creator disputes completion -> admin resolves', async ({ browser, page, request }) => {
     const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
     await ensureRunnerBank(request, runnerToken)
     const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
-
     const freshCreator = await useConfiguredCreator(request)
     const creatorToken = freshCreator.token
 
-    const created = await createTask(request, creatorToken, 'DISPUTE-' + Date.now())
+    const created = await createTask(request, creatorToken, 'INCIDENT-DISPUTE-' + Date.now())
     await adminVerify(request, adminToken, created.taskId)
     await claimAndCompleteViaApi(request, runnerToken, created.taskId)
 
-    // Runner raises the dispute through the real Completed Tasks UI.
+    // Runner escalates the issue from the existing participant Chat Hub.
     const runnerPage = await browser.newPage()
     try {
       await loginUi(runnerPage, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL))
-      await runnerPage.goto(`/tasks/my-completed?taskId=${encodeURIComponent(created.taskId)}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-      const disputeCard = runnerPage.locator('#completed-task-' + created.taskId)
-      await expect(disputeCard).toBeVisible({ timeout: 30_000 })
-      await disputeCard.getByRole('button', { name: /Raise Dispute/i }).click()
-      await expect(runnerPage.getByRole('heading', { name: /Raise Dispute/i })).toBeVisible()
-      await runnerPage.locator('.form-textarea').fill('The delivered work does not match the task requirements; please review before releasing escrow.')
-      const disputeResponse = runnerPage.waitForResponse((res) =>
+      await runnerPage.goto(`/tasks/${encodeURIComponent(created.taskId)}/chat`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+      const reportButton = runnerPage.getByRole('button', { name: /Report an issue/i })
+      await expect(reportButton).toBeVisible({ timeout: 30_000 })
+      await reportButton.click()
+      await expect(runnerPage.getByRole('heading', { name: /Report a task incident/i })).toBeVisible()
+      await runnerPage.locator('.chat-incident-modal select').selectOption('Scope change')
+      await runnerPage.locator('.chat-incident-modal textarea').fill('The creator changed the agreed task scope after I completed the work. Please review the task conversation and advise both parties.')
+      const incidentResponse = runnerPage.waitForResponse(res =>
+        res.url().includes('/incidents') && res.request().method() === 'POST' && !res.url().includes('hold-escrow'),
+        { timeout: 30_000 }
+      )
+      await runnerPage.getByRole('button', { name: /Send report/i }).click()
+      const incidentHttp = await incidentResponse
+      expect(incidentHttp.ok(), `Incident submission failed: HTTP ${incidentHttp.status()} body=${await incidentHttp.text()}`).toBeTruthy()
+    } finally {
+      await runnerPage.close()
+    }
+
+    // Incident submission alone must not mutate escrow or payment state.
+    await expect.poll(async () => {
+      const t = await getTask(request, creatorToken, created.taskId)
+      return { payment: String(t.paymentStatus).toLowerCase(), escrow: String(t.escrowStatus).toLowerCase() }
+    }, { timeout: 30_000, intervals: [1000, 2000] }).toMatchObject({
+      payment: 'escrowheld',
+      escrow: 'held',
+    })
+
+    const incidentList = await request.get(`${API_BASE_URL}/admin/incidents?status=Open&page=1&pageSize=100`, {
+      headers: { Authorization: 'Bearer ' + adminToken },
+    })
+    expect(incidentList.ok()).toBeTruthy()
+    const incidentBody = await incidentList.json()
+    const incident = (incidentBody.data?.incidents || []).find((item: any) => item.taskReference === created.taskId)
+    expect(incident).toBeTruthy()
+
+    const hold = await request.post(`${API_BASE_URL}/admin/incidents/${incident.id}/hold-escrow`, {
+      headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
+      data: { reason: 'Admin E2E: review the runner incident and linked task evidence.' },
+    })
+    expect(hold.ok(), `Incident escrow hold failed: HTTP ${hold.status()} body=${await hold.text()}`).toBeTruthy()
+
+    await expect.poll(async () => {
+      const t = await getTask(request, creatorToken, created.taskId)
+      return { payment: String(t.paymentStatus).toLowerCase(), escrow: String(t.escrowStatus).toLowerCase() }
+    }, { timeout: 30_000, intervals: [1000, 2000] }).toMatchObject({
+      payment: 'escrowheld',
+      escrow: 'incident_hold',
+    })
+
+    // Only the creator can open a formal completion dispute, including while an
+    // administrator's incident hold is active.
+    const creatorPage = await browser.newPage()
+    try {
+      await loginUi(creatorPage, freshCreator.email)
+      await creatorPage.goto(`/tasks/my-posted?taskId=${encodeURIComponent(created.taskId)}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+      const disputeButton = creatorPage.getByRole('button', { name: /Raise Completion Dispute/i })
+      await expect(disputeButton).toBeVisible({ timeout: 30_000 })
+      await disputeButton.click()
+      await expect(creatorPage.getByRole('heading', { name: /Raise Completion Dispute/i })).toBeVisible()
+      await creatorPage.locator('.modal-box textarea').fill('The delivered work does not match the original task requirements. Please review the task and conversation evidence before any payout is released.')
+      const disputeResponse = creatorPage.waitForResponse(res =>
         res.url().includes('/api/v1/disputes') && res.request().method() === 'POST',
         { timeout: 30_000 }
       )
-      await runnerPage.locator('.modal-footer').getByRole('button', { name: /Submit Dispute/i }).click()
+      await creatorPage.getByRole('button', { name: /Submit dispute/i }).click()
       const disputeHttp = await disputeResponse
-      expect(disputeHttp.ok(), `Dispute submission failed: HTTP ${disputeHttp.status()} body=${await disputeHttp.text()}`).toBeTruthy()
+      expect(disputeHttp.ok(), `Creator dispute failed: HTTP ${disputeHttp.status()} body=${await disputeHttp.text()}`).toBeTruthy()
     } finally {
-      await runnerPage.close()
+      await creatorPage.close()
     }
 
     await expect.poll(async () => {
@@ -243,24 +295,23 @@ test.describe('DFY escrow and dispute workflow', () => {
       escrow: 'disputed',
     })
 
-    const disputes = await request.get(`${API_BASE_URL}/disputes?status=Open&page=1&pageSize=20`, {
+    const disputes = await request.get(`${API_BASE_URL}/disputes?status=Open&page=1&pageSize=100`, {
       headers: { Authorization: 'Bearer ' + adminToken },
     })
     expect(disputes.ok()).toBeTruthy()
     const disputeBody = await disputes.json()
-    const items = disputeBody.data?.disputes || []
-    const dispute = items.find((d: any) => d.taskId === created.taskId)
+    const dispute = (disputeBody.data?.disputes || []).find((item: any) => item.taskId === created.taskId)
     expect(dispute).toBeTruthy()
 
     const resolve = await request.patch(`${API_BASE_URL}/disputes/${dispute.id}/resolve`, {
       headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
       data: {
         action: 'release_to_runner',
-        resolution: 'Runner work accepted after admin review.',
-        reason: 'Admin E2E resolution: release escrow to runner.',
+        resolution: 'Admin reviewed the task evidence and determined the runner should be paid.',
+        reason: 'Admin E2E resolution: release escrow to runner after review.',
       },
     })
-    expect(resolve.ok(), `dispute resolution failed: HTTP ${resolve.status()} body=${await resolve.text()}`).toBeTruthy()
+    expect(resolve.ok(), `Dispute resolution failed: HTTP ${resolve.status()} body=${await resolve.text()}`).toBeTruthy()
 
     await expect.poll(async () => {
       const t = await getTask(request, creatorToken, created.taskId)
