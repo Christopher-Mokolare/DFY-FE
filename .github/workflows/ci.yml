@@ -70,6 +70,7 @@ jobs:
       DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
       DFY_RUNNER_EMAIL: ${{ secrets.DFY_RUNNER_EMAIL }}
       DFY_RUNNER_PASSWORD: ${{ secrets.DFY_RUNNER_PASSWORD }}
+      DFY_RUNNER_TOTP_SECRET: ${{ secrets.DFY_RUNNER_TOTP_SECRET }}
       DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
       DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
     steps:
@@ -111,6 +112,7 @@ jobs:
       DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
       DFY_RUNNER_EMAIL: ${{ secrets.DFY_RUNNER_EMAIL }}
       DFY_RUNNER_PASSWORD: ${{ secrets.DFY_RUNNER_PASSWORD }}
+      DFY_RUNNER_TOTP_SECRET: ${{ secrets.DFY_RUNNER_TOTP_SECRET }}
       DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
       DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
     steps:
@@ -146,6 +148,11 @@ jobs:
           done
           cat /tmp/dfy-preview.log
           exit 1
+
+      # The staging runner authenticator counter is replay-protected. Wait past
+      # the E2E job's final TOTP step before using the same CI runner account here.
+      - name: Wait for a fresh runner authenticator window
+        run: sleep 31
 
       # Browse Tasks modal coverage requires published staging tasks. Seed/reuse
       # stable tasks with the configured creator/admin accounts before running
