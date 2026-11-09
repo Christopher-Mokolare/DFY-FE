@@ -312,6 +312,13 @@ test.describe('DFY escrow and dispute workflow', () => {
     expect(incident).toBeTruthy()
     expect(JSON.parse(incident.evidenceMessageIdsJson || '[]').length).toBeGreaterThan(0)
 
+    const evidenceResponse = await request.get(`${API_BASE_URL}/admin/incidents/${incident.id}/evidence`, {
+      headers: { Authorization: 'Bearer ' + adminToken },
+    })
+    expect(evidenceResponse.ok()).toBeTruthy()
+    const evidenceBody = await evidenceResponse.json()
+    expect(evidenceBody.data?.length).toBeGreaterThan(0)
+
     const hold = await request.post(`${API_BASE_URL}/admin/incidents/${incident.id}/hold-escrow`, {
       headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
       data: { reason: 'Admin E2E: preserve the creator confirmation window while reviewing incident evidence.' },
