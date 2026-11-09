@@ -264,7 +264,7 @@ test.describe('DFY escrow and dispute workflow', () => {
 
   test('runner reports a Chat Hub incident with message evidence without freezing escrow', async ({ browser, page, request }) => {
     const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
-    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL, ADMIN_PASSWORD))
+    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
     const freshCreator = await useConfiguredCreator(request)
     const creatorToken = freshCreator.token
 
