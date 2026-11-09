@@ -12,7 +12,7 @@ test('admin can inspect financial controls without initiating money movement', a
   await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 60_000 })
   await page.getByPlaceholder('Email Address').fill(ADMIN_EMAIL!)
   await page.getByPlaceholder('Password').fill(ADMIN_PASSWORD!)
-  await page.getByRole('button', { name: /sign in/i }).click()
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click()
   await expect(page).toHaveURL(/dashboard/i, { timeout: 30_000 })
 
   await page.goto('/admin/payments', { waitUntil: 'domcontentloaded', timeout: 60_000 })
