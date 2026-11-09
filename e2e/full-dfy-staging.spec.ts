@@ -1,4 +1,5 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { runnerSecondFactorCode } from './helpers/runner-totp'
 
 // Staging E2E uses the versioned API route used by the deployed FE client.
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
@@ -21,12 +22,19 @@ function requireEnv(name: string, value?: string) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const response = await api.post(`${API_BASE_URL}/auth/login`, {
+  let response = await api.post(`${API_BASE_URL}/auth/login`, {
     headers: { 'Content-Type': 'application/json' },
     data: { email, password },
   })
-  expect(response.ok(), `Login failed: HTTP ${response.status()} body=${await response.text()}`).toBeTruthy()
-  const body = await response.json()
+  let body = await response.json()
+  if (!response.ok() && body?.requiresTwoFactor === true && email === RUNNER_EMAIL) {
+    response = await api.post(`${API_BASE_URL}/auth/login`, {
+      headers: { 'Content-Type': 'application/json' },
+      data: { email, password, secondFactorCode: await runnerSecondFactorCode() },
+    })
+    body = await response.json()
+  }
+  expect(response.ok(), `Login failed: HTTP ${response.status()} body=${JSON.stringify(body)}`).toBeTruthy()
   expect(body.success, `Login returned success=false for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
   const token = body.token || body.data?.token
   const user = body.user || body.data?.user
