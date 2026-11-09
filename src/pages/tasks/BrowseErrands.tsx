@@ -43,7 +43,8 @@ export default function BrowseErrands() {
       const res = await tasksApi.getAvailable(p, PAGE_SIZE, filters)
       // The API envelope may be returned as either the page itself or
       // ApiResponse<Page>; normalize both shapes before rendering the list.
-      const data = (res.data?.data || res.data) as any
+      const envelope = res.data as any
+      const data = (envelope?.data || envelope) as any
       const list = (data.tasks || data.Tasks || data.items || []) as Task[]
       setTasks(Array.isArray(list) ? list : [])
       setTotalPages(data.totalPages || data.TotalPages || 1)
