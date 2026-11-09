@@ -63,6 +63,7 @@ export default function TaskChat() {
   const [incidentCategory, setIncidentCategory] = useState('Scope change')
   const [incidentDescription, setIncidentDescription] = useState('')
   const [incidentSubmitting, setIncidentSubmitting] = useState(false)
+  const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<number[]>([])
   const [incidentError, setIncidentError] = useState('')
   const [incidentSuccess, setIncidentSuccess] = useState('')
 
@@ -275,9 +276,11 @@ export default function TaskChat() {
       const response = await incidentsApi.report(taskId, {
         category: incidentCategory,
         description: incidentDescription.trim(),
+        evidenceMessageIds: selectedEvidenceIds,
       })
       if (response.data?.success === false) throw new Error(response.data.message || 'Unable to submit report')
       setIncidentDescription('')
+      setSelectedEvidenceIds([])
       setIncidentOpen(false)
       setIncidentSuccess('Your report has been sent to DoForYou support. Reporting an incident does not automatically change escrow or payout status.')
       setTimeout(() => setIncidentSuccess(''), 7000)
@@ -336,7 +339,7 @@ export default function TaskChat() {
             <label>What happened? <span>At least 20 characters</span>
               <textarea value={incidentDescription} onChange={e => setIncidentDescription(e.target.value)} rows={5} minLength={20} maxLength={2000} required placeholder="Describe what happened, when it happened, and what help you need." />
             </label>
-            <p className="chat-incident-note">This report is reviewed by DoForYou. Submitting it does not automatically freeze escrow or stop a payout.</p>
+            <p className="chat-incident-note">This report is reviewed by DoForYou. Submitting it does not automatically freeze escrow or stop a payout. {selectedEvidenceIds.length} chat message(s) attached as evidence.</p>
             {incidentError && <p className="chat-incident-error" role="alert">{incidentError}</p>}
             <div className="chat-incident-actions">
               <button type="button" className="chat-incident-cancel" onClick={() => setIncidentOpen(false)} disabled={incidentSubmitting}>Cancel</button>
@@ -383,6 +386,16 @@ export default function TaskChat() {
                         <div className="msg-text">{msg.content}</div>
                         <div className="msg-meta"><span>{formatTime(msg.timestamp)}</span>{msg.isCurrentUser && <i className={`fas ${msg.isRead ? 'fa-check-double msg-read' : 'fa-check'}`} />}</div>
                       </div>
+                      {!msg.isSystem && Number.isInteger(Number(msg.id)) && Number(msg.id) > 0 && (
+                        <button
+                          type="button"
+                          className={`chat-evidence-toggle ${selectedEvidenceIds.includes(Number(msg.id)) ? 'selected' : ''}`}
+                          onClick={() => setSelectedEvidenceIds(ids => ids.includes(Number(msg.id)) ? ids.filter(id => id !== Number(msg.id)) : [...ids, Number(msg.id)].slice(0, 10))}
+                          aria-pressed={selectedEvidenceIds.includes(Number(msg.id))}
+                        >
+                          <i className="fas fa-paperclip" /> {selectedEvidenceIds.includes(Number(msg.id)) ? 'Evidence attached' : 'Attach as evidence'}
+                        </button>
+                      )}
                     </div>
                     {msg.isCurrentUser && <div className="msg-avatar mine-avatar">{initials(msg.senderName)}</div>}
                   </div>
