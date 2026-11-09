@@ -208,11 +208,6 @@ export default function MyCompletedTasks() {
                   <div className="alert alert-info mt-3"><i className="fas fa-route" /> {lifecycle(t).detail}</div>
                 </div>
                 <div className="task-card-footer">
-                  {String(t.status || '').toLowerCase() === 'awaitingconfirmation' && (
-                    <button className="btn btn-danger btn-block btn-sm" onClick={() => { setDisputeModal(t); setDisputeIssue(''); setDisputeCategory('General'); setDisputeError('') }}>
-                      <i className="fas fa-exclamation-triangle" /> Raise Dispute
-                    </button>
-                  )}
                   {!ratedTaskIds.has(t.taskId) && (
                     <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(t); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
                       <i className="fas fa-star" /> Rate Creator
