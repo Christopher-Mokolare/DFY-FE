@@ -1,4 +1,5 @@
 import { test, expect, Page, request, type APIRequestContext } from '@playwright/test'
+import { runnerSecondFactorCode } from './helpers/runner-totp'
 
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
@@ -54,10 +55,16 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
   const futureDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
 
   try {
-    const runnerLogin = await api.post(API_BASE_URL + '/auth/login', {
+    let runnerLogin = await api.post(API_BASE_URL + '/auth/login', {
       data: { email: runnerEmail, password: runnerPassword },
     })
-    const runnerBody = await runnerLogin.json()
+    let runnerBody = await runnerLogin.json()
+    if (!runnerLogin.ok() && runnerBody?.requiresTwoFactor === true) {
+      runnerLogin = await api.post(API_BASE_URL + '/auth/login', {
+        data: { email: runnerEmail, password: runnerPassword, secondFactorCode: await runnerSecondFactorCode() },
+      })
+      runnerBody = await runnerLogin.json()
+    }
     expect(
       runnerLogin.ok() && runnerBody.success,
       `Runner preflight authentication failed: HTTP ${runnerLogin.status()} response=${JSON.stringify(runnerBody)}. Check DFY_RUNNER_EMAIL/PASSWORD and confirm this account exists in the staging database.`,
