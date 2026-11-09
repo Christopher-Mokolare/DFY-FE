@@ -4,11 +4,13 @@ const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
+const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
+const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
 
-if (!CREATOR_EMAIL || !CREATOR_PASSWORD || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  throw new Error('Missing DFY_CREATOR_EMAIL/DFY_CREATOR_PASSWORD or DFY_ADMIN_EMAIL/DFY_ADMIN_PASSWORD.')
+if (!CREATOR_EMAIL || !CREATOR_PASSWORD || !RUNNER_EMAIL || !RUNNER_PASSWORD || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  throw new Error('Missing one or more required DFY_CREATOR_*, DFY_RUNNER_*, or DFY_ADMIN_* test credentials.')
 }
 
 const tasks = [
