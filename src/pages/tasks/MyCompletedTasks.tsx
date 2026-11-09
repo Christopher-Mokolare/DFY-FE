@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { tasksApi, ratingsApi, disputesApi } from '../../api'
+import { tasksApi, ratingsApi } from '../../api'
 import Pagination from '../../components/Pagination'
 import TaskCard from '../../components/workspace/TaskCard'
 
@@ -33,11 +33,6 @@ export default function MyCompletedTasks() {
   const [ratingLoading, setRatingLoading] = useState(false)
   const [ratingError, setRatingError] = useState('')
   const [ratedTaskIds, setRatedTaskIds] = useState<Set<string>>(new Set())
-  const [disputeModal, setDisputeModal] = useState<any | null>(null)
-  const [disputeIssue, setDisputeIssue] = useState('')
-  const [disputeCategory, setDisputeCategory] = useState('General')
-  const [disputeLoading, setDisputeLoading] = useState(false)
-  const [disputeError, setDisputeError] = useState('')
 
   const loadTasks = useCallback(async (targetPage: number, targetTaskId?: string) => {
     setLoading(true)
@@ -85,27 +80,6 @@ export default function MyCompletedTasks() {
       return params
     }, { replace: true })
   }, [searchParams, loading, setSearchParams])
-
-  const handleDispute = async () => {
-    if (!disputeModal || !disputeIssue.trim()) return
-    setDisputeLoading(true)
-    setDisputeError('')
-    try {
-      const res = await disputesApi.raise(disputeModal.taskId, disputeIssue.trim(), disputeCategory)
-      if (res.data?.success === false) {
-        setDisputeError(res.data?.message || 'Failed to raise dispute')
-        return
-      }
-      setDisputeModal(null)
-      setDisputeIssue('')
-      setDisputeCategory('General')
-      await loadTasks(page)
-    } catch (err: any) {
-      setDisputeError(err.response?.data?.message || 'Failed to raise dispute')
-    } finally {
-      setDisputeLoading(false)
-    }
-  }
 
   const handleRating = async () => {
     if (!ratingModal) return
@@ -208,11 +182,6 @@ export default function MyCompletedTasks() {
                   <div className="alert alert-info mt-3"><i className="fas fa-route" /> {lifecycle(t).detail}</div>
                 </div>
                 <div className="task-card-footer">
-                  {String(t.status || '').toLowerCase() === 'awaitingconfirmation' && (
-                    <button className="btn btn-danger btn-block btn-sm" onClick={() => { setDisputeModal(t); setDisputeIssue(''); setDisputeCategory('General'); setDisputeError('') }}>
-                      <i className="fas fa-exclamation-triangle" /> Raise Dispute
-                    </button>
-                  )}
                   {!ratedTaskIds.has(t.taskId) && (
                     <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(t); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
                       <i className="fas fa-star" /> Rate Creator
@@ -235,42 +204,6 @@ export default function MyCompletedTasks() {
           label="completed tasks"
         />}
       </div>
-
-      {disputeModal && (
-        <div className="modal-overlay" onClick={() => !disputeLoading && setDisputeModal(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><i className="fas fa-exclamation-triangle" /> Raise Dispute</h3>
-              <button className="btn-close" onClick={() => !disputeLoading && setDisputeModal(null)}><i className="fas fa-times" /></button>
-            </div>
-            <div className="modal-body">
-              <p className="mb-3">Report a problem with: <strong>{disputeModal.title || disputeModal.taskDescription}</strong></p>
-              <div className="alert alert-warning mb-3"><i className="fas fa-lock" /> The 24-hour payout window will be frozen while DFY reviews the dispute.</div>
-              <div className="form-group">
-                <label className="form-label">Category</label>
-                <select className="form-select" value={disputeCategory} onChange={e => setDisputeCategory(e.target.value)} disabled={disputeLoading}>
-                  <option value="General">General</option>
-                  <option value="Quality">Quality of Work</option>
-                  <option value="NoShow">No Show</option>
-                  <option value="Payment">Payment Issue</option>
-                  <option value="Fraud">Fraud / Scam</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Describe the issue *</label>
-                <textarea className="form-textarea" value={disputeIssue} onChange={e => setDisputeIssue(e.target.value)} placeholder="Explain what went wrong..." rows={4} disabled={disputeLoading} />
-              </div>
-              {disputeError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>{disputeError}</p>}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setDisputeModal(null)} disabled={disputeLoading}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDispute} disabled={disputeLoading || !disputeIssue.trim()}>
-                {disputeLoading ? <><span className="spinner spinner-sm" /> Submitting...</> : 'Submit Dispute'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {ratingModal && (
         <div className="modal-overlay" onClick={() => setRatingModal(null)}>
