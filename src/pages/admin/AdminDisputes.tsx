@@ -19,6 +19,11 @@ export default function AdminDisputes() {
   const [incidentNotes, setIncidentNotes] = useState('')
   const [incidentError, setIncidentError] = useState('')
   const [incidentSaving, setIncidentSaving] = useState(false)
+  const [holdModal, setHoldModal] = useState<any | null>(null)
+  const [holdAction, setHoldAction] = useState<'place' | 'release'>('place')
+  const [holdReason, setHoldReason] = useState('')
+  const [holdError, setHoldError] = useState('')
+  const [holdSaving, setHoldSaving] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -40,6 +45,27 @@ export default function AdminDisputes() {
 
   useEffect(() => { load() }, [filter])
   useEffect(() => { loadIncidents() }, [incidentFilter])
+
+  const saveEscrowHold = async () => {
+    if (!holdModal || holdReason.trim().length < 10) {
+      setHoldError('Provide a reason of at least 10 characters.')
+      return
+    }
+    setHoldSaving(true)
+    setHoldError('')
+    try {
+      const action = holdAction === 'place' ? incidentsApi.placeEscrowHold : incidentsApi.releaseEscrowHold
+      const res = await action(holdModal.id, holdReason.trim())
+      if (res.data?.success === false) throw new Error(res.data.message || 'Escrow hold action failed')
+      setHoldModal(null)
+      setHoldReason('')
+      loadIncidents()
+    } catch (error: any) {
+      setHoldError(error?.response?.data?.message || error?.message || 'Escrow hold action failed')
+    } finally {
+      setHoldSaving(false)
+    }
+  }
 
   const saveIncidentReview = async () => {
     if (!incidentReview || incidentNotes.trim().length < 5) {
@@ -206,10 +232,22 @@ export default function AdminDisputes() {
                     {incident.adminNotes && <p className="text-muted text-sm">Review notes: {incident.adminNotes}</p>}
                     <div className="text-muted text-sm">Reported {new Date(incident.createdAt).toLocaleString('en-ZA')}</div>
                   </div>
-                  {!['Resolved','Dismissed'].includes(incident.status) && (
-                    <div className="admin-task-card-footer">
+                  <div className="admin-task-card-footer" style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                    {!['Resolved','Dismissed'].includes(incident.status) && (
                       <button className="btn btn-primary btn-sm" onClick={() => { setIncidentReview(incident); setIncidentStatus('UnderReview'); setIncidentNotes(incident.adminNotes || ''); setIncidentError('') }}>Review incident</button>
-                    </div>
+                    )}
+                    {!incident.escrowHoldPlacedAt && incident.escrowHoldReleasedAt == null && incident.status !== 'Resolved' && incident.status !== 'Dismissed' && (
+                      <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => { setHoldModal(incident); setHoldAction('place'); setHoldReason(''); setHoldError('') }}>Place escrow hold</button>
+                    )}
+                    {incident.escrowHoldPlacedAt && !incident.escrowHoldReleasedAt && (
+                      <button className="btn btn-outline btn-sm" style={{ color: 'var(--success)', borderColor: 'var(--success)' }} onClick={() => { setHoldModal(incident); setHoldAction('release'); setHoldReason(''); setHoldError('') }}>Release escrow hold</button>
+                    )}
+                  </div>
+                  {incident.escrowHoldPlacedAt && (
+                    <p className="text-muted text-sm">Escrow hold placed {new Date(incident.escrowHoldPlacedAt).toLocaleString('en-ZA')}. Reason: {incident.escrowHoldReason}</p>
+                  )}
+                  {incident.escrowHoldReleasedAt && (
+                    <p className="text-muted text-sm">Escrow hold released {new Date(incident.escrowHoldReleasedAt).toLocaleString('en-ZA')}. Reason: {incident.escrowHoldReleaseReason}</p>
                   )}
                 </article>
               ))}
@@ -217,6 +255,34 @@ export default function AdminDisputes() {
           )}
         </div>
       </div>
+
+      {holdModal && (
+        <div className="modal-overlay" onClick={() => !holdSaving && setHoldModal(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-lock" /> {holdAction === 'place' ? 'Place escrow hold' : 'Release escrow hold'}</h3>
+              <button className="btn-close" onClick={() => setHoldModal(null)} disabled={holdSaving}><i className="fas fa-times" /></button>
+            </div>
+            <div className="modal-body">
+              <p>Incident #{holdModal.id} · Task {holdModal.taskReference}</p>
+              <div className="alert alert-warning">
+                {holdAction === 'place'
+                  ? 'This action blocks the automatic escrow release while the task is awaiting confirmation. Payment status remains unchanged.'
+                  : 'This restores held escrow and extends the creator confirmation deadline by the exact time spent on hold. Normal backend release rules then resume.'}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Admin reason (10–500 characters)</label>
+                <textarea className="form-textarea" rows={4} maxLength={500} value={holdReason} onChange={e => setHoldReason(e.target.value)} placeholder="Record the evidence reviewed and why this action is necessary." />
+              </div>
+            </div>
+            {holdError && <p style={{ color: 'var(--danger)', padding: '0 1.5rem' }}>{holdError}</p>}
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setHoldModal(null)} disabled={holdSaving}>Cancel</button>
+              <button className={holdAction === 'place' ? 'btn btn-danger' : 'btn btn-primary'} onClick={saveEscrowHold} disabled={holdSaving || holdReason.trim().length < 10}>{holdSaving ? 'Processing…' : holdAction === 'place' ? 'Place hold' : 'Release hold'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {incidentReview && (
         <div className="modal-overlay" onClick={() => !incidentSaving && setIncidentReview(null)}>
