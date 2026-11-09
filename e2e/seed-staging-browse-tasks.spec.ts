@@ -1,4 +1,5 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { runnerSecondFactorCode } from './helpers/runner-totp'
 
 const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
@@ -28,16 +29,22 @@ function futureDate(days: number) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const response = await api.post(`${API_BASE_URL}/auth/login`, {
+  let response = await api.post(`${API_BASE_URL}/auth/login`, {
     headers: { 'Content-Type': 'application/json' },
     data: { email, password },
   })
-
-  if (!response.ok()) {
-    throw new Error(`Login failed for configured test account: ${response.status()} ${await response.text()}`)
+  let body = await response.json()
+  if (!response.ok() && body?.requiresTwoFactor === true && email === RUNNER_EMAIL) {
+    response = await api.post(`${API_BASE_URL}/auth/login`, {
+      headers: { 'Content-Type': 'application/json' },
+      data: { email, password, secondFactorCode: await runnerSecondFactorCode() },
+    })
+    body = await response.json()
   }
 
-  const body = await response.json()
+  if (!response.ok()) {
+    throw new Error(`Login failed for configured test account: ${response.status()} ${JSON.stringify(body)}`)
+  }
   const token = body?.token || body?.data?.token
   if (!body?.success || !token) {
     throw new Error('Login response did not contain a usable authentication token.')
