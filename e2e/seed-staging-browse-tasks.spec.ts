@@ -110,17 +110,28 @@ async function createTask(
   return String(taskId)
 }
 
-async function verifyTask(api: APIRequestContext, adminToken: string, taskName: string, taskId: string) {
-  const response = await api.patch(`${API_BASE_URL}/admin/tasks/${taskId}/verify`, {
+async function verifyTasksForBrowse(api: APIRequestContext, adminToken: string, taskIds: string[]) {
+  // Browse Tasks only returns paid tasks whose funds are held in escrow.
+  // The per-task /verify endpoint only approves moderation; it does not seed
+  // the payment/escrow state required by /tasks/available.
+  const response = await api.patch(`${API_BASE_URL}/admin/tasks/bulk-verify`, {
     headers: {
       Authorization: `Bearer ${adminToken}`,
       'Content-Type': 'application/json',
     },
-    data: { reason: 'Staging mobile Browse Tasks test data' },
+    data: {
+      taskIds,
+      reason: 'Staging mobile Browse Tasks E2E payment/escrow seed.',
+    },
   })
 
-  if (![200, 204].includes(response.status())) {
-    throw new Error(`Verification failed for "${taskName}": ${response.status()} ${await response.text()}`)
+  if (!response.ok()) {
+    throw new Error(`Bulk payment verification failed: HTTP ${response.status()} ${await response.text()}`)
+  }
+
+  const body = await response.json()
+  if (body?.success !== true) {
+    throw new Error(`Bulk payment verification returned success=false: ${JSON.stringify(body)}`)
   }
 }
 
@@ -133,20 +144,30 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
   }
 
   const adminToken = await apiLogin(request, ADMIN_EMAIL!, ADMIN_PASSWORD!)
-  for (let i = 0; i < tasks.length; i++) {
-    await verifyTask(request, adminToken, tasks[i][0], taskIds[i])
-  }
+  await verifyTasksForBrowse(request, adminToken, taskIds)
 
-  // Browse Tasks is the runner-facing marketplace. The creator who posted
-  // these tasks should not be used to verify their own listings in the UI.
-  // Authenticate as the configured runner through the real login endpoint.
+  // Verify the backend source of truth before asserting the rendered cards.
+  // A task can be moderation-approved but still absent from Browse Tasks until
+  // its payment is marked received and escrow-held.
+  await expect.poll(async () => {
+    const response = await request.get(`${API_BASE_URL}/tasks/available?page=1&pageSize=100`, {
+      headers: { Authorization: `Bearer ${await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)}` },
+    })
+    if (!response.ok()) return false
+    const body = await response.json()
+    const list = body.tasks || body.data?.tasks || body.data?.Tasks || []
+    return Array.isArray(list) && taskIds.every(id =>
+      list.some((task: any) => String(task.taskId || task.id) === String(id))
+    )
+  }, { timeout: 45_000, intervals: [1000, 2000, 3000] }).toBe(true)
+
+  // Browse Tasks is the runner-facing marketplace. Use the configured runner
+  // account to verify the same paid/escrow-held listings in the actual UI.
   const runnerToken = await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)
   await setBrowserSession(page, runnerToken)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 
   for (const [name] of tasks) {
-    // Seed data may already exist from another PR's staging E2E run. Match the
-    // first exact task heading instead of failing strict mode on duplicate cards.
     await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible({ timeout: 30_000 })
   }
 
