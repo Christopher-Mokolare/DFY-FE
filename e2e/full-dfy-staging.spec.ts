@@ -224,6 +224,7 @@ test.describe('DFY escrow and dispute workflow', () => {
       await runnerPage.goto(`/tasks/${encodeURIComponent(created.taskId)}/chat`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
       const reportButton = runnerPage.getByRole('button', { name: /Report an issue/i })
       await expect(reportButton).toBeVisible({ timeout: 30_000 })
+      await expect(runnerPage.getByText(chatEvidenceText)).toBeVisible({ timeout: 30_000 })
       await reportButton.click()
       await expect(runnerPage.getByRole('heading', { name: /Report a task incident/i })).toBeVisible()
       await runnerPage.locator('.chat-incident-modal select').selectOption('Scope change')
