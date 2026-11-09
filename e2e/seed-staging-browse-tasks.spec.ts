@@ -14,6 +14,8 @@ if (!CREATOR_EMAIL || !CREATOR_PASSWORD || !RUNNER_EMAIL || !RUNNER_PASSWORD || 
   throw new Error('Missing one or more required DFY_CREATOR_*, DFY_RUNNER_*, or DFY_ADMIN_* test credentials.')
 }
 
+const authenticatedUsers = new Map<string, unknown>()
+
 const tasks = [
   ['Urgent grocery run for the week', 'Please collect the weekly groceries and deliver them to the specified address.', 175],
   ['Collect groceries from the local supermarket', 'Collect a prepaid grocery order and deliver it safely.', 200],
@@ -46,18 +48,22 @@ async function apiLogin(api: APIRequestContext, email: string, password: string)
     throw new Error(`Login failed for configured test account: ${response.status()} ${JSON.stringify(body)}`)
   }
   const token = body?.token || body?.data?.token
-  if (!body?.success || !token) {
-    throw new Error('Login response did not contain a usable authentication token.')
+  const user = body?.user || body?.data?.user
+  if (!body?.success || !token || !user) {
+    throw new Error('Login response did not contain a usable authentication token and user profile.')
   }
-
+  authenticatedUsers.set(email, user)
   return String(token)
 }
 
-async function setBrowserSession(page: Page, authToken: string) {
+async function setBrowserSession(page: Page, authToken: string, email: string) {
+  const user = authenticatedUsers.get(email)
+  if (!user) throw new Error('The runner profile was not captured during API authentication.')
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.evaluate((token) => {
+  await page.evaluate(({ token, currentUser }) => {
     localStorage.setItem('token', token)
-  }, authToken)
+    localStorage.setItem('currentUser', JSON.stringify(currentUser))
+  }, { token: authToken, currentUser: user })
 }
 
 async function postedTasks(api: APIRequestContext, authToken: string) {
@@ -171,7 +177,7 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
 
   // Browse Tasks is the runner-facing marketplace. Use the same configured
   // runner session to verify the paid/escrow-held listings in the actual UI.
-  await setBrowserSession(page, runnerToken)
+  await setBrowserSession(page, runnerToken, RUNNER_EMAIL!)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 
   for (const [name] of tasks) {
