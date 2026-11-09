@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import * as signalR from '@microsoft/signalr'
 import DOMPurify from 'dompurify'
-import { tasksApi } from '../../api'
+import { tasksApi, taskIncidentsApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
 import type { ChatMessage } from '../../types'
@@ -59,6 +59,13 @@ export default function TaskChat() {
   const [error, setError] = useState('')
   const [connected, setConnected] = useState(false)
   const [taskInfo, setTaskInfo] = useState<any>(null)
+  const [incidentOpen, setIncidentOpen] = useState(false)
+  const [incidentCategory, setIncidentCategory] = useState('Scope change')
+  const [incidentDescription, setIncidentDescription] = useState('')
+  const [incidentEvidence, setIncidentEvidence] = useState<number[]>([])
+  const [incidentSending, setIncidentSending] = useState(false)
+  const [incidentError, setIncidentError] = useState('')
+  const [incidentSuccess, setIncidentSuccess] = useState('')
 
   const taskTitle = taskInfo?.taskName || taskInfo?.taskDescription || searchParams.get('title') || 'Task conversation'
   const taskStatus = taskInfo?.taskStatus || ''
@@ -252,6 +259,31 @@ export default function TaskChat() {
     }
   }
 
+  const handleIncidentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!taskId || incidentSending || incidentDescription.trim().length < 20) return
+    setIncidentSending(true)
+    setIncidentError('')
+    setIncidentSuccess('')
+    try {
+      const res = await taskIncidentsApi.report(taskId, {
+        category: incidentCategory,
+        description: incidentDescription.trim(),
+        evidenceMessageIds: incidentEvidence,
+      })
+      if (res.data?.success === false) throw new Error(res.data.message || 'Unable to submit incident')
+      setIncidentOpen(false)
+      setIncidentDescription('')
+      setIncidentEvidence([])
+      setIncidentSuccess('Your report was sent to DoForYou support. Your report does not automatically change escrow or payout status.')
+      setTimeout(() => setIncidentSuccess(''), 7000)
+    } catch (err: any) {
+      setIncidentError(err?.response?.data?.message || err?.message || 'Unable to submit incident. Please try again.')
+    } finally {
+      setIncidentSending(false)
+    }
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -354,6 +386,41 @@ export default function TaskChat() {
       </div>
 
       {error && <div className="chat-error"><i className="fas fa-circle-exclamation" /> {error}</div>}
+      {incidentSuccess && <div className="chat-incident-success" role="status">{incidentSuccess}</div>}
+      {incidentOpen && (
+        <div className="chat-incident-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setIncidentOpen(false) }}>
+          <form className="chat-incident-modal" role="dialog" aria-modal="true" aria-labelledby="incident-title" onSubmit={handleIncidentSubmit}>
+            <div className="chat-incident-heading">
+              <div><span className="chat-incident-kicker">DOFORYOU SUPPORT</span><h2 id="incident-title">Report a task incident</h2></div>
+              <button type="button" className="chat-incident-close" onClick={() => setIncidentOpen(false)} aria-label="Close">×</button>
+            </div>
+            <p>Use this when chat has not resolved a task-related concern. Your report is reviewed by DoForYou and does not automatically pause escrow or payout.</p>
+            <label>What happened?
+              <select value={incidentCategory} onChange={e => setIncidentCategory(e.target.value)}>
+                {['Scope change','Task information','Access or location','Creator unresponsive','Safety concern','Threats or harassment','Cancellation or lost costs','Other'].map(value => <option key={value}>{value}</option>)}
+              </select>
+            </label>
+            <label>Describe the incident
+              <textarea value={incidentDescription} onChange={e => setIncidentDescription(e.target.value)} minLength={20} maxLength={2000} rows={5} placeholder="Include what happened, when it happened and what help you need." required />
+              <small>{incidentDescription.trim().length}/2000 characters (minimum 20)</small>
+            </label>
+            {messages.filter(m => /^\d+$/.test(String(m.id))).length > 0 && (
+              <fieldset className="chat-incident-evidence">
+                <legend>Attach relevant Chat Hub messages (optional)</legend>
+                {messages.filter(m => /^\d+$/.test(String(m.id))).slice(-10).map(m => {
+                  const id = Number(m.id)
+                  return <label key={id}><input type="checkbox" checked={incidentEvidence.includes(id)} onChange={e => setIncidentEvidence(prev => e.target.checked ? [...prev, id].slice(-10) : prev.filter(value => value !== id))} /><span><strong>{m.isCurrentUser ? 'You' : m.senderName}</strong> · {m.content.slice(0, 110)}</span></label>
+                })}
+              </fieldset>
+            )}
+            {incidentError && <div className="chat-error" role="alert">{incidentError}</div>}
+            <div className="chat-incident-actions">
+              <button type="button" className="btn btn-outline" onClick={() => setIncidentOpen(false)} disabled={incidentSending}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={incidentSending || incidentDescription.trim().length < 20}>{incidentSending ? 'Sending…' : 'Send report'}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {chatClosed ? (
         <div className="chat-closed-footer">
@@ -361,7 +428,9 @@ export default function TaskChat() {
           <div><strong>Conversation closed</strong><span>You can still view the full history, but new messages are disabled.</span></div>
         </div>
       ) : (
-        <form className="chat-footer" onSubmit={handleSend}>
+        <div className="chat-footer-shell">
+          {taskInfo?.canReportIncident === true && <button type="button" className="chat-report-incident-btn" onClick={() => setIncidentOpen(true)}><i className="fas fa-flag" /> Report an issue</button>}
+          <form className="chat-footer" onSubmit={handleSend}>
           <div className="chat-input-wrap">
             <textarea
               className="chat-input"
@@ -379,7 +448,8 @@ export default function TaskChat() {
           <button type="submit" className="chat-send-btn" disabled={!newMessage.trim() || sending} aria-label="Send message">
             {sending ? <span className="spinner spinner-sm" /> : <i className="fas fa-paper-plane" />}
           </button>
-        </form>
+          </form>
+        </div>
       )}
     </div>
   )
