@@ -111,6 +111,27 @@ async function getTask(api: APIRequestContext, token: string, taskId: string) {
   return body.data
 }
 
+async function ensureRunnerEligibility(api: APIRequestContext, runnerToken: string) {
+  const headers = { Authorization: 'Bearer ' + runnerToken }
+  const [identity, twoFactor] = await Promise.all([
+    api.get(`${API_BASE_URL}/identity-verification/status`, { headers }),
+    api.get(`${API_BASE_URL}/auth/two-factor/status`, { headers }),
+  ])
+
+  expect(identity.ok(), `Could not check runner identity verification: HTTP ${identity.status()} ${await identity.text()}`).toBeTruthy()
+  expect(twoFactor.ok(), `Could not check runner authenticator status: HTTP ${twoFactor.status()} ${await twoFactor.text()}`).toBeTruthy()
+
+  const identityBody = await identity.json()
+  const twoFactorBody = await twoFactor.json()
+  const identityStatus = String(identityBody.data?.status || 'unknown').toLowerCase()
+  const authenticatorEnabled = twoFactorBody.data?.enabled === true
+
+  expect(
+    identityStatus === 'passed' && authenticatorEnabled,
+    `Staging runner test account is not eligible to accept paid tasks. Identity verification status: ${identityStatus}; authenticator-based 2FA enabled: ${authenticatorEnabled}. Complete the real runner identity check and enable an authenticator on DFY_RUNNER_EMAIL before running paid-task lifecycle E2E.`,
+  ).toBeTruthy()
+}
+
 async function ensureRunnerBank(api: APIRequestContext, runnerToken: string) {
   const existing = await api.get(`${API_BASE_URL}/banking/accounts`, {
     headers: { Authorization: 'Bearer ' + runnerToken },
@@ -128,6 +149,7 @@ test.describe('DFY escrow and dispute workflow', () => {
     // Authenticate the pre-provisioned runner and admin before creating any records.
     // Misconfigured secrets must fail before this E2E leaves a fresh creator behind.
     const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    await ensureRunnerEligibility(request, runnerToken)
     await ensureRunnerBank(request, runnerToken)
     const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
 
@@ -202,6 +224,7 @@ test.describe('DFY escrow and dispute workflow', () => {
 
   test('runner reports incident in Chat Hub -> admin holds escrow -> creator disputes completion -> admin resolves', async ({ browser, page, request }) => {
     const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    await ensureRunnerEligibility(request, runnerToken)
     await ensureRunnerBank(request, runnerToken)
     const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
     const freshCreator = await useConfiguredCreator(request)
