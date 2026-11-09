@@ -306,7 +306,7 @@ export default function TaskChat() {
             <span className="chat-live"><i className="fas fa-circle" /> {connected ? 'Live' : 'Syncing'}</span>
           </div>
         </div>
-        {!chatClosed && <button className="chat-report-btn" onClick={() => { setIncidentOpen(true); setIncidentError('') }} title="Report a task incident">
+        {!chatClosed && taskInfo?.canReportIncident && <button className="chat-report-btn" onClick={() => { setIncidentOpen(true); setIncidentError('') }} title="Report a task incident">
           <i className="fas fa-flag" /><span>Report issue</span>
         </button>}
         <button className="chat-task-btn" onClick={() => navigate(`${taskInfo?.createdByUserId === user?.id ? '/tasks/my-posted' : ['claimed','in_progress'].includes(String(taskStatus).toLowerCase()) ? '/tasks/my-active' : '/tasks/my-completed'}?taskId=${encodeURIComponent(taskId || '')}`)} title="Open task">
