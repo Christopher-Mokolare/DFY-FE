@@ -210,6 +210,12 @@ test.describe('DFY escrow and dispute workflow', () => {
     const created = await createTask(request, creatorToken, 'INCIDENT-DISPUTE-' + Date.now())
     await adminVerify(request, adminToken, created.taskId)
     await claimAndCompleteViaApi(request, runnerToken, created.taskId)
+    const chatEvidenceText = 'I asked the creator to confirm the agreed scope before marking the work complete.'
+    const chatEvidence = await request.post(`${API_BASE_URL}/tasks/${created.taskId}/messages`, {
+      headers: { Authorization: 'Bearer ' + runnerToken, 'Content-Type': 'application/json' },
+      data: { content: chatEvidenceText },
+    })
+    expect(chatEvidence.ok()).toBeTruthy()
 
     // Runner escalates the issue from the existing participant Chat Hub.
     const runnerPage = await browser.newPage()
@@ -222,6 +228,7 @@ test.describe('DFY escrow and dispute workflow', () => {
       await expect(runnerPage.getByRole('heading', { name: /Report a task incident/i })).toBeVisible()
       await runnerPage.locator('.chat-incident-modal select').selectOption('Scope change')
       await runnerPage.locator('.chat-incident-modal textarea').fill('The creator changed the agreed task scope after I completed the work. Please review the task conversation and advise both parties.')
+      await runnerPage.locator('.chat-incident-evidence input[type="checkbox"]').first().check()
       const incidentResponse = runnerPage.waitForResponse(res =>
         res.url().includes('/incidents') && res.request().method() === 'POST' && !res.url().includes('hold-escrow'),
         { timeout: 30_000 }
@@ -249,6 +256,12 @@ test.describe('DFY escrow and dispute workflow', () => {
     const incidentBody = await incidentList.json()
     const incident = (incidentBody.data?.incidents || []).find((item: any) => item.taskReference === created.taskId)
     expect(incident).toBeTruthy()
+    const evidenceResponse = await request.get(`${API_BASE_URL}/admin/incidents/${incident.id}/evidence`, {
+      headers: { Authorization: 'Bearer ' + adminToken },
+    })
+    expect(evidenceResponse.ok()).toBeTruthy()
+    const evidenceBody = await evidenceResponse.json()
+    expect(evidenceBody.data?.some((item: any) => item.content === chatEvidenceText)).toBeTruthy()
 
     const hold = await request.post(`${API_BASE_URL}/admin/incidents/${incident.id}/hold-escrow`, {
       headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
