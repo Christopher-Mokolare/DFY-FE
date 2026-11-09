@@ -240,6 +240,17 @@ test.describe('DFY escrow and dispute workflow', () => {
       await runnerPage.close()
     }
 
+    // A runner must not be able to open a creator-only completion dispute.
+    const runnerDisputeAttempt = await request.post(`${API_BASE_URL}/disputes`, {
+      headers: { Authorization: 'Bearer ' + runnerToken, 'Content-Type': 'application/json' },
+      data: {
+        taskId: created.taskId,
+        issue: 'Runner attempting to submit a creator-only completion dispute.',
+        category: 'Other',
+      },
+    })
+    expect(runnerDisputeAttempt.status()).toBe(403)
+
     // Incident submission alone must not mutate escrow or payment state.
     await expect.poll(async () => {
       const t = await getTask(request, creatorToken, created.taskId)
