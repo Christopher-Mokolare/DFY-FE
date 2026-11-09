@@ -181,6 +181,20 @@ export default function MyPostedTasks() {
     }
   }
 
+  const openCompletionConfirm = async (task: Task) => {
+    setActionError('')
+    try {
+      const detail = await tasksApi.getById(task.taskId)
+      if (!detail.data?.success || !detail.data?.data?.canConfirm) {
+        setActionError(detail.data?.message || 'Confirmation is temporarily unavailable while this task is under review.')
+        return
+      }
+      setConfirmModal(task)
+    } catch (error: any) {
+      setActionError(error?.response?.data?.message || 'Unable to verify task confirmation eligibility. Refresh and try again.')
+    }
+  }
+
   const handleConfirm = async () => {
     if (!confirmModal) return
     setActionLoading(true); setActionError('')
@@ -285,7 +299,7 @@ export default function MyPostedTasks() {
                   <div className="task-card-footer">
                     {key === 'pendingPayment' && <div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => { handlePostErrand(); navigate(`/tasks/post?edit=${task.taskId}`) }}><i className="fas fa-edit" /> Edit</button><button className="btn btn-danger btn-sm" onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel</button><button className="btn btn-primary btn-sm" onClick={() => handlePayNow(task.taskId)}><i className="fas fa-credit-card" /> Pay with Paystack</button></div>}
                     {key === 'posted' && <div className="action-col"><button className="btn btn-primary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel Task</button></div>}
-                    {(key === 'claimed' || key === 'completed') && <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/${task.taskId}/chat?title=${encodeURIComponent(task.taskName || task.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>{task.helperContact && <a href={`tel:${encodeURIComponent(task.helperContact)}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /> Call</a>}</div>{key === 'completed' && <button className="btn btn-primary btn-block btn-sm mt-2" onClick={() => setConfirmModal(task)}><i className="fas fa-check" /> Confirm & Pay Runner</button>}
+                    {(key === 'claimed' || key === 'completed') && <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/${task.taskId}/chat?title=${encodeURIComponent(task.taskName || task.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>{task.helperContact && <a href={`tel:${encodeURIComponent(task.helperContact)}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /> Call</a>}</div>{key === 'completed' && <button className="btn btn-primary btn-block btn-sm mt-2" onClick={() => void openCompletionConfirm(task)}><i className="fas fa-check" /> Confirm & Pay Runner</button>}
                     {key === 'completed' && task.paymentStatus?.toLowerCase() !== 'disputepending' && task.escrowStatus?.toLowerCase() !== 'disputed' && (
                       <button className="btn btn-outline btn-block btn-sm mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => openCompletionDispute(task)}>
                         <i className="fas fa-gavel" /> Raise completion dispute
