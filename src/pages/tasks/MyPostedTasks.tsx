@@ -242,6 +242,7 @@ export default function MyPostedTasks() {
         <div className="page-header"><div className="container"><h1><i className="fas fa-list-check" /> My Posted Tasks</h1><p>Manage and track your posted tasks</p></div></div>
         <div className="container">
           {error && <div className="alert alert-error mb-4" role="alert"><i className="fas fa-exclamation-circle" /> {error} <button className="btn btn-secondary btn-sm" onClick={() => void loadTasks(page)}>Retry</button></div>}
+          {actionError && !confirmModal && <div className="alert alert-warning mb-4" role="alert"><i className="fas fa-info-circle" /> {actionError} <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionError('')}>Dismiss</button></div>}
           {statusCounts.all > 0 && <div className="posted-task-tabs" role="tablist" aria-label="Task status">
             {TASK_SECTIONS.map(({ key, icon, label }) => (
               <button
