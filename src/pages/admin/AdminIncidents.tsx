@@ -122,7 +122,7 @@ export default function AdminIncidents() {
           {loading ? <div className="loading-state"><div className="spinner" /></div> : rows.length === 0 ? (
             <div className="empty-state"><i className="fas fa-flag" /><p>No incidents found</p></div>
           ) : (
-            <div className="admin-task-grid">
+            <div className="admin-cards-wrap">
               {rows.map(row => (
                 <button type="button" key={row.id} className="admin-task-card" onClick={() => void selectIncident(row)} style={{ textAlign: 'left', cursor: 'pointer', border: selected?.id === row.id ? '2px solid var(--primary)' : undefined }}>
                   <div className="admin-task-card-header">
