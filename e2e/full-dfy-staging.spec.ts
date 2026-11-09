@@ -312,6 +312,24 @@ test.describe('DFY escrow and dispute workflow', () => {
     expect(incident).toBeTruthy()
     expect(JSON.parse(incident.evidenceMessageIdsJson || '[]').length).toBeGreaterThan(0)
 
+    const hold = await request.post(`${API_BASE_URL}/admin/incidents/${incident.id}/hold-escrow`, {
+      headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
+      data: { reason: 'Admin E2E: preserve the creator confirmation window while reviewing incident evidence.' },
+    })
+    expect(hold.ok(), `Admin escrow hold failed: HTTP ${hold.status()} body=${await hold.text()}`).toBeTruthy()
+    const taskOnHold = await getTask(request, creatorToken, created.taskId)
+    expect(String(taskOnHold.escrowStatus).toLowerCase()).toBe('incident_hold')
+    expect(String(taskOnHold.paymentStatus).toLowerCase()).toBe('escrowheld')
+
+    const releaseHold = await request.post(`${API_BASE_URL}/admin/incidents/${incident.id}/release-escrow-hold`, {
+      headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
+      data: { reason: 'Admin E2E: incident evidence reviewed; restore normal confirmation process.' },
+    })
+    expect(releaseHold.ok(), `Admin escrow hold release failed: HTTP ${releaseHold.status()} body=${await releaseHold.text()}`).toBeTruthy()
+    const taskAfterHold = await getTask(request, creatorToken, created.taskId)
+    expect(String(taskAfterHold.escrowStatus).toLowerCase()).toBe('held')
+    expect(String(taskAfterHold.paymentStatus).toLowerCase()).toBe('escrowheld')
+
     const review = await request.patch(`${API_BASE_URL}/admin/incidents/${incident.id}`, {
       headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
       data: { status: 'Resolved', adminNotes: 'Reviewed the incident and referenced Chat Hub evidence. No escrow action was required.' },
