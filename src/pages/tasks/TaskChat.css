@@ -40,3 +40,6 @@
 .chat-incident-submit{background:#b91c1c;color:#fff}
 .chat-incident-submit:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:640px){.chat-report-btn{padding:.6rem;min-width:38px;justify-content:center}.chat-report-btn span{display:none}}
+
+.chat-evidence-toggle{display:block;margin:.25rem 0 0 auto;border:0;background:transparent;color:#64748b;font-size:.62rem;padding:.2rem .35rem;cursor:pointer}
+.chat-evidence-toggle.selected{color:#1d4ed8;font-weight:700}
