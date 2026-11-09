@@ -66,7 +66,7 @@ export default function AdminDisputes() {
     setEvidenceLoading(true)
     setEvidenceError('')
     try {
-      const response = await adminApi.getTaskMessages(String(incident.taskId))
+      const response = await adminApi.getTaskMessages(String(incident.taskReference))
       if (response.data?.success === false) throw new Error(response.data.message || 'Unable to load task chat')
       const messages = response.data?.data || []
       setEvidenceMessages(messages.filter((message: any) => ids.includes(Number(message.id))))
