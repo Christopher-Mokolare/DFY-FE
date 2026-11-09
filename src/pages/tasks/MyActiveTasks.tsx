@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { tasksApi, disputesApi, ratingsApi } from '../../api'
+import { tasksApi, ratingsApi } from '../../api'
 import Pagination from '../../components/Pagination'
 import TaskCard from '../../components/workspace/TaskCard'
 
@@ -34,10 +34,6 @@ export default function MyActiveTasks() {
   const [totalTasks, setTotalTasks] = useState(0)
   const [completeModal, setCompleteModal] = useState<any | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
-  const [disputeModal, setDisputeModal] = useState<any | null>(null)
-  const [disputeIssue, setDisputeIssue] = useState('')
-  const [disputeCategory, setDisputeCategory] = useState('General')
-  const [disputeLoading, setDisputeLoading] = useState(false)
   const [ratingModal, setRatingModal] = useState<any | null>(null)
   const [ratingValue, setRatingValue] = useState(5)
   const [ratingReview, setRatingReview] = useState('')
@@ -45,7 +41,6 @@ export default function MyActiveTasks() {
   const [ratingError, setRatingError] = useState('')
   const [ratedTaskIds, setRatedTaskIds] = useState<Set<string>>(new Set())
   const [actionError, setActionError] = useState('')
-  const [disputeError, setDisputeError] = useState('')
 
   const loadTasks = useCallback(async (targetPage = page, targetTaskId?: string) => {
     setLoading(true)
@@ -90,21 +85,6 @@ export default function MyActiveTasks() {
     } catch (err: any) {
       setActionError(err.response?.data?.message || 'Failed to mark complete')
     } finally { setActionLoading(false) }
-  }
-
-  const handleDispute = async () => {
-    if (!disputeModal || !disputeIssue.trim()) return
-    setDisputeLoading(true); setDisputeError('')
-    try {
-      const res = await disputesApi.raise(disputeModal.taskId, disputeIssue, disputeCategory)
-      if (res.data?.success === false) { setDisputeError(res.data?.message || 'Failed to raise dispute'); return }
-      setDisputeModal(null)
-      setDisputeIssue('')
-      setDisputeCategory('General')
-      await loadTasks(page)
-    } catch (err: any) {
-      setDisputeError(err.response?.data?.message || 'Failed to raise dispute')
-    } finally { setDisputeLoading(false) }
   }
 
   const handleRating = async () => {
@@ -187,11 +167,6 @@ export default function MyActiveTasks() {
                           <i className="fas fa-check" /> Mark as Complete
                         </button>
                       )}
-                      {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
-                        <button className="btn btn-outline btn-block btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={() => setDisputeModal(raw)}>
-                          <i className="fas fa-exclamation-triangle" /> Raise Dispute
-                        </button>
-                      )}
                       {['runnerpaid', 'runner_paid', 'completed'].includes(t.taskStatus?.toLowerCase()) && !ratedTaskIds.has(t.taskId) && (
                         <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(raw); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
                           <i className="fas fa-star" /> Rate Creator
@@ -231,42 +206,6 @@ export default function MyActiveTasks() {
               <button className="btn btn-secondary" onClick={() => { setCompleteModal(null); setActionError('') }}>Cancel</button>
               <button className="btn btn-primary" onClick={handleComplete} disabled={actionLoading}>
                 {actionLoading ? <><span className="spinner spinner-sm" /> Processing...</> : 'Mark Complete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {disputeModal && (
-        <div className="modal-overlay" onClick={() => setDisputeModal(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><i className="fas fa-exclamation-triangle" style={{ color: '#EF4444' }} /> Raise Dispute</h3>
-              <button className="btn-close" onClick={() => setDisputeModal(null)}><i className="fas fa-times" /></button>
-            </div>
-            <div className="modal-body">
-              <p className="mb-3">Raising a dispute on: <strong>{disputeModal.description || disputeModal.taskDescription || disputeModal.title}</strong></p>
-              <div className="alert alert-warning mb-3"><i className="fas fa-lock" /> Escrow will be frozen until an admin resolves the dispute.</div>
-              <div className="form-group">
-                <label className="form-label">Category</label>
-                <select className="form-select" value={disputeCategory} onChange={e => setDisputeCategory(e.target.value)}>
-                  <option value="General">General</option>
-                  <option value="Payment">Payment Issue</option>
-                  <option value="Quality">Quality of Work</option>
-                  <option value="NoShow">No Show</option>
-                  <option value="Fraud">Fraud / Scam</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Describe the issue *</label>
-                <textarea className="form-textarea" placeholder="Explain what went wrong..." value={disputeIssue} onChange={e => setDisputeIssue(e.target.value)} rows={4} />
-              </div>
-            </div>
-            {disputeError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{disputeError}</p>}
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => { setDisputeModal(null); setDisputeError('') }}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDispute} disabled={disputeLoading || !disputeIssue.trim()}>
-                {disputeLoading ? <><span className="spinner spinner-sm" /> Submitting...</> : 'Submit Dispute'}
               </button>
             </div>
           </div>
