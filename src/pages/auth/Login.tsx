@@ -50,13 +50,14 @@ export default function Login() {
       setSecondFactorCode('')
       finishSignIn(loggedInUser)
     } catch (err: any) {
-      if (err.response?.data?.requiresTwoFactor) {
+      const responseData = err?.response?.data ?? err?.data ?? err
+      if (responseData?.requiresTwoFactor === true || responseData?.RequiresTwoFactor === true) {
         setRequiresTwoFactor(true)
-        setError(err.response?.data?.message || 'Enter your authenticator code to continue.')
-      } else if (err.response?.data?.requiresAccountSetup && pendingGoogleToken) {
+        setError(responseData?.message || responseData?.Message || 'Enter your authenticator code to continue.')
+      } else if ((responseData?.requiresAccountSetup === true || responseData?.RequiresAccountSetup === true) && pendingGoogleToken) {
         navigate('/register', { state: { googleIdToken: pendingGoogleToken, returnToTaskId } })
       } else {
-        setError(err.response?.data?.message || err.message || 'Login failed. Please try again.')
+        setError(responseData?.message || responseData?.Message || err.message || 'Login failed. Please try again.')
       }
     } finally {
       setLoading(false)
@@ -70,15 +71,16 @@ export default function Login() {
       const loggedInUser = await googleLogin(idToken)
       finishSignIn(loggedInUser)
     } catch (err: any) {
-      if (err.response?.data?.requiresTwoFactor) {
+      const responseData = err?.response?.data ?? err?.data ?? err
+      if (responseData?.requiresTwoFactor === true || responseData?.RequiresTwoFactor === true) {
         setPendingGoogleToken(idToken)
         setRequiresTwoFactor(true)
-        setError(err.response?.data?.message || 'Enter your authenticator code to continue.')
-      } else if (err.response?.data?.requiresAccountSetup) {
+        setError(responseData?.message || responseData?.Message || 'Enter your authenticator code to continue.')
+      } else if (responseData?.requiresAccountSetup === true || responseData?.RequiresAccountSetup === true) {
         // Keep the short-lived Google ID token in navigation state only, never in a URL or storage.
         navigate('/register', { state: { googleIdToken: idToken, returnToTaskId } })
       } else {
-        setError(err.response?.data?.message || err.message || 'Google sign-in could not be completed.')
+        setError(responseData?.message || responseData?.Message || err.message || 'Google sign-in could not be completed.')
       }
     } finally {
       setLoading(false)
@@ -103,82 +105,102 @@ export default function Login() {
           <p className="auth-subtitle">Enter your credentials to access your account</p>
 
           {notice && <div className="alert alert-success" role="status">{notice}</div>}
-          {error && <div className="alert alert-error"><i className="fas fa-exclamation-circle" /> {error}</div>}
+          {error && <div className="alert alert-error" role="alert" aria-live="assertive"><i className="fas fa-exclamation-circle" /> {error}</div>}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <div className="input-with-icon">
-                <i className="fas fa-envelope" />
-                <input
-                  type="email"
-                  className="form-input"
-                  placeholder="Email Address"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <div className="input-with-icon password-input">
-                <i className="fas fa-lock" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  className="form-input"
-                  placeholder="Password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-                <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
-                  <i className={`fas fa-eye${showPassword ? '-slash' : ''}`} />
+          <form onSubmit={handleSubmit} noValidate={requiresTwoFactor}>
+            {!requiresTwoFactor ? (
+              <>
+                <div className="form-group">
+                  <div className="input-with-icon">
+                    <i className="fas fa-envelope" />
+                    <input
+                      type="email"
+                      className="form-input"
+                      placeholder="Email Address"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      autoComplete="username"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-with-icon password-input">
+                    <i className="fas fa-lock" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      className="form-input"
+                      placeholder="Password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                      minLength={6}
+                    />
+                    <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                      <i className={`fas fa-eye${showPassword ? '-slash' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading || !email.trim() || !password}>
+                  {loading ? <><span className="spinner spinner-sm" /> Signing in...</> : 'Sign In'}
                 </button>
-              </div>
-            </div>
-            {requiresTwoFactor && !pendingGoogleToken && (
-              <div className="form-group">
-                <label className="form-label" htmlFor="second-factor-code">Authenticator or recovery code</label>
-                <input
-                  id="second-factor-code"
-                  className="form-input"
-                  value={secondFactorCode}
-                  onChange={e => setSecondFactorCode(e.target.value)}
-                  placeholder="Six-digit code or recovery code"
-                  autoComplete="one-time-code"
-                  inputMode="text"
-                  maxLength={20}
-                  required
-                />
-              </div>
+              </>
+            ) : (
+              <section className="auth-two-factor-step" aria-labelledby="two-factor-heading">
+                <div className="auth-two-factor-heading">
+                  <h3 id="two-factor-heading">Two-factor authentication</h3>
+                  <p>
+                    {pendingGoogleToken
+                      ? 'Verify your Google sign-in with the code from your authenticator app.'
+                      : 'Your password was accepted. Enter the code from your authenticator app or use one of your recovery codes.'}
+                  </p>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="second-factor-code">Authenticator code or recovery code</label>
+                  <input
+                    id="second-factor-code"
+                    name="secondFactorCode"
+                    type="text"
+                    className="form-input"
+                    value={secondFactorCode}
+                    onChange={e => setSecondFactorCode(e.target.value)}
+                    placeholder="Enter your 6-digit code or recovery code"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    inputMode="text"
+                    maxLength={32}
+                    required
+                  />
+                  <small className="text-muted">Authenticator codes change every 30 seconds. Recovery codes can only be used once.</small>
+                </div>
+                <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading || !secondFactorCode.trim()}>
+                  {loading ? <><span className="spinner spinner-sm" /> Verifying...</> : 'Verify and sign in'}
+                </button>
+                <button
+                  type="button"
+                  className="auth-link-button"
+                  style={{ display: 'block', margin: '1rem auto 0' }}
+                  disabled={loading}
+                  onClick={() => {
+                    setRequiresTwoFactor(false)
+                    setSecondFactorCode('')
+                    setPendingGoogleToken(null)
+                    setError('')
+                  }}
+                >
+                  Back to sign in
+                </button>
+              </section>
             )}
-            <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading || (!pendingGoogleToken && (!email || !password)) || (requiresTwoFactor && !secondFactorCode.trim())}>
-              {loading ? <><span className="spinner spinner-sm" /> Signing in...</> : (requiresTwoFactor ? 'Verify & Sign In' : 'Sign In')}
-            </button>
           </form>
 
-          {pendingGoogleToken && requiresTwoFactor && (
-            <div className="form-group" style={{ marginTop: '1rem' }}>
-              <label className="form-label" htmlFor="google-second-factor-code">Authenticator or recovery code</label>
-              <input
-                id="google-second-factor-code"
-                className="form-input"
-                value={secondFactorCode}
-                onChange={e => setSecondFactorCode(e.target.value)}
-                placeholder="Six-digit code or recovery code"
-                autoComplete="one-time-code"
-                maxLength={20}
-              />
-              <button type="button" className="btn btn-primary btn-block" disabled={loading || !secondFactorCode.trim()} onClick={() => { void handleSubmit({ preventDefault: () => {} } as React.FormEvent) }}>
-                {loading ? 'Verifying…' : 'Verify Google sign-in'}
-              </button>
+          {!requiresTwoFactor && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem', margin: '1.25rem 0' }}>
+              <div className="text-muted text-sm">or</div>
+              <GoogleIdentityButton onCredential={handleGoogleCredential} disabled={loading} />
             </div>
           )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem', margin: '1.25rem 0' }}>
-            <div className="text-muted text-sm">or</div>
-            <GoogleIdentityButton onCredential={handleGoogleCredential} disabled={loading} />
-          </div>
 
           <p className="auth-switch" style={{ marginTop: '0.75rem' }}>
             <Link to="/forgot-password">Forgot password?</Link>
