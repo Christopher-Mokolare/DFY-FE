@@ -26,22 +26,8 @@ function futureDate(days: number) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const response = await api.post(`${API_BASE_URL}/auth/login`, {
-    headers: { 'Content-Type': 'application/json' },
-    data: { email, password },
-  })
-
-  if (!response.ok()) {
-    throw new Error(`Login failed for configured test account: ${response.status()} ${await response.text()}`)
-  }
-
-  const body = await response.json()
-  const token = body?.token || body?.data?.token
-  if (!body?.success || !token) {
-    throw new Error('Login response did not contain a usable authentication token.')
-  }
-
-  return String(token)
+  const session = await loginWithTotp(api, API_BASE_URL, email, password)
+  return session.token
 }
 
 async function setBrowserSession(page: Page, authToken: string) {
