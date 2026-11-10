@@ -1,4 +1,5 @@
 /**
+import { loginWithTotp } from './helpers/auth'
  * E2E: Complete runner ↔ creator lifecycle
  *
  * Credentials are supplied through CI environment variables / GitHub Secrets.
