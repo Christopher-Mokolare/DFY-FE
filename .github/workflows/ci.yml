@@ -92,7 +92,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run staging E2E
-        run: npm test -- e2e/auth-two-factor.spec.ts e2e/staging.spec.ts e2e/creator-runner-24h-confirmation.spec.ts e2e/full-dfy-staging.spec.ts e2e/runner-creator-lifecycle.spec.ts e2e/admin-financial-controls.spec.ts
+        run: npm test -- e2e/staging.spec.ts e2e/creator-runner-24h-confirmation.spec.ts e2e/full-dfy-staging.spec.ts e2e/runner-creator-lifecycle.spec.ts e2e/admin-financial-controls.spec.ts
 
       - name: Upload Playwright report
         if: always()
@@ -160,4 +160,4 @@ jobs:
         run: npm test -- e2e/seed-staging-browse-tasks.spec.ts
 
       - name: Run mobile and marketing quality suite
-        run: npm test -- e2e/mobile-responsive.spec.ts e2e/marketing-quality.spec.ts
+        run: npm test -- e2e/auth-two-factor.spec.ts e2e/mobile-responsive.spec.ts e2e/marketing-quality.spec.ts
