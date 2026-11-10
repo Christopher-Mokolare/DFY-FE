@@ -21,19 +21,9 @@ function requireEnv(name: string, value?: string) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const response = await api.post(`${API_BASE_URL}/auth/login`, {
-    headers: { 'Content-Type': 'application/json' },
-    data: { email, password },
-  })
-  expect(response.ok(), `Login failed: HTTP ${response.status()} body=${await response.text()}`).toBeTruthy()
-  const body = await response.json()
-  expect(body.success, `Login returned success=false for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
-  const token = body.token || body.data?.token
-  const user = body.user || body.data?.user
-  expect(token, `Login response did not contain a token for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
-  expect(user, `Login response did not contain a user profile for ${email}.`).toBeTruthy()
-  authenticatedSessions.set(email, { token: String(token), user })
-  return String(token)
+  const session = await loginWithTotp(api, API_BASE_URL, email, password)
+  authenticatedSessions.set(email, { token: session.token, user: session.user })
+  return session.token
 }
 
 async function useConfiguredCreator(api: APIRequestContext) {
