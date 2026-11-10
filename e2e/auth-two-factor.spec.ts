@@ -1,3 +1,4 @@
+import { generateTotp } from './helpers/auth'
 import { test, expect } from '@playwright/test'
 
 const API = '**/api/v1/**'
@@ -139,4 +140,9 @@ test('the second-factor field accepts a recovery code without weakening the chal
   await page.getByLabel('Authenticator code or recovery code').fill('AB12-CD34-EF56-7890')
   await page.getByRole('button', { name: 'Verify and sign in' }).click()
   await expect(page).toHaveURL(/\/dashboard(?:$|\?)/, { timeout: 15_000 })
+})
+
+test('TOTP helper matches the RFC 6238 SHA-1 six-digit test vector', () => {
+  // RFC 6238 test secret: ASCII "12345678901234567890", Base32 encoded.
+  expect(generateTotp('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 59_000)).toBe('287082')
 })
