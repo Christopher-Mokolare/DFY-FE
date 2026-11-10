@@ -1,4 +1,5 @@
 import { test, expect, Page, request, type APIRequestContext } from '@playwright/test'
+import { loginWithTotp } from './helpers/auth'
 
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
