@@ -1,4 +1,5 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { loginWithTotp } from './helpers/auth'
 
 const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
