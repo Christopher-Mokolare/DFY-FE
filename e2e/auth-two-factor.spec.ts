@@ -87,7 +87,7 @@ test('password login presents a dedicated 2FA step and completes after a valid c
   await page.goto('/login')
   await page.getByPlaceholder('Email Address').fill('two-factor@example.test')
   await page.getByPlaceholder('Password').fill('ExamplePassword!123')
-  await page.getByRole('button', { name: 'Sign In' }).click()
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click()
 
   await expect(page.getByRole('heading', { name: 'Two-factor authentication' })).toBeVisible()
   await expect(page.getByLabel('Authenticator code or recovery code')).toBeVisible()
@@ -135,7 +135,7 @@ test('the second-factor field accepts a recovery code without weakening the chal
   await page.goto('/login')
   await page.getByPlaceholder('Email Address').fill('two-factor@example.test')
   await page.getByPlaceholder('Password').fill('ExamplePassword!123')
-  await page.getByRole('button', { name: 'Sign In' }).click()
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Two-factor authentication' })).toBeVisible()
   await page.getByLabel('Authenticator code or recovery code').fill('AB12-CD34-EF56-7890')
   await page.getByRole('button', { name: 'Verify and sign in' }).click()
