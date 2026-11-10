@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 
 const API = '**/api/v1/**'
 const LOGIN = '**/api/v1/auth/login'
-const PROFILE = '**/api/v1/user/profile'
 
 function sessionResponse() {
   return {
