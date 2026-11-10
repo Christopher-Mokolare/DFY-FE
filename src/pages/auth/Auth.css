@@ -381,3 +381,34 @@
   color: #176534;
   line-height: 1.5;
 }
+
+
+/* Dedicated second-factor step shown after the password has been accepted. */
+.auth-two-factor-step {
+  margin-top: 0.25rem;
+  padding: 1.1rem;
+  border: 1px solid #e8ebf0;
+  border-radius: 1rem;
+  background: #fcfcfd;
+}
+.auth-two-factor-heading h3 {
+  margin: 0 0 0.45rem;
+  color: #172033;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.auth-two-factor-heading p {
+  margin: 0 0 1.1rem;
+  color: #687386;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.auth-two-factor-step small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #737e8e;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+.auth-two-factor-step .form-group { margin-bottom: 1rem; }
+.auth-two-factor-step .form-input { width: 100%; letter-spacing: 0.04em; }
