@@ -1,5 +1,4 @@
 /**
-import { loginWithTotp } from './helpers/auth'
  * E2E: Complete runner ↔ creator lifecycle
  *
  * Credentials are supplied through CI environment variables / GitHub Secrets.
@@ -14,6 +13,7 @@ import { loginWithTotp } from './helpers/auth'
  */
 
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { loginWithTotp } from './helpers/auth'
 
 const API  = (process.env.DFY_API_URL  || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const BASE = process.env.BASE_URL       || 'https://dfy-fe-staging.onrender.com'
