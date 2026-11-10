@@ -37,18 +37,9 @@ function requireEnv(name: string, value?: string): string {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string): Promise<string> {
-  const res  = await api.post(`${API}/auth/login`, { data: { email, password } })
-  const body = await res.json()
-  expect(
-    res.ok() && body.success !== false,
-    `Login failed for configured test account: HTTP ${res.status()} response=${JSON.stringify(body)}. Verify the matching DFY_* GitHub Actions secrets and that the account exists in the staging database.`,
-  ).toBeTruthy()
-  const token = body.token ?? body.data?.token
-  const user = body.user ?? body.data?.user
-  expect(token, `Login succeeded without a token: ${JSON.stringify(body)}`).toBeTruthy()
-  expect(user, `Login succeeded without a user profile for ${email}.`).toBeTruthy()
-  authenticatedSessions.set(email, { token: String(token), user })
-  return String(token)
+  const session = await loginWithTotp(api, API, email, password)
+  authenticatedSessions.set(email, { token: session.token, user: session.user })
+  return session.token
 }
 
 async function loginUi(page: Page, email: string) {
