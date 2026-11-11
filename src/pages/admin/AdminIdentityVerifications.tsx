@@ -50,24 +50,11 @@ export default function AdminIdentityVerifications() {
     if (!selected) return
     if (decision !== 'approve' && !reasonCode) { setError('Choose a standard reason for this decision.'); return }
     if (decision !== 'approve' && runnerNote.trim().length < 10) { setError('Explain what the runner needs to correct in at least 10 characters.'); return }
-    const reasonLabels: Record<string, string> = {
-      document_unclear: 'Document image is unclear',
-      back_side_missing: 'Required back side is missing',
-      document_expired: 'Document is expired',
-      name_mismatch: 'Name does not match the profile',
-      id_number_unreadable: 'ID number is unreadable',
-      suspected_tampering: 'Document requires additional authenticity review',
-      other: 'Other review reason',
-    }
-    const reason = decision === 'approve'
-      ? (runnerNote.trim() || 'DFY manual document review completed and approved.')
-      : reasonCode + ': ' + reasonLabels[reasonCode] + '\\n' + runnerNote.trim()
     const actionLabel = decision === 'approve' ? 'approve' : decision === 'reject' ? 'reject' : 'request more information for'
     if (!window.confirm('Are you sure you want to ' + actionLabel + ' this runner document review? This decision will be recorded in the audit trail.')) return
     setBusy(true); setError('')
     try {
-      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reason, internalNote.trim())
-      if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
+      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim())      if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
       setSelected(null); clearUrls(); await load()
     } catch (err: any) {
