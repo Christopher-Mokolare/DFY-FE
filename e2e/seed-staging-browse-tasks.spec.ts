@@ -1,5 +1,5 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
-import { runnerSecondFactorCode } from './helpers/runner-totp'
+import { loginTestAccount } from './helpers/totp-auth'
 
 const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
@@ -31,27 +31,20 @@ function futureDate(days: number) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  let response = await api.post(`${API_BASE_URL}/auth/login`, {
-    headers: { 'Content-Type': 'application/json' },
-    data: { email, password },
-  })
-  let body = await response.json()
-  if (!response.ok() && body?.requiresTwoFactor === true && email === RUNNER_EMAIL) {
-    response = await api.post(`${API_BASE_URL}/auth/login`, {
-      headers: { 'Content-Type': 'application/json' },
-      data: { email, password, secondFactorCode: await runnerSecondFactorCode() },
-    })
-    body = await response.json()
-  }
-
-  if (!response.ok()) {
-    throw new Error(`Login failed for configured test account: ${response.status()} ${JSON.stringify(body)}`)
-  }
-  const token = body?.token || body?.data?.token
-  const user = body?.user || body?.data?.user
-  if (!body?.success || !token || !user) {
-    throw new Error('Login response did not contain a usable authentication token and user profile.')
-  }
+  const normalized = email.trim().toLowerCase()
+  const secret = normalized === RUNNER_EMAIL?.trim().toLowerCase()
+    ? process.env.DFY_RUNNER_TOTP_SECRET
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase()
+      ? process.env.DFY_CREATOR_TOTP_SECRET
+      : normalized === ADMIN_EMAIL?.trim().toLowerCase()
+        ? process.env.DFY_ADMIN_TOTP_SECRET
+        : undefined
+  const label = normalized === RUNNER_EMAIL?.trim().toLowerCase() ? 'runner'
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase() ? 'creator' : 'admin'
+  const body = await loginTestAccount(api, email, password, secret, label)
+  const token = body.token || body.data?.token
+  const user = body.user || body.data?.user
+  if (!token || !user) throw new Error(`Login response did not contain a token and user profile for ${email}.`)
   authenticatedUsers.set(email, user)
   return String(token)
 }
