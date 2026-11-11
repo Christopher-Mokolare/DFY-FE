@@ -62,6 +62,8 @@ export default function AdminIdentityVerifications() {
     const reason = decision === 'approve'
       ? (runnerNote.trim() || 'DFY manual document review completed and approved.')
       : reasonCode + ': ' + reasonLabels[reasonCode] + '\\n' + runnerNote.trim()
+    const actionLabel = decision === 'approve' ? 'approve' : decision === 'reject' ? 'reject' : 'request more information for'
+    if (!window.confirm('Are you sure you want to ' + actionLabel + ' this runner document review? This decision will be recorded in the audit trail.')) return
     setBusy(true); setError('')
     try {
       const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reason, internalNote.trim())
