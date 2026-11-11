@@ -11,6 +11,7 @@ export default function AdminIdentityVerifications() {
   const [reasonCode, setReasonCode] = useState('')
   const [runnerNote, setRunnerNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
+  const [verifiedDateOfBirth, setVerifiedDateOfBirth] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -34,7 +35,7 @@ export default function AdminIdentityVerifications() {
   useEffect(() => { void load(); return () => clearUrls() }, [])
 
   const open = async (row: Submission) => {
-    clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setMessage(''); setError('')
+    clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setMessage(''); setError('')
     try {
       const front = await adminApi.getManualIdentityDocument(row.id, 'front')
       setFrontUrl(URL.createObjectURL(front.data))
@@ -54,7 +55,8 @@ export default function AdminIdentityVerifications() {
     if (!window.confirm('Are you sure you want to ' + actionLabel + ' this runner document review? This decision will be recorded in the audit trail.')) return
     setBusy(true); setError('')
     try {
-      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim())
+      if (decision === 'approve' && !verifiedDateOfBirth) { setError('Enter the date of birth exactly as shown on the document.'); return }
+      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim(), verifiedDateOfBirth || undefined)
       if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
       setSelected(null); clearUrls(); await load()
@@ -90,6 +92,9 @@ export default function AdminIdentityVerifications() {
             {frontUrl && <figure><figcaption>{selected.documentType === 'south_african_id_book' ? 'ID book photo-information page' : selected.documentType === 'passport' ? 'Passport photo-information page' : 'Front of Smart ID card'}</figcaption><img src={frontUrl} alt="Identity document front" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
             {backUrl && <figure><figcaption>Back of ID card</figcaption><img src={backUrl} alt="Identity document back" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
           </div>
+          <label className="form-label" htmlFor="verifiedDateOfBirth">Date of birth shown on identity document (required for approval)</label>
+          <input id="verifiedDateOfBirth" className="form-input" type="date" value={verifiedDateOfBirth} onChange={e => setVerifiedDateOfBirth(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+          <p className="text-muted text-xs">Enter the date printed on the document after checking it. The backend will reject approval if the date shows the runner is under 18.</p>
           <label className="form-label" htmlFor="reviewReasonCode">Standard reason</label>
           <select id="reviewReasonCode" className="form-input" value={reasonCode} onChange={e => setReasonCode(e.target.value)}>
             <option value="">Choose a reason (required for reject or request information)</option>
