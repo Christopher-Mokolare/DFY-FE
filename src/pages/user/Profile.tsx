@@ -532,7 +532,7 @@ export default function Profile() {
                     {identityProviderConfigured && (
                       <>
                         <p className="text-sm" style={{ margin: 0 }}>
-                          Submit a South African ID card (front and back) or passport photo-information page. DFY encrypts the images and an authorised administrator reviews them manually. No selfie, automated liveness or facial recognition is used.
+                          Submit a South African Smart ID card (front and back), green barcoded ID book (photo-information page) or passport photo-information page. DFY encrypts the images and an authorised administrator reviews them manually. No selfie, automated liveness or facial recognition is used.
                         </p>
                         <label style={{ display: 'flex', gap: '.6rem', alignItems: 'flex-start' }}>
                           <input
