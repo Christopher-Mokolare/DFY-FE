@@ -1,12 +1,16 @@
 import { test, expect, Page, request, type APIRequestContext } from '@playwright/test'
+import { loginTestAccount } from './helpers/totp-auth'
 
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
+const CREATOR_TOTP_SECRET = process.env.DFY_CREATOR_TOTP_SECRET
 const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
 const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
+const RUNNER_TOTP_SECRET = process.env.DFY_RUNNER_TOTP_SECRET
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
+const ADMIN_TOTP_SECRET = process.env.DFY_ADMIN_TOTP_SECRET
 
 test.setTimeout(3 * 60 * 1000)
 
@@ -54,14 +58,7 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
   const futureDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
 
   try {
-    const runnerLogin = await api.post(API_BASE_URL + '/auth/login', {
-      data: { email: runnerEmail, password: runnerPassword },
-    })
-    const runnerBody = await runnerLogin.json()
-    expect(
-      runnerLogin.ok() && runnerBody.success,
-      `Runner preflight authentication failed: HTTP ${runnerLogin.status()} response=${JSON.stringify(runnerBody)}. Check DFY_RUNNER_EMAIL/PASSWORD and confirm this account exists in the staging database.`,
-    ).toBeTruthy()
+    const runnerBody = await loginTestAccount(api, runnerEmail, runnerPassword, RUNNER_TOTP_SECRET, 'runner')
     const runnerToken = runnerBody.token || runnerBody.data?.token
     const runnerUser = runnerBody.user || runnerBody.data?.user
     expect(runnerToken, 'Runner login succeeded without returning a token.').toBeTruthy()
@@ -69,27 +66,13 @@ test('creator -> runner -> completion -> automatic 24h confirmation lifecycle', 
     await ensureRunnerBank(api, String(runnerToken))
 
     // Authenticate creator and admin before any task is created.
-    const creatorPreflight = await api.post(API_BASE_URL + '/auth/login', {
-      data: { email: creatorEmail, password: creatorPassword },
-    })
-    const creatorPreflightBody = await creatorPreflight.json()
-    expect(
-      creatorPreflight.ok() && creatorPreflightBody.success,
-      `Creator preflight authentication failed: HTTP ${creatorPreflight.status()} response=${JSON.stringify(creatorPreflightBody)}. Check DFY_CREATOR_EMAIL/PASSWORD and the staging database.`,
-    ).toBeTruthy()
+    const creatorPreflightBody = await loginTestAccount(api, creatorEmail, creatorPassword, CREATOR_TOTP_SECRET, 'creator')
     const creatorToken = creatorPreflightBody.token || creatorPreflightBody.data?.token
     const creatorUser = creatorPreflightBody.user || creatorPreflightBody.data?.user
     expect(creatorToken, 'Creator login succeeded without returning a token.').toBeTruthy()
     expect(creatorUser, 'Creator login succeeded without returning a user profile.').toBeTruthy()
 
-    const adminLogin = await api.post(API_BASE_URL + '/auth/login', {
-      data: { email: adminEmail, password: adminPassword },
-    })
-    const adminBody = await adminLogin.json()
-    expect(
-      adminLogin.ok() && adminBody.success,
-      `Admin preflight authentication failed: HTTP ${adminLogin.status()} response=${JSON.stringify(adminBody)}. Check DFY_ADMIN_EMAIL/PASSWORD and the staging database.`,
-    ).toBeTruthy()
+    const adminBody = await loginTestAccount(api, adminEmail, adminPassword, ADMIN_TOTP_SECRET, 'admin')
     const adminToken = adminBody.token || adminBody.data?.token
     expect(adminToken, 'Admin login succeeded without returning a token.').toBeTruthy()
 

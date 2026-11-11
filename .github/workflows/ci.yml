@@ -72,6 +72,9 @@ jobs:
       DFY_RUNNER_PASSWORD: ${{ secrets.DFY_RUNNER_PASSWORD }}
       DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
       DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
+      DFY_CREATOR_TOTP_SECRET: ${{ secrets.DFY_CREATOR_TOTP_SECRET }}
+      DFY_RUNNER_TOTP_SECRET: ${{ secrets.DFY_RUNNER_TOTP_SECRET }}
+      DFY_ADMIN_TOTP_SECRET: ${{ secrets.DFY_ADMIN_TOTP_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -113,6 +116,9 @@ jobs:
       DFY_RUNNER_PASSWORD: ${{ secrets.DFY_RUNNER_PASSWORD }}
       DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
       DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
+      DFY_CREATOR_TOTP_SECRET: ${{ secrets.DFY_CREATOR_TOTP_SECRET }}
+      DFY_RUNNER_TOTP_SECRET: ${{ secrets.DFY_RUNNER_TOTP_SECRET }}
+      DFY_ADMIN_TOTP_SECRET: ${{ secrets.DFY_ADMIN_TOTP_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
