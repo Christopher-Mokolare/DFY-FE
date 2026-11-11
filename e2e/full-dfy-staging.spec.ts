@@ -1,6 +1,5 @@
 import { loginTestAccount } from './helpers/totp-auth'
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
-import { runnerSecondFactorCode } from './helpers/runner-totp'
 
 // Staging E2E uses the versioned API route used by the deployed FE client.
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
