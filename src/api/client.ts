@@ -28,7 +28,19 @@ api.interceptors.response.use(
     return res
   },
   (error) => {
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+    const responseData = error.response?.data
+    const requiresTwoFactor =
+      responseData?.requiresTwoFactor === true ||
+      responseData?.RequiresTwoFactor === true ||
+      responseData?.data?.requiresTwoFactor === true ||
+      responseData?.data?.RequiresTwoFactor === true
+    const requestUrl = `${error.config?.baseURL || ''}${error.config?.url || ''}`.toLowerCase()
+    const isAuthenticationRequest = requestUrl.includes('auth/login') || requestUrl.includes('auth/google')
+    const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login'
+
+    // A 401 two-factor challenge is an expected authentication step, not an
+    // expired session. Preserve it for Login.tsx instead of redirecting.
+    if (error.response?.status === 401 && !isAuthenticationRequest && !requiresTwoFactor && !isLoginPage) {
       localStorage.removeItem('token')
       localStorage.removeItem('currentUser')
       window.location.href = '/login'
