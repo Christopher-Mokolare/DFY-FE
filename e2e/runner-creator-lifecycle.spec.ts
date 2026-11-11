@@ -13,7 +13,7 @@
  */
 
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
-import { runnerSecondFactorCode } from './helpers/runner-totp'
+import { loginTestAccount } from './helpers/totp-auth'
 
 const API  = (process.env.DFY_API_URL  || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const BASE = process.env.BASE_URL       || 'https://dfy-fe-staging.onrender.com'
@@ -38,21 +38,20 @@ function requireEnv(name: string, value?: string): string {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string): Promise<string> {
-  let res = await api.post(`${API}/auth/login`, { data: { email, password } })
-  let body = await res.json()
-  if (!res.ok() && body?.requiresTwoFactor === true && email === RUNNER_EMAIL) {
-    res = await api.post(`${API}/auth/login`, {
-      data: { email, password, secondFactorCode: await runnerSecondFactorCode() },
-    })
-    body = await res.json()
-  }
-  expect(
-    res.ok() && body.success !== false,
-    `Login failed for configured test account: HTTP ${res.status()} response=${JSON.stringify(body)}. Verify DFY_* credentials and DFY_RUNNER_TOTP_SECRET for the eligible runner account.`,
-  ).toBeTruthy()
+  const normalized = email.trim().toLowerCase()
+  const secret = normalized === RUNNER_EMAIL?.trim().toLowerCase()
+    ? process.env.DFY_RUNNER_TOTP_SECRET
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase()
+      ? process.env.DFY_CREATOR_TOTP_SECRET
+      : normalized === ADMIN_EMAIL?.trim().toLowerCase()
+        ? process.env.DFY_ADMIN_TOTP_SECRET
+        : undefined
+  const label = normalized === RUNNER_EMAIL?.trim().toLowerCase() ? 'runner'
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase() ? 'creator' : 'admin'
+  const body = await loginTestAccount(api, email, password, secret, label)
   const token = body.token ?? body.data?.token
   const user = body.user ?? body.data?.user
-  expect(token, `Login succeeded without a token: ${JSON.stringify(body)}`).toBeTruthy()
+  expect(token, `Login succeeded without a token for ${email}.`).toBeTruthy()
   expect(user, `Login succeeded without a user profile for ${email}.`).toBeTruthy()
   authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
