@@ -10,6 +10,7 @@ export default function AdminIdentityVerifications() {
   const [backUrl, setBackUrl] = useState('')
   const [reasonCode, setReasonCode] = useState('')
   const [runnerNote, setRunnerNote] = useState('')
+  const [internalNote, setInternalNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -33,7 +34,7 @@ export default function AdminIdentityVerifications() {
   useEffect(() => { void load(); return () => clearUrls() }, [])
 
   const open = async (row: Submission) => {
-    clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setMessage(''); setError('')
+    clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setMessage(''); setError('')
     try {
       const front = await adminApi.getManualIdentityDocument(row.id, 'front')
       setFrontUrl(URL.createObjectURL(front.data))
@@ -63,7 +64,7 @@ export default function AdminIdentityVerifications() {
       : reasonCode + ': ' + reasonLabels[reasonCode] + '\\n' + runnerNote.trim()
     setBusy(true); setError('')
     try {
-      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reason)
+      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reason, internalNote.trim())
       if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
       setSelected(null); clearUrls(); await load()
@@ -113,6 +114,8 @@ export default function AdminIdentityVerifications() {
           <label className="form-label" htmlFor="reviewReasonNote">Explanation for runner</label>
           <textarea id="reviewReasonNote" className="form-input" rows={3} maxLength={850} value={runnerNote} onChange={e => setRunnerNote(e.target.value)} placeholder="Explain what was checked and, if more information is needed, exactly what the runner must correct." />
           <p className="text-muted text-xs">The selected reason and this explanation are included in the runner's review result. Do not enter confidential investigation notes here.</p>
+          <label className="form-label" htmlFor="internalReviewNote">Private administrator note (not shown to runner)</label>
+          <textarea id="internalReviewNote" className="form-input" rows={2} maxLength={1000} value={internalNote} onChange={e => setInternalNote(e.target.value)} placeholder="Optional internal context for authorised administrators only." />
           <div className="admin-table-actions" style={{ marginTop: '1rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" disabled={busy || !frontUrl} onClick={() => void decide('approve')}>Approve</button>
             <button className="btn btn-secondary" disabled={busy || !frontUrl} onClick={() => void decide('request_information')}>Request information</button>
