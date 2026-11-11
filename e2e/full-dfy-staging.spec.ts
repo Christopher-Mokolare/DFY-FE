@@ -1,18 +1,16 @@
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
 import { loginTestAccount } from './helpers/totp-auth'
+import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { runnerSecondFactorCode } from './helpers/runner-totp'
 
 // Staging E2E uses the versioned API route used by the deployed FE client.
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
-const CREATOR_TOTP_SECRET = process.env.DFY_CREATOR_TOTP_SECRET
 const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
 const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
-const RUNNER_TOTP_SECRET = process.env.DFY_RUNNER_TOTP_SECRET
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
-const ADMIN_TOTP_SECRET = process.env.DFY_ADMIN_TOTP_SECRET
 
 test.setTimeout(4 * 60 * 1000)
 
@@ -24,11 +22,21 @@ function requireEnv(name: string, value?: string) {
   return value
 }
 
-async function apiLogin(api: APIRequestContext, email: string, password: string, totpSecret: string | undefined, label: string) {
-  const body = await loginTestAccount(api, email, password, totpSecret, label)
+async function apiLogin(api: APIRequestContext, email: string, password: string) {
+  const normalized = email.trim().toLowerCase()
+  const secret = normalized === RUNNER_EMAIL?.trim().toLowerCase()
+    ? process.env.DFY_RUNNER_TOTP_SECRET
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase()
+      ? process.env.DFY_CREATOR_TOTP_SECRET
+      : normalized === ADMIN_EMAIL?.trim().toLowerCase()
+        ? process.env.DFY_ADMIN_TOTP_SECRET
+        : undefined
+  const label = normalized === RUNNER_EMAIL?.trim().toLowerCase() ? 'runner'
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase() ? 'creator' : 'admin'
+  const body = await loginTestAccount(api, email, password, secret, label)
   const token = body.token || body.data?.token
   const user = body.user || body.data?.user
-  expect(token, `Login response did not contain a token for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+  expect(token, `Login response did not contain a token for ${email}.`).toBeTruthy()
   expect(user, `Login response did not contain a user profile for ${email}.`).toBeTruthy()
   authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
@@ -37,7 +45,7 @@ async function apiLogin(api: APIRequestContext, email: string, password: string,
 async function useConfiguredCreator(api: APIRequestContext) {
   const email = requireEnv('DFY_CREATOR_EMAIL', CREATOR_EMAIL)
   const password = requireEnv('DFY_CREATOR_PASSWORD', CREATOR_PASSWORD)
-  const token = await apiLogin(api, email, password, CREATOR_TOTP_SECRET, 'creator')
+  const token = await apiLogin(api, email, password)
   return { email, password, token }
 }
 async function loginUi(page: Page, email: string) {
@@ -109,6 +117,27 @@ async function getTask(api: APIRequestContext, token: string, taskId: string) {
   return body.data
 }
 
+async function ensureRunnerEligibility(api: APIRequestContext, runnerToken: string) {
+  const headers = { Authorization: 'Bearer ' + runnerToken }
+  const [identity, twoFactor] = await Promise.all([
+    api.get(`${API_BASE_URL}/identity-verification/status`, { headers }),
+    api.get(`${API_BASE_URL}/auth/two-factor/status`, { headers }),
+  ])
+
+  expect(identity.ok(), `Could not check runner identity verification: HTTP ${identity.status()} ${await identity.text()}`).toBeTruthy()
+  expect(twoFactor.ok(), `Could not check runner authenticator status: HTTP ${twoFactor.status()} ${await twoFactor.text()}`).toBeTruthy()
+
+  const identityBody = await identity.json()
+  const twoFactorBody = await twoFactor.json()
+  const identityStatus = String(identityBody.data?.status || 'unknown').toLowerCase()
+  const authenticatorEnabled = twoFactorBody.data?.enabled === true
+
+  expect(
+    identityStatus === 'passed' && authenticatorEnabled,
+    `Staging runner test account is not eligible to accept paid tasks. Identity verification status: ${identityStatus}; authenticator-based 2FA enabled: ${authenticatorEnabled}. Complete the real runner identity check and enable an authenticator on DFY_RUNNER_EMAIL before running paid-task lifecycle E2E.`,
+  ).toBeTruthy()
+}
+
 async function ensureRunnerBank(api: APIRequestContext, runnerToken: string) {
   const existing = await api.get(`${API_BASE_URL}/banking/accounts`, {
     headers: { Authorization: 'Bearer ' + runnerToken },
@@ -125,9 +154,10 @@ test.describe('DFY escrow and dispute workflow', () => {
   test('admin-verified test payment -> runner completes -> creator confirms -> payout is queued', async ({ page, request }) => {
     // Authenticate the pre-provisioned runner and admin before creating any records.
     // Misconfigured secrets must fail before this E2E leaves a fresh creator behind.
-    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD), RUNNER_TOTP_SECRET, 'runner')
+    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    await ensureRunnerEligibility(request, runnerToken)
     await ensureRunnerBank(request, runnerToken)
-    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD), ADMIN_TOTP_SECRET, 'admin')
+    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
 
     const freshCreator = await useConfiguredCreator(request)
     const creatorEmail = freshCreator.email
@@ -198,38 +228,116 @@ test.describe('DFY escrow and dispute workflow', () => {
     })
   })
 
-  test('runner dispute freezes escrow -> admin resolves dispute -> payout path is re-opened', async ({ browser, page, request }) => {
-    // Preflight all existing privileged/test accounts before creating a creator or task.
-    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD), RUNNER_TOTP_SECRET, 'runner')
+  test('runner reports incident in Chat Hub -> admin holds escrow -> creator disputes completion -> admin resolves', async ({ browser, page, request }) => {
+    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    await ensureRunnerEligibility(request, runnerToken)
     await ensureRunnerBank(request, runnerToken)
-    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD), ADMIN_TOTP_SECRET, 'admin')
-
+    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
     const freshCreator = await useConfiguredCreator(request)
     const creatorToken = freshCreator.token
 
-    const created = await createTask(request, creatorToken, 'DISPUTE-' + Date.now())
+    const created = await createTask(request, creatorToken, 'INCIDENT-DISPUTE-' + Date.now())
     await adminVerify(request, adminToken, created.taskId)
     await claimAndCompleteViaApi(request, runnerToken, created.taskId)
+    const chatEvidenceText = 'I asked the creator to confirm the agreed scope before marking the work complete.'
+    const chatEvidence = await request.post(`${API_BASE_URL}/tasks/${created.taskId}/messages`, {
+      headers: { Authorization: 'Bearer ' + runnerToken, 'Content-Type': 'application/json' },
+      data: { content: chatEvidenceText },
+    })
+    expect(chatEvidence.ok()).toBeTruthy()
 
-    // Runner raises the dispute through the real Completed Tasks UI.
+    // Runner escalates the issue from the existing participant Chat Hub.
     const runnerPage = await browser.newPage()
     try {
       await loginUi(runnerPage, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL))
-      await runnerPage.goto(`/tasks/my-completed?taskId=${encodeURIComponent(created.taskId)}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-      const disputeCard = runnerPage.locator('#completed-task-' + created.taskId)
-      await expect(disputeCard).toBeVisible({ timeout: 30_000 })
-      await disputeCard.getByRole('button', { name: /Raise Dispute/i }).click()
-      await expect(runnerPage.getByRole('heading', { name: /Raise Dispute/i })).toBeVisible()
-      await runnerPage.locator('.form-textarea').fill('The delivered work does not match the task requirements; please review before releasing escrow.')
-      const disputeResponse = runnerPage.waitForResponse((res) =>
+      await runnerPage.goto(`/tasks/${encodeURIComponent(created.taskId)}/chat`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+      const reportButton = runnerPage.getByRole('button', { name: /Report an issue/i })
+      await expect(reportButton).toBeVisible({ timeout: 30_000 })
+      await expect(runnerPage.getByText(chatEvidenceText)).toBeVisible({ timeout: 30_000 })
+      await reportButton.click()
+      await expect(runnerPage.getByRole('heading', { name: /Report a task incident/i })).toBeVisible()
+      await runnerPage.locator('.chat-incident-modal select').selectOption('Scope change')
+      await runnerPage.locator('.chat-incident-modal textarea').fill('The creator changed the agreed task scope after I completed the work. Please review the task conversation and advise both parties.')
+      await runnerPage.locator('.chat-incident-evidence input[type="checkbox"]').first().check()
+      const incidentResponse = runnerPage.waitForResponse(res =>
+        res.url().includes('/incidents') && res.request().method() === 'POST' && !res.url().includes('hold-escrow'),
+        { timeout: 30_000 }
+      )
+      await runnerPage.getByRole('button', { name: /Send report/i }).click()
+      const incidentHttp = await incidentResponse
+      expect(incidentHttp.ok(), `Incident submission failed: HTTP ${incidentHttp.status()} body=${await incidentHttp.text()}`).toBeTruthy()
+    } finally {
+      await runnerPage.close()
+    }
+
+    // A runner must not be able to open a creator-only completion dispute.
+    const runnerDisputeAttempt = await request.post(`${API_BASE_URL}/disputes`, {
+      headers: { Authorization: 'Bearer ' + runnerToken, 'Content-Type': 'application/json' },
+      data: {
+        taskId: created.taskId,
+        issue: 'Runner attempting to submit a creator-only completion dispute.',
+        category: 'Other',
+      },
+    })
+    expect(runnerDisputeAttempt.status()).toBe(403)
+
+    // Incident submission alone must not mutate escrow or payment state.
+    await expect.poll(async () => {
+      const t = await getTask(request, creatorToken, created.taskId)
+      return { payment: String(t.paymentStatus).toLowerCase(), escrow: String(t.escrowStatus).toLowerCase() }
+    }, { timeout: 30_000, intervals: [1000, 2000] }).toMatchObject({
+      payment: 'escrowheld',
+      escrow: 'held',
+    })
+
+    const incidentList = await request.get(`${API_BASE_URL}/admin/incidents?status=Open&page=1&pageSize=100`, {
+      headers: { Authorization: 'Bearer ' + adminToken },
+    })
+    expect(incidentList.ok()).toBeTruthy()
+    const incidentBody = await incidentList.json()
+    const incident = (incidentBody.data?.incidents || []).find((item: any) => item.taskReference === created.taskId)
+    expect(incident).toBeTruthy()
+    const evidenceResponse = await request.get(`${API_BASE_URL}/admin/incidents/${incident.id}/evidence`, {
+      headers: { Authorization: 'Bearer ' + adminToken },
+    })
+    expect(evidenceResponse.ok()).toBeTruthy()
+    const evidenceBody = await evidenceResponse.json()
+    expect(evidenceBody.data?.some((item: any) => item.content === chatEvidenceText)).toBeTruthy()
+
+    const hold = await request.post(`${API_BASE_URL}/admin/incidents/${incident.id}/hold-escrow`, {
+      headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
+      data: { reason: 'Admin E2E: review the runner incident and linked task evidence.' },
+    })
+    expect(hold.ok(), `Incident escrow hold failed: HTTP ${hold.status()} body=${await hold.text()}`).toBeTruthy()
+
+    await expect.poll(async () => {
+      const t = await getTask(request, creatorToken, created.taskId)
+      return { payment: String(t.paymentStatus).toLowerCase(), escrow: String(t.escrowStatus).toLowerCase() }
+    }, { timeout: 30_000, intervals: [1000, 2000] }).toMatchObject({
+      payment: 'escrowheld',
+      escrow: 'incident_hold',
+    })
+
+    // Only the creator can open a formal completion dispute, including while an
+    // administrator's incident hold is active.
+    const creatorPage = await browser.newPage()
+    try {
+      await loginUi(creatorPage, freshCreator.email)
+      await creatorPage.goto(`/tasks/my-posted?taskId=${encodeURIComponent(created.taskId)}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+      const disputeButton = creatorPage.getByRole('button', { name: /Raise Completion Dispute/i })
+      await expect(disputeButton).toBeVisible({ timeout: 30_000 })
+      await disputeButton.click()
+      await expect(creatorPage.getByRole('heading', { name: /Raise Completion Dispute/i })).toBeVisible()
+      await creatorPage.locator('.modal-box textarea').fill('The delivered work does not match the original task requirements. Please review the task and conversation evidence before any payout is released.')
+      const disputeResponse = creatorPage.waitForResponse(res =>
         res.url().includes('/api/v1/disputes') && res.request().method() === 'POST',
         { timeout: 30_000 }
       )
-      await runnerPage.locator('.modal-footer').getByRole('button', { name: /Submit Dispute/i }).click()
+      await creatorPage.getByRole('button', { name: /Submit dispute/i }).click()
       const disputeHttp = await disputeResponse
-      expect(disputeHttp.ok(), `Dispute submission failed: HTTP ${disputeHttp.status()} body=${await disputeHttp.text()}`).toBeTruthy()
+      expect(disputeHttp.ok(), `Creator dispute failed: HTTP ${disputeHttp.status()} body=${await disputeHttp.text()}`).toBeTruthy()
     } finally {
-      await runnerPage.close()
+      await creatorPage.close()
     }
 
     await expect.poll(async () => {
@@ -241,24 +349,23 @@ test.describe('DFY escrow and dispute workflow', () => {
       escrow: 'disputed',
     })
 
-    const disputes = await request.get(`${API_BASE_URL}/disputes?status=Open&page=1&pageSize=20`, {
+    const disputes = await request.get(`${API_BASE_URL}/disputes?status=Open&page=1&pageSize=100`, {
       headers: { Authorization: 'Bearer ' + adminToken },
     })
     expect(disputes.ok()).toBeTruthy()
     const disputeBody = await disputes.json()
-    const items = disputeBody.data?.disputes || []
-    const dispute = items.find((d: any) => d.taskId === created.taskId)
+    const dispute = (disputeBody.data?.disputes || []).find((item: any) => item.taskId === created.taskId)
     expect(dispute).toBeTruthy()
 
     const resolve = await request.patch(`${API_BASE_URL}/disputes/${dispute.id}/resolve`, {
       headers: { Authorization: 'Bearer ' + adminToken, 'Content-Type': 'application/json' },
       data: {
         action: 'release_to_runner',
-        resolution: 'Runner work accepted after admin review.',
-        reason: 'Admin E2E resolution: release escrow to runner.',
+        resolution: 'Admin reviewed the task evidence and determined the runner should be paid.',
+        reason: 'Admin E2E resolution: release escrow to runner after review.',
       },
     })
-    expect(resolve.ok(), `dispute resolution failed: HTTP ${resolve.status()} body=${await resolve.text()}`).toBeTruthy()
+    expect(resolve.ok(), `Dispute resolution failed: HTTP ${resolve.status()} body=${await resolve.text()}`).toBeTruthy()
 
     await expect.poll(async () => {
       const t = await getTask(request, creatorToken, created.taskId)

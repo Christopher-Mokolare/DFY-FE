@@ -39,6 +39,7 @@ import AdminUsers from './pages/admin/AdminUsers'
 import AdminTasks from './pages/admin/AdminTasks'
 import AdminPayments from './pages/admin/AdminPayments'
 import AdminDisputes from './pages/admin/AdminDisputes'
+import AdminIncidents from './pages/admin/AdminIncidents'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
 import AdminTestimonials from './pages/admin/AdminTestimonials'
 import { PaymentSuccess, PaymentCancelled } from './pages/PaymentPages'
@@ -97,6 +98,7 @@ export default function App() {
               <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
               <Route path="/admin/payments" element={<RequireAdmin><AdminPayments /></RequireAdmin>} />
               <Route path="/admin/disputes" element={<RequireAdmin><AdminDisputes /></RequireAdmin>} />
+              <Route path="/admin/incidents" element={<RequireAdmin><AdminIncidents /></RequireAdmin>} />
               <Route path="/admin/audit-log" element={<RequireAdmin><AdminAuditLog /></RequireAdmin>} />
               <Route path="/admin/testimonials" element={<RequireAdmin><AdminTestimonials /></RequireAdmin>} />
 
