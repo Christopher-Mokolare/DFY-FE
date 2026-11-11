@@ -37,7 +37,31 @@ export default function Login() {
     navigate(dest, { replace: true })
   }
 
-  const getErrorPayload = (err: any) => err?.response?.data?.data ?? err?.response?.data ?? {}
+  const getErrorPayload = (err: any) => {
+    const body = err?.response?.data
+    // APIs may return the challenge at the root, inside data, or inside an
+    // error envelope. Keep the original body available for all known shapes.
+    return body?.data ?? body?.error ?? body?.Error ?? body ?? {}
+  }
+  const isTwoFactorChallenge = (err: any) => {
+    const body = err?.response?.data
+    const candidates = [body, body?.data, body?.error, body?.Error, body?.errors]
+    if (candidates.some(value =>
+      value?.requiresTwoFactor === true ||
+      value?.RequiresTwoFactor === true ||
+      value?.requires_two_factor === true
+    )) return true
+
+    // A 401 is a challenge only when the backend explicitly says an
+    // authenticator/recovery code is required; ordinary invalid credentials
+    // must continue to display the normal login error.
+    const message = candidates
+      .map(value => value?.message || value?.Message || '')
+      .join(' ')
+      .toLowerCase()
+    return err?.response?.status === 401 &&
+      /enter the code from your authenticator|authenticator app or a recovery code|two.factor authentication required/.test(message)
+  }
   const getErrorMessage = (err: any, fallback: string) => {
     const payload = getErrorPayload(err)
     return payload.message || payload.Message || err?.message || fallback
@@ -57,7 +81,7 @@ export default function Login() {
       finishSignIn(loggedInUser)
     } catch (err: any) {
       const payload = getErrorPayload(err)
-      if (payload.requiresTwoFactor === true || payload.RequiresTwoFactor === true) {
+      if (isTwoFactorChallenge(err)) {
         setRequiresTwoFactor(true)
         setError(secondFactorCode.trim()
           ? getErrorMessage(err, 'That code was not accepted. Try the current code or a recovery code.')
