@@ -35,6 +35,42 @@ async function waitForNextTotpStep(): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, remaining + 150))
 }
 
+function rateLimitDelayMs(response: { headers: () => Record<string, string> }, attempt: number): number {
+  const headers = response.headers()
+  const retryAfter = headers['retry-after']
+  if (retryAfter) {
+    const seconds = Number(retryAfter)
+    if (Number.isFinite(seconds) && seconds >= 0) return Math.min(seconds * 1000, 60_000)
+    const date = Date.parse(retryAfter)
+    if (Number.isFinite(date)) return Math.min(Math.max(0, date - Date.now()), 60_000)
+  }
+
+  const reset = Number(headers['x-ratelimit-reset'])
+  if (Number.isFinite(reset) && reset > 0) {
+    const resetAt = reset > 1_000_000_000_000 ? reset : reset * 1000
+    return Math.min(Math.max(0, resetAt - Date.now()), 60_000)
+  }
+
+  // When the API omits rate-limit headers, back off rather than repeatedly
+  // submitting credentials into the protected login endpoint.
+  return Math.min(5_000 * (2 ** attempt), 30_000)
+}
+
+async function postLoginWithRateLimitRetry(
+  api: APIRequestContext,
+  url: string,
+  createData: () => Record<string, string>,
+): Promise<Awaited<ReturnType<APIRequestContext['post']>>> {
+  let response: Awaited<ReturnType<APIRequestContext['post']>>
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await api.post(url, { data: createData() })
+    if (response.status() !== 429 || attempt === 2) return response
+    const delay = rateLimitDelayMs(response, attempt)
+    await new Promise(resolve => setTimeout(resolve, delay + 150))
+  }
+  return response!
+}
+
 export async function loginTestAccount(
   api: APIRequestContext,
   email: string,
@@ -43,7 +79,7 @@ export async function loginTestAccount(
   accountLabel = 'test',
 ) {
   const url = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '') + '/auth/login'
-  const first = await api.post(url, { data: { email, password } })
+  const first = await postLoginWithRateLimitRetry(api, url, () => ({ email, password }))
   let body: any
   try { body = await first.json() } catch { body = { message: await first.text() } }
 
@@ -59,8 +95,7 @@ export async function loginTestAccount(
     // 30-second counter, so retry once with a fresh counter on that response.
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0) await waitForNextTotpStep()
-      const secondFactorCode = generateTotp(totpSecret)
-      const second = await api.post(url, { data: { email, password, secondFactorCode } })
+      const second = await postLoginWithRateLimitRetry(api, url, () => ({ email, password, secondFactorCode: generateTotp(totpSecret) }))
       let secondBody: any
       try { secondBody = await second.json() } catch { secondBody = { message: await second.text() } }
       if (second.ok() && secondBody?.success !== false && (secondBody?.token || secondBody?.data?.token)) {
