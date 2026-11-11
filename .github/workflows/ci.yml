@@ -56,7 +56,6 @@ jobs:
           curl --fail --silent --show-error -H "Authorization: Bearer $DFY_BE_READ_TOKEN" -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/DoForYou-ZA/DFY-BE/contents/docs/openapi.json?ref=$CANONICAL_REF" -o /tmp/dfy-canonical-openapi.json
           diff -u contracts/openapi.json /tmp/dfy-canonical-openapi.json
 
-
       - name: Build
         run: npm run build
 
@@ -88,11 +87,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build frontend for local 2FA regression
+        env:
+          VITE_API_URL: https://dfy-be-staging.onrender.com/api/v1
+          VITE_SIGNALR_URL: https://dfy-be-staging.onrender.com/taskHub
+        run: npm run build
+
+      - name: Start local Vite preview for 2FA regression
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/dfy-2fa-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/dfy-2fa-preview.log
+          exit 1
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      # This test must run against the PR's local build. Running it against the
+      # shared staging FE only tests the previously deployed commit, not this PR.
+      - name: Run local 2FA UI regression
+        run: npm test -- e2e/login-two-factor-transition.spec.ts
+
       - name: Run staging E2E
-        run: npm test -- e2e/login-two-factor-transition.spec.ts e2e/staging.spec.ts e2e/creator-runner-24h-confirmation.spec.ts e2e/full-dfy-staging.spec.ts e2e/runner-creator-lifecycle.spec.ts e2e/admin-financial-controls.spec.ts
+        run: npm test -- e2e/staging.spec.ts e2e/creator-runner-24h-confirmation.spec.ts e2e/full-dfy-staging.spec.ts e2e/runner-creator-lifecycle.spec.ts e2e/admin-financial-controls.spec.ts
 
       - name: Upload Playwright report
         if: always()
