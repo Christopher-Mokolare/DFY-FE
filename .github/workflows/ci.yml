@@ -92,7 +92,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run staging E2E
-        run: npm test -- e2e/staging.spec.ts e2e/creator-runner-24h-confirmation.spec.ts e2e/full-dfy-staging.spec.ts e2e/runner-creator-lifecycle.spec.ts e2e/admin-financial-controls.spec.ts
+        run: npm test -- e2e/login-two-factor-transition.spec.ts e2e/staging.spec.ts e2e/creator-runner-24h-confirmation.spec.ts e2e/full-dfy-staging.spec.ts e2e/runner-creator-lifecycle.spec.ts e2e/admin-financial-controls.spec.ts
 
       - name: Upload Playwright report
         if: always()
