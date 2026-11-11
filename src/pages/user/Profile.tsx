@@ -520,10 +520,10 @@ export default function Profile() {
             {(form.userType === 'runner' || form.userType === 'both') && (
               <div className="alert alert-info mt-4" role="status">
                 <strong>Runner eligibility</strong>
-                <p className="text-sm" style={{ margin: '.4rem 0' }}>Identity check: {identityVerificationStatus.replace(/_/g, ' ')}.</p>
+                <p className="text-sm" style={{ margin: '.4rem 0' }}>DFY Document Review: {identityVerificationStatus === 'passed' ? 'DFY Identity Document Reviewed' : identityVerificationStatus === 'more_info_requested' ? 'more information required' : identityVerificationStatus === 'failed' ? 'review unsuccessful' : identityVerificationStatus.replace(/_/g, ' ')}.</p>
                 <p className="text-sm" style={{ margin: '.4rem 0' }}>Authenticator 2FA: {authenticatorTwoFactorEnabled ? 'enabled' : 'not enabled'}.</p>
                 <p className="text-sm" style={{ margin: '.4rem 0' }}>Payout account: {hasVerifiedPayoutAccount ? 'bank recipient verified' : 'not verified'}.</p>
-                <p className="text-sm" style={{ margin: '.4rem 0' }}>{canAcceptTasks ? 'Runner task acceptance is enabled.' : 'Task acceptance remains locked until the backend confirms identity verification is passed and authenticator 2FA is enabled.'}</p>
+                <p className="text-sm" style={{ margin: '.4rem 0' }}>{canAcceptTasks ? 'Runner task acceptance is enabled.' : 'Task acceptance stays locked until DFY Document Review is approved and authenticator 2FA is enabled.'}</p>
                 {identityVerificationStatus !== 'passed' && identityVerificationStatus !== 'pending' && (
                   <div style={{ display: 'grid', gap: '.75rem', marginTop: '.75rem' }}>
                     {!identityProviderConfigured && (
