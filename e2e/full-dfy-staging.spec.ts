@@ -1,14 +1,18 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { loginTestAccount } from './helpers/totp-auth'
 
 // Staging E2E uses the versioned API route used by the deployed FE client.
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
+const CREATOR_TOTP_SECRET = process.env.DFY_CREATOR_TOTP_SECRET
 const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
 const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
+const RUNNER_TOTP_SECRET = process.env.DFY_RUNNER_TOTP_SECRET
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
+const ADMIN_TOTP_SECRET = process.env.DFY_ADMIN_TOTP_SECRET
 
 test.setTimeout(4 * 60 * 1000)
 
@@ -20,14 +24,8 @@ function requireEnv(name: string, value?: string) {
   return value
 }
 
-async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const response = await api.post(`${API_BASE_URL}/auth/login`, {
-    headers: { 'Content-Type': 'application/json' },
-    data: { email, password },
-  })
-  expect(response.ok(), `Login failed: HTTP ${response.status()} body=${await response.text()}`).toBeTruthy()
-  const body = await response.json()
-  expect(body.success, `Login returned success=false for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+async function apiLogin(api: APIRequestContext, email: string, password: string, totpSecret: string | undefined, label: string) {
+  const body = await loginTestAccount(api, email, password, totpSecret, label)
   const token = body.token || body.data?.token
   const user = body.user || body.data?.user
   expect(token, `Login response did not contain a token for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
@@ -39,7 +37,7 @@ async function apiLogin(api: APIRequestContext, email: string, password: string)
 async function useConfiguredCreator(api: APIRequestContext) {
   const email = requireEnv('DFY_CREATOR_EMAIL', CREATOR_EMAIL)
   const password = requireEnv('DFY_CREATOR_PASSWORD', CREATOR_PASSWORD)
-  const token = await apiLogin(api, email, password)
+  const token = await apiLogin(api, email, password, CREATOR_TOTP_SECRET, 'creator')
   return { email, password, token }
 }
 async function loginUi(page: Page, email: string) {
@@ -127,9 +125,9 @@ test.describe('DFY escrow and dispute workflow', () => {
   test('admin-verified test payment -> runner completes -> creator confirms -> payout is queued', async ({ page, request }) => {
     // Authenticate the pre-provisioned runner and admin before creating any records.
     // Misconfigured secrets must fail before this E2E leaves a fresh creator behind.
-    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD), RUNNER_TOTP_SECRET, 'runner')
     await ensureRunnerBank(request, runnerToken)
-    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
+    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD), ADMIN_TOTP_SECRET, 'admin')
 
     const freshCreator = await useConfiguredCreator(request)
     const creatorEmail = freshCreator.email
