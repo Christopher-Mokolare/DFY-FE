@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 
 const LOGIN = '**/auth/login**'
 const CORS_HEADERS = {
-  'access-control-allow-origin': 'http://127.0.0.1:4173',
+  'access-control-allow-origin': '*',
   'access-control-allow-credentials': 'true',
 }
 
@@ -41,7 +41,13 @@ test('password login presents a dedicated 2FA step and completes after a valid c
 
   // Match the API path independent of origin or version prefix; do not let a
   // broad profile mock intercept the password challenge request.
-  await page.route(url => url.pathname.endsWith('/auth/login'), async route => {
+  await page.route('**/*', async route => {
+    const requestUrl = new URL(route.request().url())
+    if (!requestUrl.pathname.includes('/auth/login')) {
+      await route.continue()
+      return
+    }
+    console.log('[2FA UI mock] intercepted', route.request().method(), route.request().url())
     // The UI preview and staging API are different origins. Mock the browser's
     // JSON POST preflight as well as the login response so CORS does not hide
     // the intended 401 two-factor challenge from Axios.
@@ -100,6 +106,8 @@ test('password login presents a dedicated 2FA step and completes after a valid c
     })
   })
 
+  page.on('requestfailed', request => console.log('[2FA UI request failed]', request.method(), request.url(), request.failure()?.errorText))
+  page.on('response', response => { if (response.url().includes('/auth/login')) console.log('[2FA UI response]', response.status(), response.url()) })
   await page.goto('/login')
   await page.getByPlaceholder('Email Address').fill('two-factor@example.test')
   await page.getByPlaceholder('Password').fill('ExamplePassword!123')
@@ -144,6 +152,8 @@ test('the second-factor field accepts a recovery code without weakening the chal
     })
   })
 
+  page.on('requestfailed', request => console.log('[2FA UI request failed]', request.method(), request.url(), request.failure()?.errorText))
+  page.on('response', response => { if (response.url().includes('/auth/login')) console.log('[2FA UI response]', response.status(), response.url()) })
   await page.goto('/login')
   await page.getByPlaceholder('Email Address').fill('two-factor@example.test')
   await page.getByPlaceholder('Password').fill('ExamplePassword!123')
