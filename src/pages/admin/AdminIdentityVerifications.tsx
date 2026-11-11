@@ -69,9 +69,9 @@ export default function AdminIdentityVerifications() {
           {loading ? <div className="loading-state"><div className="spinner" /></div> : rows.length === 0 ? <p className="text-muted">There are no pending identity applications.</p> : (
             <div style={{ overflowX: 'auto' }}>
               <table className="admin-table">
-                <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Submitted</th><th /></tr></thead>
+                <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Date of birth</th><th>Submitted</th><th /></tr></thead>
                 <tbody>{rows.map(row => <tr key={row.id}>
-                  <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id' ? 'South African ID card' : 'Passport'}</td>
+                  <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id' ? 'South African ID card' : 'Passport'}</td><td>{row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString('en-ZA') : 'Not provided'}</td>
                   <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)}>Review</button></td>
                 </tr>)}</tbody>
               </table>
