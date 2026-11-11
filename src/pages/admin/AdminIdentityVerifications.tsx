@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../api'
 
-type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; userName: string; email: string; dateOfBirth?: string | null }
+type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; reviewDueAt: string; reviewAgeMinutes: number; isOverdue: boolean; userName: string; email: string; dateOfBirth?: string | null }
 
 export default function AdminIdentityVerifications() {
   const [rows, setRows] = useState<Submission[]>([])
@@ -83,10 +83,10 @@ export default function AdminIdentityVerifications() {
           {loading ? <div className="loading-state"><div className="spinner" /></div> : rows.length === 0 ? <p className="text-muted">There are no pending identity applications.</p> : (
             <div style={{ overflowX: 'auto' }}>
               <table className="admin-table">
-                <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Date of birth</th><th>Submitted</th><th /></tr></thead>
+                <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Date of birth</th><th>Submitted</th><th>Review target</th><th /></tr></thead>
                 <tbody>{rows.map(row => <tr key={row.id}>
                   <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id_card' ? 'South African Smart ID card' : row.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'}</td><td>{row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString('en-ZA') : 'Not provided'}</td>
-                  <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)}>Review</button></td>
+                  <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><span style={{ color: row.isOverdue ? '#b91c1c' : 'inherit', fontWeight: row.isOverdue ? 700 : 400 }}>{row.isOverdue ? 'OVERDUE · ' : ''}{new Date(row.reviewDueAt).toLocaleString('en-ZA')}</span><div className="text-muted text-xs">{Math.floor(row.reviewAgeMinutes / 60)}h {row.reviewAgeMinutes % 60}m in queue</div></td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)}>Review</button></td>
                 </tr>)}</tbody>
               </table>
             </div>
