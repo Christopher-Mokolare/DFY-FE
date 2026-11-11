@@ -1,7 +1,6 @@
 import { generateTotp } from './helpers/auth'
 import { test, expect } from '@playwright/test'
 
-const PROFILE = '**/api/v1/user/profile'
 const LOGIN = '**/auth/login**'
 
 function sessionResponse() {
@@ -36,13 +35,7 @@ function sessionResponse() {
 test('password login presents a dedicated 2FA step and completes after a valid code', async ({ page }) => {
   const submittedCodes: string[] = []
 
-  await page.route(PROFILE, route => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ success: true, data: {} }),
-  }))
-
-  await page.route(LOGIN, async route => {
+  await page.route(url => url.pathname.endsWith('/auth/login'), async route => {
     const body = route.request().postDataJSON() as { secondFactorCode?: string }
     const code = body.secondFactorCode || ''
     submittedCodes.push(code)
@@ -108,12 +101,6 @@ test('password login presents a dedicated 2FA step and completes after a valid c
 })
 
 test('the second-factor field accepts a recovery code without weakening the challenge', async ({ page }) => {
-  await page.route(PROFILE, route => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ success: true, data: {} }),
-  }))
-
   await page.route(LOGIN, async route => {
     const body = route.request().postDataJSON() as { secondFactorCode?: string }
     if (!body.secondFactorCode) {
