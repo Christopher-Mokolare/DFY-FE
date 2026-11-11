@@ -15,7 +15,7 @@ export default function Layout() {
   const { user, loading, isAuthenticated, isAdmin } = useAuth()
   const showFooter = PUBLIC_ROUTES.includes(pathname)
   const isAdminRoute = pathname.startsWith('/admin')
-  const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\\/tasks\\/[^/]+\\/chat$/.test(pathname)
+  const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
   if (!loading && isAuthenticated() && user && isAdmin()) return <Navigate to="/admin/dashboard" replace />
