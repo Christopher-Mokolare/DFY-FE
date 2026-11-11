@@ -125,7 +125,7 @@ export const adminApi = {
   getUsers: (params?: object) => api.get('/admin/users', { params }),
   getManualIdentityVerifications: (params?: object) => api.get('/manual-identity-verification/admin/pending', { params }),
   getManualIdentityDocument: (id: number, side: 'front' | 'back') => api.get(`/manual-identity-verification/admin/${id}/document/${side}`, { responseType: 'blob' }),
-  decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reason: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reason }),
+  decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reason: string, internalNote?: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reason, internalNote }),
 
   updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
   updateUserRole: (id: number, role: string, reason: string) => api.patch(`/admin/users/${id}/role`, { role, reason }),
