@@ -35,6 +35,8 @@ function sessionResponse() {
 test('password login presents a dedicated 2FA step and completes after a valid code', async ({ page }) => {
   const submittedCodes: string[] = []
 
+  // Match the API path independent of origin or version prefix; do not let a
+  // broad profile mock intercept the password challenge request.
   await page.route(url => url.pathname.endsWith('/auth/login'), async route => {
     const body = route.request().postDataJSON() as { secondFactorCode?: string }
     const code = body.secondFactorCode || ''
