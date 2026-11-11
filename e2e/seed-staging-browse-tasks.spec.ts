@@ -1,20 +1,15 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
-import { loginTestAccount } from './helpers/totp-auth'
 
 const BASE_URL = process.env.BASE_URL || 'https://dfy-fe-staging.onrender.com'
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
-const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
-const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
 
-if (!CREATOR_EMAIL || !CREATOR_PASSWORD || !RUNNER_EMAIL || !RUNNER_PASSWORD || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  throw new Error('Missing one or more required DFY_CREATOR_*, DFY_RUNNER_*, or DFY_ADMIN_* test credentials.')
+if (!CREATOR_EMAIL || !CREATOR_PASSWORD || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  throw new Error('Missing DFY_CREATOR_EMAIL/DFY_CREATOR_PASSWORD or DFY_ADMIN_EMAIL/DFY_ADMIN_PASSWORD.')
 }
-
-const authenticatedUsers = new Map<string, unknown>()
 
 const tasks = [
   ['Urgent grocery run for the week', 'Please collect the weekly groceries and deliver them to the specified address.', 175],
@@ -31,32 +26,29 @@ function futureDate(days: number) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const normalized = email.trim().toLowerCase()
-  const secret = normalized === RUNNER_EMAIL?.trim().toLowerCase()
-    ? process.env.DFY_RUNNER_TOTP_SECRET
-    : normalized === CREATOR_EMAIL?.trim().toLowerCase()
-      ? process.env.DFY_CREATOR_TOTP_SECRET
-      : normalized === ADMIN_EMAIL?.trim().toLowerCase()
-        ? process.env.DFY_ADMIN_TOTP_SECRET
-        : undefined
-  const label = normalized === RUNNER_EMAIL?.trim().toLowerCase() ? 'runner'
-    : normalized === CREATOR_EMAIL?.trim().toLowerCase() ? 'creator' : 'admin'
-  const body = await loginTestAccount(api, email, password, secret, label)
-  const token = body.token || body.data?.token
-  const user = body.user || body.data?.user
-  if (!token || !user) throw new Error(`Login response did not contain a token and user profile for ${email}.`)
-  authenticatedUsers.set(email, user)
+  const response = await api.post(`${API_BASE_URL}/auth/login`, {
+    headers: { 'Content-Type': 'application/json' },
+    data: { email, password },
+  })
+
+  if (!response.ok()) {
+    throw new Error(`Login failed for configured test account: ${response.status()} ${await response.text()}`)
+  }
+
+  const body = await response.json()
+  const token = body?.token || body?.data?.token
+  if (!body?.success || !token) {
+    throw new Error('Login response did not contain a usable authentication token.')
+  }
+
   return String(token)
 }
 
-async function setBrowserSession(page: Page, authToken: string, email: string) {
-  const user = authenticatedUsers.get(email)
-  if (!user) throw new Error('The runner profile was not captured during API authentication.')
+async function setBrowserSession(page: Page, authToken: string) {
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-  await page.evaluate(({ token, currentUser }) => {
+  await page.evaluate((token) => {
     localStorage.setItem('token', token)
-    localStorage.setItem('currentUser', JSON.stringify(currentUser))
-  }, { token: authToken, currentUser: user })
+  }, authToken)
 }
 
 async function postedTasks(api: APIRequestContext, authToken: string) {
@@ -116,28 +108,17 @@ async function createTask(
   return String(taskId)
 }
 
-async function verifyTasksForBrowse(api: APIRequestContext, adminToken: string, taskIds: string[]) {
-  // Browse Tasks only returns paid tasks whose funds are held in escrow.
-  // The per-task /verify endpoint only approves moderation; it does not seed
-  // the payment/escrow state required by /tasks/available.
-  const response = await api.patch(`${API_BASE_URL}/admin/tasks/bulk-verify`, {
+async function verifyTask(api: APIRequestContext, adminToken: string, taskName: string, taskId: string) {
+  const response = await api.patch(`${API_BASE_URL}/admin/tasks/${taskId}/verify`, {
     headers: {
       Authorization: `Bearer ${adminToken}`,
       'Content-Type': 'application/json',
     },
-    data: {
-      taskIds,
-      reason: 'Staging mobile Browse Tasks E2E payment/escrow seed.',
-    },
+    data: { reason: 'Staging mobile Browse Tasks test data' },
   })
 
-  if (!response.ok()) {
-    throw new Error(`Bulk payment verification failed: HTTP ${response.status()} ${await response.text()}`)
-  }
-
-  const body = await response.json()
-  if (body?.success !== true) {
-    throw new Error(`Bulk payment verification returned success=false: ${JSON.stringify(body)}`)
+  if (![200, 204].includes(response.status())) {
+    throw new Error(`Verification failed for "${taskName}": ${response.status()} ${await response.text()}`)
   }
 }
 
@@ -150,32 +131,46 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
   }
 
   const adminToken = await apiLogin(request, ADMIN_EMAIL!, ADMIN_PASSWORD!)
-  await verifyTasksForBrowse(request, adminToken, taskIds)
+  for (let i = 0; i < tasks.length; i++) {
+    await verifyTask(request, adminToken, tasks[i][0], taskIds[i])
+  }
 
-  // Verify the backend source of truth before asserting the rendered cards.
-  // A task can be moderation-approved but still absent from Browse Tasks until
-  // its payment is marked received and escrow-held.
-  const runnerToken = await apiLogin(request, RUNNER_EMAIL!, RUNNER_PASSWORD!)
-  await expect.poll(async () => {
-    const response = await request.get(`${API_BASE_URL}/tasks/available?page=1&pageSize=100`, {
-      headers: { Authorization: `Bearer ${runnerToken}` },
-    })
-    if (!response.ok()) return false
-    const body = await response.json()
-    const list = body.tasks || body.data?.tasks || body.data?.Tasks || []
-    return Array.isArray(list) && taskIds.every(id =>
-      list.some((task: any) => String(task.taskId || task.id) === String(id))
+  // Confirm each task is actually published by the backend before checking
+  // the rendered Browse Tasks experience. The API returns only Posted tasks
+  // with EscrowHeld payment status, so this catches failed verification early.
+  for (let i = 0; i < tasks.length; i++) {
+    const [name] = tasks[i]
+    const response = await request.get(
+      `${API_BASE_URL}/tasks/available?page=1&pageSize=100&search=${encodeURIComponent(name)}`,
+      { headers: { Authorization: `Bearer ${creatorToken}` } },
     )
-  }, { timeout: 45_000, intervals: [1000, 2000, 3000] }).toBe(true)
+    if (!response.ok()) {
+      throw new Error(`Available tasks lookup failed for "${name}": ${response.status()} ${await response.text()}`)
+    }
+    const body = await response.json()
+    const available = body?.tasks || body?.data?.tasks || []
+    const published = available.find((item: any) =>
+      String(item?.taskId || item?.id) === taskIds[i] && item?.taskName === name,
+    )
+    if (!published) {
+      throw new Error(
+        `Task "${name}" was created and verified but is not returned by /tasks/available. ` +
+        `Check its TaskStatus, PaymentStatus, and deletion state before testing the UI.`,
+      )
+    }
+  }
 
-  // Browse Tasks is the runner-facing marketplace. Use the same configured
-  // runner session to verify the paid/escrow-held listings in the actual UI.
-  await setBrowserSession(page, runnerToken, RUNNER_EMAIL!)
+  // Browse Tasks is paginated and the reusable seed records may pre-date other
+  // staging activity. Search for each exact title so the UI assertion does not
+  // depend on a task happening to be in the first page of the shared staging feed.
+  await setBrowserSession(page, creatorToken)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+  const search = page.getByRole('searchbox', { name: 'Search tasks' })
 
   for (const [name] of tasks) {
+    await search.fill(name)
     await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible({ timeout: 30_000 })
   }
 
-  console.log('DFY STAGING PLAYWRIGHT SEED COMPLETE: 5/5 tasks created, verified, and visible in Browse Tasks.')
+  console.log('DFY STAGING PLAYWRIGHT SEED COMPLETE: 5/5 tasks created, verified, returned by the available-tasks API, and visible in Browse Tasks search.')
 })
