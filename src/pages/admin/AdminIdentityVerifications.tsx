@@ -8,7 +8,8 @@ export default function AdminIdentityVerifications() {
   const [selected, setSelected] = useState<Submission | null>(null)
   const [frontUrl, setFrontUrl] = useState('')
   const [backUrl, setBackUrl] = useState('')
-  const [reason, setReason] = useState('')
+  const [reasonCode, setReasonCode] = useState('')
+  const [runnerNote, setRunnerNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -32,7 +33,7 @@ export default function AdminIdentityVerifications() {
   useEffect(() => { void load(); return () => clearUrls() }, [])
 
   const open = async (row: Submission) => {
-    clearUrls(); setSelected(row); setReason(''); setMessage(''); setError('')
+    clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setMessage(''); setError('')
     try {
       const front = await adminApi.getManualIdentityDocument(row.id, 'front')
       setFrontUrl(URL.createObjectURL(front.data))
@@ -46,10 +47,23 @@ export default function AdminIdentityVerifications() {
   }
   const decide = async (decision: 'approve' | 'reject' | 'request_information') => {
     if (!selected) return
-    if (reason.trim().length < 10) { setError('Enter a review reason of at least 10 characters.'); return }
+    if (decision !== 'approve' && !reasonCode) { setError('Choose a standard reason for this decision.'); return }
+    if (decision !== 'approve' && runnerNote.trim().length < 10) { setError('Explain what the runner needs to correct in at least 10 characters.'); return }
+    const reasonLabels: Record<string, string> = {
+      document_unclear: 'Document image is unclear',
+      back_side_missing: 'Required back side is missing',
+      document_expired: 'Document is expired',
+      name_mismatch: 'Name does not match the profile',
+      id_number_unreadable: 'ID number is unreadable',
+      suspected_tampering: 'Document requires additional authenticity review',
+      other: 'Other review reason',
+    }
+    const reason = decision === 'approve'
+      ? (runnerNote.trim() || 'DFY manual document review completed and approved.')
+      : reasonCode + ': ' + reasonLabels[reasonCode] + '\\n' + runnerNote.trim()
     setBusy(true); setError('')
     try {
-      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reason.trim())
+      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reason)
       if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
       setSelected(null); clearUrls(); await load()
@@ -85,8 +99,20 @@ export default function AdminIdentityVerifications() {
             {frontUrl && <figure><figcaption>{selected.documentType === 'south_african_id_book' ? 'ID book photo-information page' : selected.documentType === 'passport' ? 'Passport photo-information page' : 'Front of Smart ID card'}</figcaption><img src={frontUrl} alt="Identity document front" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
             {backUrl && <figure><figcaption>Back of ID card</figcaption><img src={backUrl} alt="Identity document back" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
           </div>
-          <label className="form-label" htmlFor="reviewReason">Review reason (required)</label>
-          <textarea id="reviewReason" className="form-input" rows={3} maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} placeholder="Record what you checked and why this decision is appropriate." />
+          <label className="form-label" htmlFor="reviewReasonCode">Standard reason</label>
+          <select id="reviewReasonCode" className="form-input" value={reasonCode} onChange={e => setReasonCode(e.target.value)}>
+            <option value="">Choose a reason (required for reject or request information)</option>
+            <option value="document_unclear">Document image is unclear</option>
+            <option value="back_side_missing">Required back side is missing</option>
+            <option value="document_expired">Document is expired</option>
+            <option value="name_mismatch">Name does not match the profile</option>
+            <option value="id_number_unreadable">ID number is unreadable</option>
+            <option value="suspected_tampering">Document requires additional authenticity review</option>
+            <option value="other">Other</option>
+          </select>
+          <label className="form-label" htmlFor="reviewReasonNote">Explanation for runner</label>
+          <textarea id="reviewReasonNote" className="form-input" rows={3} maxLength={850} value={runnerNote} onChange={e => setRunnerNote(e.target.value)} placeholder="Explain what was checked and, if more information is needed, exactly what the runner must correct." />
+          <p className="text-muted text-xs">The selected reason and this explanation are included in the runner's review result. Do not enter confidential investigation notes here.</p>
           <div className="admin-table-actions" style={{ marginTop: '1rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" disabled={busy || !frontUrl} onClick={() => void decide('approve')}>Approve</button>
             <button className="btn btn-secondary" disabled={busy || !frontUrl} onClick={() => void decide('request_information')}>Request information</button>
