@@ -36,6 +36,7 @@ import Profile from './pages/user/Profile'
 import BankAccounts from './pages/user/BankAccounts'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
+import AdminIdentityVerifications from './pages/admin/AdminIdentityVerifications'
 import AdminTasks from './pages/admin/AdminTasks'
 import AdminPayments from './pages/admin/AdminPayments'
 import AdminDisputes from './pages/admin/AdminDisputes'
@@ -94,6 +95,7 @@ export default function App() {
 
               <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
               <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
+              <Route path="/admin/identity-verifications" element={<RequireAdmin><AdminIdentityVerifications /></RequireAdmin>} />
               <Route path="/admin/tasks" element={<RequireAdmin><AdminTasks /></RequireAdmin>} />
               <Route path="/admin/payments" element={<RequireAdmin><AdminPayments /></RequireAdmin>} />
               <Route path="/admin/disputes" element={<RequireAdmin><AdminDisputes /></RequireAdmin>} />

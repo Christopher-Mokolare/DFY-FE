@@ -15,10 +15,10 @@ export const publicApi = {
 }
 
 export const identityVerificationApi = {
-  getStatus: () => api.get('/identity-verification/status'),
-  createSession: (data: { consentAccepted: boolean; consentVersion: string }) => api.post('/identity-verification/session', data),
-  exchange: (handoffCode: string) => api.post('/identity-verification/exchange', { handoffCode }),
-  refresh: () => api.post('/identity-verification/refresh', {}),
+  getStatus: () => api.get('/manual-identity-verification/status'),
+  createHandoff: (data: { consentAccepted: boolean; consentVersion: string }) => api.post('/manual-identity-verification/handoff', data),
+  submitHandoff: (form: FormData) => api.post('/manual-identity-verification/submission/handoff', form),
+  submit: (form: FormData) => api.post('/manual-identity-verification/submission', form),
 }
 
 export const authApi = {
@@ -123,6 +123,13 @@ export const adminApi = {
   bulkVerify: (ids: string[], reason: string) => api.patch('/admin/tasks/bulk-verify', { taskIds: ids, reason }),
   forceReleaseEscrow: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/force-release-escrow`, { reason }),
   getUsers: (params?: object) => api.get('/admin/users', { params }),
+  getManualIdentityVerifications: (params?: object) => api.get('/manual-identity-verification/admin/pending', { params }),
+  claimManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/claim`),
+  heartbeatManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/heartbeat`),
+  releaseManualIdentityReview: (id: number) => api.delete(`/manual-identity-verification/admin/${id}/claim`),
+  getManualIdentityDocument: (id: number, side: 'front' | 'back') => api.get(`/manual-identity-verification/admin/${id}/document/${side}`, { responseType: 'blob' }),
+  decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reasonCode: string, runnerNote: string, internalNote?: string, verifiedDateOfBirth?: string, southAfricanIdNumber?: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reasonCode, runnerNote, internalNote, verifiedDateOfBirth, southAfricanIdNumber }),
+
   updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
   updateUserRole: (id: number, role: string, reason: string) => api.patch(`/admin/users/${id}/role`, { role, reason }),
   getUserTaskHistory: (id: number) => api.get(`/admin/users/${id}/tasks`),

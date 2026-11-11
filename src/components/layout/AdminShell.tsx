@@ -6,6 +6,7 @@ const navigation = [
   { label: 'Overview', to: '/admin/dashboard', icon: 'fa-chart-pie', section: 'WORKSPACE' },
   { label: 'Tasks', to: '/admin/tasks', icon: 'fa-list-check', section: 'OPERATIONS' },
   { label: 'Users', to: '/admin/users', icon: 'fa-users', section: 'OPERATIONS' },
+  { label: 'Identity review', to: '/admin/identity-verifications', icon: 'fa-id-card', section: 'OPERATIONS' },
   { label: 'Disputes', to: '/admin/disputes', icon: 'fa-gavel', section: 'OPERATIONS' },
   { label: 'Payments', to: '/admin/payments', icon: 'fa-credit-card', section: 'FINANCE' },
   { label: 'Testimonials', to: '/admin/testimonials', icon: 'fa-quote-left', section: 'CONTENT' },
