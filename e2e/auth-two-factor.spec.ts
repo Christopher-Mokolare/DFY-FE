@@ -2,6 +2,10 @@ import { generateTotp } from './helpers/auth'
 import { test, expect } from '@playwright/test'
 
 const LOGIN = '**/auth/login**'
+const CORS_HEADERS = {
+  'access-control-allow-origin': 'http://127.0.0.1:4173',
+  'access-control-allow-credentials': 'true',
+}
 
 function sessionResponse() {
   return {
@@ -38,6 +42,20 @@ test('password login presents a dedicated 2FA step and completes after a valid c
   // Match the API path independent of origin or version prefix; do not let a
   // broad profile mock intercept the password challenge request.
   await page.route(url => url.pathname.endsWith('/auth/login'), async route => {
+    // The UI preview and staging API are different origins. Mock the browser's
+    // JSON POST preflight as well as the login response so CORS does not hide
+    // the intended 401 two-factor challenge from Axios.
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          ...CORS_HEADERS,
+          'access-control-allow-methods': 'POST, OPTIONS',
+          'access-control-allow-headers': 'content-type,authorization',
+        },
+      })
+      return
+    }
     const body = route.request().postDataJSON() as { secondFactorCode?: string }
     const code = body.secondFactorCode || ''
     submittedCodes.push(code)
@@ -46,6 +64,7 @@ test('password login presents a dedicated 2FA step and completes after a valid c
       await route.fulfill({
         status: 401,
         contentType: 'application/json',
+        headers: CORS_HEADERS,
         body: JSON.stringify({
           success: false,
           requiresTwoFactor: true,
@@ -63,6 +82,7 @@ test('password login presents a dedicated 2FA step and completes after a valid c
       await route.fulfill({
         status: 401,
         contentType: 'application/json',
+        headers: CORS_HEADERS,
         body: JSON.stringify({
           success: false,
           requiresTwoFactor: true,
@@ -75,6 +95,7 @@ test('password login presents a dedicated 2FA step and completes after a valid c
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
+        headers: CORS_HEADERS,
       body: JSON.stringify(sessionResponse()),
     })
   })
@@ -109,6 +130,7 @@ test('the second-factor field accepts a recovery code without weakening the chal
       await route.fulfill({
         status: 401,
         contentType: 'application/json',
+        headers: CORS_HEADERS,
         body: JSON.stringify({ success: false, requiresTwoFactor: true, message: 'Enter the code from your authenticator app or a recovery code.' }),
       })
       return
@@ -117,6 +139,7 @@ test('the second-factor field accepts a recovery code without weakening the chal
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
+        headers: CORS_HEADERS,
       body: JSON.stringify(sessionResponse()),
     })
   })
