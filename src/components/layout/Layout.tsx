@@ -12,7 +12,7 @@ const USER_WORKSPACE_ROUTES = ['/dashboard', '/tasks/post', '/tasks/browse', '/t
 
 export default function Layout() {
   const { pathname } = useLocation()
-  const { user, loading, loginTransitioning, isAuthenticated, isAdmin } = useAuth()
+  const { user, loading, isAuthenticated, isAdmin } = useAuth()
   const showFooter = PUBLIC_ROUTES.includes(pathname)
   const isAdminRoute = pathname.startsWith('/admin')
   const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
@@ -20,9 +20,11 @@ export default function Layout() {
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
   if (!loading && isAuthenticated() && user && isAdmin()) return <Navigate to="/admin/dashboard" replace />
 
-  if ((pathname === '/login' || pathname === '/register') && loginTransitioning) {
-    return <div className="page-wrapper user-dashboard-page-wrapper" aria-busy="true"><div className="loading-screen"><div className="spinner" /></div></div>
-  }
+  // Keep /login and /register mounted while authentication is in flight.
+  // AuthProvider.loginTransitioning used to replace the Outlet with a spinner,
+  // unmounting Login before its rejected 401 challenge could set the 2FA step.
+  // The form owns its own loading/disabled state; preserving the component is
+  // required so the backend's 2FA challenge can transition to the code screen.
   if (!loading && isAuthenticated() && user) {
     if (pathname === '/login' || pathname === '/register') return <Navigate to="/dashboard" replace />
     if (!isUserWorkspaceRoute) return <Navigate to="/dashboard" replace />
