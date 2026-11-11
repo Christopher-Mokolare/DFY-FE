@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../api'
 
-type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; reviewDueAt: string; reviewAgeMinutes: number; isOverdue: boolean; userName: string; email: string; dateOfBirth?: string | null }
+type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; reviewDueAt: string; reviewAgeMinutes: number; isOverdue: boolean; duplicateIdDetected?: boolean; userName: string; email: string; dateOfBirth?: string | null }
 
 export default function AdminIdentityVerifications() {
   const [rows, setRows] = useState<Submission[]>([])
@@ -12,6 +12,7 @@ export default function AdminIdentityVerifications() {
   const [runnerNote, setRunnerNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
   const [verifiedDateOfBirth, setVerifiedDateOfBirth] = useState('')
+  const [southAfricanIdNumber, setSouthAfricanIdNumber] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -46,7 +47,7 @@ export default function AdminIdentityVerifications() {
   }, [selected?.id])
 
   const open = async (row: Submission) => {
-    clearUrls(); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setMessage(''); setError('')
+    clearUrls(); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setSouthAfricanIdNumber(''); setMessage(''); setError('')
     try {
       await adminApi.claimManualIdentityReview(row.id)
       setSelected(row)
@@ -71,7 +72,9 @@ export default function AdminIdentityVerifications() {
     setBusy(true); setError('')
     try {
       if (decision === 'approve' && !verifiedDateOfBirth) { setError('Enter the date of birth exactly as shown on the document.'); return }
-      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim(), verifiedDateOfBirth || undefined)
+      const isSouthAfricanId = selected.documentType === 'south_african_id_card' || selected.documentType === 'south_african_id_book'
+      if (decision === 'approve' && isSouthAfricanId && !/^\\d{13}$/.test(southAfricanIdNumber)) { setError('Enter the 13-digit South African ID number shown on the document.'); return }
+      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim(), verifiedDateOfBirth || undefined, southAfricanIdNumber || undefined)
       if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
       setSelected(null); clearUrls(); await load()
@@ -93,7 +96,7 @@ export default function AdminIdentityVerifications() {
               <table className="admin-table">
                 <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Date of birth</th><th>Submitted</th><th>Review target</th><th /></tr></thead>
                 <tbody>{rows.map(row => <tr key={row.id}>
-                  <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id_card' ? 'South African Smart ID card' : row.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'}</td><td>{row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString('en-ZA') : 'Not provided'}</td>
+                  <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id_card' ? 'South African Smart ID card' : row.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'}{row.duplicateIdDetected && <div className="text-danger text-xs"><strong>Potential duplicate ID — investigation required</strong></div>}</td><td>{row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString('en-ZA') : 'Not provided'}</td>
                   <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><span style={{ color: row.isOverdue ? '#b91c1c' : 'inherit', fontWeight: row.isOverdue ? 700 : 400 }}>{row.isOverdue ? 'OVERDUE · ' : ''}{new Date(row.reviewDueAt).toLocaleString('en-ZA')}</span><div className="text-muted text-xs">{Math.floor(row.reviewAgeMinutes / 60)}h {row.reviewAgeMinutes % 60}m in queue</div></td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)}>Review</button></td>
                 </tr>)}</tbody>
               </table>
@@ -107,6 +110,12 @@ export default function AdminIdentityVerifications() {
             {frontUrl && <figure><figcaption>{selected.documentType === 'south_african_id_book' ? 'ID book photo-information page' : selected.documentType === 'passport' ? 'Passport photo-information page' : 'Front of Smart ID card'}</figcaption><div style={{ position: 'relative', overflow: 'hidden', borderRadius: 8 }}><img src={frontUrl} alt="Identity document front" style={{ display: 'block', width: '100%', height: 'auto' }} /><div aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', overflow: 'hidden', color: 'rgba(127,29,29,.48)', fontSize: 'clamp(1rem,3vw,2rem)', fontWeight: 800, letterSpacing: '.12em', textAlign: 'center', transform: 'rotate(-24deg)', textShadow: '0 1px 2px rgba(255,255,255,.8)' }}>DFY CONFIDENTIAL · REVIEW ONLY · CASE {selected.id}</div></div></figure>}
             {backUrl && <figure><figcaption>Back of ID card</figcaption><div style={{ position: 'relative', overflow: 'hidden', borderRadius: 8 }}><img src={backUrl} alt="Identity document back" style={{ display: 'block', width: '100%', height: 'auto' }} /><div aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', overflow: 'hidden', color: 'rgba(127,29,29,.48)', fontSize: 'clamp(1rem,3vw,2rem)', fontWeight: 800, letterSpacing: '.12em', textAlign: 'center', transform: 'rotate(-24deg)', textShadow: '0 1px 2px rgba(255,255,255,.8)' }}>DFY CONFIDENTIAL · REVIEW ONLY · CASE {selected.id}</div></div></figure>}
           </div>
+          {(selected.documentType === 'south_african_id_card' || selected.documentType === 'south_african_id_book') && <>
+            <label className="form-label" htmlFor="southAfricanIdNumber">13-digit South African ID number (required for approval)</label>
+            <input id="southAfricanIdNumber" className="form-input" type="password" inputMode="numeric" autoComplete="off" maxLength={13} value={southAfricanIdNumber} onChange={e => setSouthAfricanIdNumber(e.target.value.replace(/\\D/g, '').slice(0, 13))} placeholder="Enter the number from the document" />
+            <p className="text-muted text-xs">The backend validates the ID checksum and compares a keyed fingerprint for possible duplicate accounts. The raw ID number is not stored in the review record.</p>
+          </>}
+          {selected.duplicateIdDetected && <div className="alert alert-error" role="alert">A possible duplicate ID number has been detected. Do not approve this case; it requires a separate identity investigation.</div>}
           <label className="form-label" htmlFor="verifiedDateOfBirth">Date of birth shown on identity document (required for approval)</label>
           <input id="verifiedDateOfBirth" className="form-input" type="date" value={verifiedDateOfBirth} onChange={e => setVerifiedDateOfBirth(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
           <p className="text-muted text-xs">Enter the date printed on the document after checking it. The backend will reject approval if the date shows the runner is under 18.</p>
