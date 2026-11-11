@@ -147,6 +147,14 @@ jobs:
       - name: Run mocked two-factor UI tests
         run: npm test -- e2e/auth-two-factor.spec.ts
 
+      - name: Upload two-factor UI diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: auth-ui-playwright-report
+          path: test-results/
+          if-no-files-found: ignore
+
   mobile-e2e:
     runs-on: ubuntu-latest
     needs: e2e
