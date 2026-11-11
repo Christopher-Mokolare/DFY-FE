@@ -47,7 +47,7 @@ test('password login presents a dedicated 2FA step and completes after a valid c
       await route.continue()
       return
     }
-    console.log('[2FA UI mock] intercepted', route.request().method(), route.request().url())
+    console.log('[2FA UI mock] intercepted', route.request().method(), route.request().url(), route.request().postData())
     // The UI preview and staging API are different origins. Mock the browser's
     // JSON POST preflight as well as the login response so CORS does not hide
     // the intended 401 two-factor challenge from Axios.
@@ -109,9 +109,15 @@ test('password login presents a dedicated 2FA step and completes after a valid c
   page.on('requestfailed', request => console.log('[2FA UI request failed]', request.method(), request.url(), request.failure()?.errorText))
   page.on('response', response => { if (response.url().includes('/auth/login')) console.log('[2FA UI response]', response.status(), response.url()) })
   await page.goto('/login')
-  await page.getByPlaceholder('Email Address').fill('two-factor@example.test')
-  await page.getByPlaceholder('Password').fill('ExamplePassword!123')
-  await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+  const emailInput = page.getByPlaceholder('Email Address')
+  const passwordInput = page.getByPlaceholder('Password')
+  await emailInput.fill('two-factor@example.test')
+  await passwordInput.fill('ExamplePassword!123')
+  await expect(emailInput).toHaveValue('two-factor@example.test')
+  await expect(passwordInput).toHaveValue('ExamplePassword!123')
+  const signInButton = page.getByRole('button', { name: 'Sign In', exact: true })
+  await expect(signInButton).toBeEnabled()
+  await signInButton.click()
 
   await expect(page.getByRole('heading', { name: 'Two-factor authentication' })).toBeVisible()
   await expect(page.getByLabel('Authenticator code or recovery code')).toBeVisible()
