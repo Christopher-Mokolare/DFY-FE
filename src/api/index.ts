@@ -16,6 +16,8 @@ export const publicApi = {
 
 export const identityVerificationApi = {
   getStatus: () => api.get('/manual-identity-verification/status'),
+  createHandoff: (data: { consentAccepted: boolean; consentVersion: string }) => api.post('/manual-identity-verification/handoff', data),
+  submitHandoff: (form: FormData) => api.post('/manual-identity-verification/submission/handoff', form, { headers: { 'Content-Type': 'multipart/form-data' } }),
   submit: (form: FormData) => api.post('/manual-identity-verification/submission', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
