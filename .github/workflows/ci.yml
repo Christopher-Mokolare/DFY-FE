@@ -68,10 +68,13 @@ jobs:
       DFY_API_URL: ${{ vars.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1' }}
       DFY_CREATOR_EMAIL: ${{ secrets.DFY_CREATOR_EMAIL }}
       DFY_CREATOR_PASSWORD: ${{ secrets.DFY_CREATOR_PASSWORD }}
+      DFY_CREATOR_TOTP_SECRET: ${{ secrets.DFY_CREATOR_TOTP_SECRET }}
       DFY_RUNNER_EMAIL: ${{ secrets.DFY_RUNNER_EMAIL }}
       DFY_RUNNER_PASSWORD: ${{ secrets.DFY_RUNNER_PASSWORD }}
+      DFY_RUNNER_TOTP_SECRET: ${{ secrets.DFY_RUNNER_TOTP_SECRET }}
       DFY_ADMIN_EMAIL: ${{ secrets.DFY_ADMIN_EMAIL }}
       DFY_ADMIN_PASSWORD: ${{ secrets.DFY_ADMIN_PASSWORD }}
+      DFY_ADMIN_TOTP_SECRET: ${{ secrets.DFY_ADMIN_TOTP_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
