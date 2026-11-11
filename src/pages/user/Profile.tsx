@@ -63,6 +63,7 @@ export default function Profile() {
   const [marketingConsentMessage, setMarketingConsentMessage] = useState('')
   const [marketingConsentError, setMarketingConsentError] = useState('')
   const [identityVerificationStatus, setIdentityVerificationStatus] = useState('not_started')
+  const [identityLatestSubmission, setIdentityLatestSubmission] = useState<{ documentType: string; status: string; submittedAt: string; reviewReason?: string | null } | null>(null)
   const [identityProviderConfigured, setIdentityProviderConfigured] = useState(false)
   const [identityAttemptsRemaining, setIdentityAttemptsRemaining] = useState(0)
   const [identityConsentVersion, setIdentityConsentVersion] = useState('identity-verification-v1')
@@ -291,6 +292,7 @@ export default function Profile() {
     const status = statusResponse.data?.data || statusResponse.data
     if (profile) {
       setIdentityVerificationStatus(profile.identityVerificationStatus || 'not_started')
+      setIdentityLatestSubmission(status?.latestSubmission || null)
       setAuthenticatorTwoFactorEnabled(!!profile.authenticatorTwoFactorEnabled)
       setCanAcceptTasks(!!profile.canAcceptTasks)
       setHasVerifiedPayoutAccount(!!profile.hasVerifiedPayoutAccount)
@@ -560,8 +562,22 @@ export default function Profile() {
                     )}
                   </div>
                 )}
+                {identityLatestSubmission && (
+                  <div className="alert alert-info" role="status" style={{ marginTop: '.75rem' }}>
+                    <strong>DFY Document Review</strong>
+                    <p className="text-sm" style={{ margin: '.35rem 0' }}>
+                      Submitted {new Date(identityLatestSubmission.submittedAt).toLocaleString('en-ZA')}.
+                      {' '}Status: {identityLatestSubmission.status === 'more_info_requested' ? 'More information required' : identityLatestSubmission.status === 'rejected' ? 'Review unsuccessful' : identityLatestSubmission.status === 'approved' ? 'DFY Identity Document Reviewed' : 'Under review'}.
+                    </p>
+                    {(identityLatestSubmission.status === 'more_info_requested' || identityLatestSubmission.status === 'rejected') && identityLatestSubmission.reviewReason && (
+                      <p className="text-sm" style={{ margin: '.35rem 0 0' }}>
+                        <strong>Administrator feedback:</strong> {identityLatestSubmission.reviewReason}
+                      </p>
+                    )}
+                  </div>
+                )}
                 {identityVerificationStatus === 'pending' && (
-                  <p className="text-sm" style={{ margin: '.5rem 0 0' }}>Your identity documents are awaiting DFY administrator review. Please do not submit them again.</p>
+                  <p className="text-sm" style={{ margin: '.5rem 0 0' }}>Your documents are under review. DFY aims to complete the review within one business day. We will notify you when there is an update.</p>
                 )}
                 {identityVerificationStatus === 'manual_review' && (
                   <p className="text-sm" style={{ margin: '.5rem 0 0' }}>Your verification requires review. Task acceptance stays locked; contact support for the next step.</p>
