@@ -124,6 +124,9 @@ export const adminApi = {
   forceReleaseEscrow: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/force-release-escrow`, { reason }),
   getUsers: (params?: object) => api.get('/admin/users', { params }),
   getManualIdentityVerifications: (params?: object) => api.get('/manual-identity-verification/admin/pending', { params }),
+  claimManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/claim`),
+  heartbeatManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/heartbeat`),
+  releaseManualIdentityReview: (id: number) => api.delete(`/manual-identity-verification/admin/${id}/claim`),
   getManualIdentityDocument: (id: number, side: 'front' | 'back') => api.get(`/manual-identity-verification/admin/${id}/document/${side}`, { responseType: 'blob' }),
   decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reasonCode: string, runnerNote: string, internalNote?: string, verifiedDateOfBirth?: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reasonCode, runnerNote, internalNote, verifiedDateOfBirth }),
 
