@@ -71,8 +71,8 @@ export default function MyPostedTasks() {
   const [disputeModal, setDisputeModal] = useState<Task | null>(null)
   const [disputeIssue, setDisputeIssue] = useState('')
   const [disputeCategory, setDisputeCategory] = useState('Quality')
-  const [disputeError, setDisputeError] = useState('')
   const [disputeLoading, setDisputeLoading] = useState(false)
+  const [disputeError, setDisputeError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState('')
   const [cancelModal, setCancelModal] = useState<Task | null>(null)
@@ -145,6 +145,56 @@ export default function MyPostedTasks() {
     }, { replace: true })
   }, [activeSection, searchParams, loading, tasks, setSearchParams])
 
+  const openCompletionDispute = async (task: Task) => {
+    setDisputeError('')
+    try {
+      const detail = await tasksApi.getById(task.taskId)
+      if (!detail.data?.success || !detail.data?.data?.canDispute) {
+        setActionError(detail.data?.message || 'A completion dispute is not available for this task.')
+        return
+      }
+      setDisputeModal(task)
+      setDisputeIssue('')
+      setDisputeCategory('Quality')
+    } catch (error: any) {
+      setActionError(error?.response?.data?.message || 'Unable to verify dispute eligibility. Refresh and try again.')
+    }
+  }
+
+  const handleRaiseDispute = async () => {
+    if (!disputeModal || disputeIssue.trim().length < 10) {
+      setDisputeError('Describe the completion problem in at least 10 characters.')
+      return
+    }
+    setDisputeLoading(true)
+    setDisputeError('')
+    try {
+      const res = await disputesApi.raise(disputeModal.taskId, disputeIssue.trim(), disputeCategory)
+      if (res.data?.success === false) throw new Error(res.data.message || 'Unable to raise dispute')
+      setDisputeModal(null)
+      setDisputeIssue('')
+      await loadTasks(page)
+    } catch (error: any) {
+      setDisputeError(error?.response?.data?.message || error?.message || 'Unable to raise dispute')
+    } finally {
+      setDisputeLoading(false)
+    }
+  }
+
+  const openCompletionConfirm = async (task: Task) => {
+    setActionError('')
+    try {
+      const detail = await tasksApi.getById(task.taskId)
+      if (!detail.data?.success || !detail.data?.data?.canConfirm) {
+        setActionError(detail.data?.message || 'Confirmation is temporarily unavailable while this task is under review.')
+        return
+      }
+      setConfirmModal(task)
+    } catch (error: any) {
+      setActionError(error?.response?.data?.message || 'Unable to verify task confirmation eligibility. Refresh and try again.')
+    }
+  }
+
   const handleConfirm = async () => {
     if (!confirmModal) return
     setActionLoading(true); setActionError('')
@@ -153,20 +203,6 @@ export default function MyPostedTasks() {
       if (res.data?.success === false) { setActionError(res.data?.message || 'Failed to confirm task'); return }
       setConfirmModal(null); await loadTasks(page)
     } catch (err: any) { setActionError(err.response?.data?.message || 'Failed to confirm task') } finally { setActionLoading(false) }
-  }
-
-  const handleRaiseDispute = async () => {
-    if (!disputeModal || disputeIssue.trim().length < 10 || disputeLoading) return
-    setDisputeLoading(true); setDisputeError('')
-    try {
-      const res = await disputesApi.raise(disputeModal.taskId, disputeIssue.trim(), disputeCategory)
-      if (res.data?.success === false) throw new Error(res.data?.message || 'Unable to raise dispute')
-      setDisputeModal(null)
-      setDisputeIssue('')
-      await loadTasks(page)
-    } catch (err: any) {
-      setDisputeError(err?.response?.data?.message || err?.message || 'Unable to raise dispute. Please try again.')
-    } finally { setDisputeLoading(false) }
   }
 
   const handleRating = async () => {
@@ -206,6 +242,7 @@ export default function MyPostedTasks() {
         <div className="page-header"><div className="container"><h1><i className="fas fa-list-check" /> My Posted Tasks</h1><p>Manage and track your posted tasks</p></div></div>
         <div className="container">
           {error && <div className="alert alert-error mb-4" role="alert"><i className="fas fa-exclamation-circle" /> {error} <button className="btn btn-secondary btn-sm" onClick={() => void loadTasks(page)}>Retry</button></div>}
+          {actionError && !confirmModal && <div className="alert alert-warning mb-4" role="alert"><i className="fas fa-info-circle" /> {actionError} <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionError('')}>Dismiss</button></div>}
           {statusCounts.all > 0 && <div className="posted-task-tabs" role="tablist" aria-label="Task status">
             {TASK_SECTIONS.map(({ key, icon, label }) => (
               <button
@@ -263,7 +300,13 @@ export default function MyPostedTasks() {
                   <div className="task-card-footer">
                     {key === 'pendingPayment' && <div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => { handlePostErrand(); navigate(`/tasks/post?edit=${task.taskId}`) }}><i className="fas fa-edit" /> Edit</button><button className="btn btn-danger btn-sm" onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel</button><button className="btn btn-primary btn-sm" onClick={() => handlePayNow(task.taskId)}><i className="fas fa-credit-card" /> Pay with Paystack</button></div>}
                     {key === 'posted' && <div className="action-col"><button className="btn btn-primary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><i className="fas fa-times" /> Cancel Task</button></div>}
-                    {(key === 'claimed' || key === 'completed') && <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/${task.taskId}/chat?title=${encodeURIComponent(task.taskName || task.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>{task.helperContact && <a href={`tel:${encodeURIComponent(task.helperContact)}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /> Call</a>}</div>{key === 'completed' && <button className="btn btn-primary btn-block btn-sm mt-2" onClick={() => setConfirmModal(task)}><i className="fas fa-check" /> Confirm & Pay Runner</button>}{key === 'completed' && task.paymentStatus?.toLowerCase() === 'escrowheld' && <button className="btn btn-outline btn-block btn-sm mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => { setDisputeModal(task); setDisputeIssue(''); setDisputeCategory('Quality'); setDisputeError('') }}><i className="fas fa-gavel" /> Raise Completion Dispute</button>}{key === 'claimed' && <div className="action-col mt-2"><button className="btn btn-secondary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)', flexDirection: 'column', gap: '0.1rem', lineHeight: 1.2 }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><span><i className="fas fa-times" /> Cancel Task</span></button></div>}</div>}
+                    {(key === 'claimed' || key === 'completed') && <div className="action-col"><div className="action-row"><button className="btn btn-outline btn-sm" onClick={() => navigate(`/tasks/${task.taskId}/chat?title=${encodeURIComponent(task.taskName || task.taskDescription || 'Task Chat')}`)}><i className="fas fa-comment" /> Chat</button>{task.helperContact && <a href={`tel:${encodeURIComponent(task.helperContact)}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /> Call</a>}</div>{key === 'completed' && task.escrowStatus?.toLowerCase() === 'incident_hold' && <div className="alert alert-warning mt-2"><i className="fas fa-lock" /> DFY has placed a temporary incident hold. Confirmation and automatic payout are paused while the report is reviewed. You may still raise a completion dispute.</div>}
+                    {key === 'completed' && task.escrowStatus?.toLowerCase() !== 'incident_hold' && <button className="btn btn-primary btn-block btn-sm mt-2" onClick={() => void openCompletionConfirm(task)}><i className="fas fa-check" /> Confirm & Pay Runner</button>}
+                    {key === 'completed' && task.paymentStatus?.toLowerCase() !== 'disputepending' && task.escrowStatus?.toLowerCase() !== 'disputed' && (
+                      <button className="btn btn-outline btn-block btn-sm mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => openCompletionDispute(task)}>
+                        <i className="fas fa-gavel" /> Raise completion dispute
+                      </button>
+                    )}{key === 'claimed' && <div className="action-col mt-2"><button className="btn btn-secondary btn-block btn-sm" onClick={() => setDetailsModal(task)}>View Details</button><button className="btn btn-outline btn-sm btn-block mt-2" style={{ color: 'var(--danger)', borderColor: 'var(--danger)', flexDirection: 'column', gap: '0.1rem', lineHeight: 1.2 }} onClick={() => { setCancelModal(task); setCancelMessage('') }}><span><i className="fas fa-times" /> Cancel Task</span></button></div>}</div>}
                     {key === 'runnerPaid' && <div className="action-row"><button className="btn btn-primary btn-sm flex-1" onClick={() => setDetailsModal(task)}>View Details</button>{task.helperContact && <a href={`tel:${task.helperContact}`} className="btn btn-outline btn-sm"><i className="fas fa-phone" /></a>}{!ratedTaskIds.has(task.taskId) && <button className="btn btn-outline btn-sm" onClick={() => { setRatingModal(task); setRatingReview(''); setRatingValue(5); setRatingError('') }}><i className="fas fa-star" /> Rate</button>}</div>}
                   </div>
                 </TaskCard>
@@ -280,7 +323,7 @@ export default function MyPostedTasks() {
           />}
         </div>
 
-        {disputeModal && <div className="modal-overlay" onClick={() => !disputeLoading && setDisputeModal(null)}><div className="modal-box" onClick={e => e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-gavel" /> Raise Completion Dispute</h3><button className="btn-close" onClick={() => !disputeLoading && setDisputeModal(null)}><i className="fas fa-times" /></button></div><div className="modal-body"><p className="mb-3">Raise a formal dispute if the runner's completed work does not meet the agreed task requirements. Task: <strong>{disputeModal.taskName || disputeModal.taskDescription}</strong></p><div className="alert alert-warning"><i className="fas fa-shield-halved" /> A formal dispute places the held escrow into dispute status and prevents normal release while DFY reviews it.</div><div className="form-group"><label className="form-label">Dispute category</label><select className="form-select" value={disputeCategory} onChange={e => setDisputeCategory(e.target.value)} disabled={disputeLoading}><option value="Quality">Quality of work</option><option value="Incomplete work">Incomplete work</option><option value="Not as agreed">Not as agreed</option><option value="Other">Other</option></select></div><div className="form-group"><label className="form-label">Explain the issue (minimum 10 characters)</label><textarea className="form-textarea" rows={5} maxLength={2000} value={disputeIssue} onChange={e => setDisputeIssue(e.target.value)} placeholder="Describe what was agreed, what was delivered, and what remains unresolved." disabled={disputeLoading} /></div></div>{disputeError && <p role="alert" style={{ color: 'var(--danger)', fontSize: '.85rem', padding: '0 1.5rem .5rem' }}>{disputeError}</p>}<div className="modal-footer"><button className="btn btn-secondary" onClick={() => setDisputeModal(null)} disabled={disputeLoading}>Cancel</button><button className="btn btn-danger" onClick={handleRaiseDispute} disabled={disputeLoading || disputeIssue.trim().length < 10}>{disputeLoading ? 'Submitting…' : 'Submit dispute'}</button></div></div></div>}
+        {disputeModal && <div className="modal-overlay" onClick={() => !disputeLoading && setDisputeModal(null)}><div className="modal-box" onClick={e => e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-gavel" /> Dispute Completion</h3><button className="btn-close" onClick={() => !disputeLoading && setDisputeModal(null)}><i className="fas fa-times" /></button></div><div className="modal-body"><p>Describe the problem with the runner's completed work on <strong>{disputeModal.taskName || disputeModal.taskDescription}</strong>.</p><div className="alert alert-warning mt-3"><i className="fas fa-lock" /> A valid completion dispute freezes held escrow while DFY reviews the case.</div><div className="form-group mt-3"><label className="form-label">Category</label><select className="form-select" value={disputeCategory} onChange={e => setDisputeCategory(e.target.value)} disabled={disputeLoading}><option value="Quality">Quality of work</option><option value="Incomplete work">Incomplete work</option><option value="Scope">Task requirements</option><option value="Safety">Safety or conduct</option><option value="Other">Other</option></select></div><div className="form-group"><label className="form-label">Describe the issue *</label><textarea className="form-textarea" value={disputeIssue} onChange={e => setDisputeIssue(e.target.value)} rows={4} minLength={10} maxLength={2000} placeholder="Explain what is incomplete or does not match the agreed task." disabled={disputeLoading} /></div></div>{disputeError && <p style={{ color: 'var(--danger)', fontSize: '.85rem', padding: '0 1.5rem' }}>{disputeError}</p>}<div className="modal-footer"><button className="btn btn-secondary" onClick={() => setDisputeModal(null)} disabled={disputeLoading}>Cancel</button><button className="btn btn-danger" onClick={handleRaiseDispute} disabled={disputeLoading || disputeIssue.trim().length < 10}>{disputeLoading ? 'Submitting…' : 'Submit dispute'}</button></div></div></div>}
 
         {confirmModal && <div className="modal-overlay" onClick={() => setConfirmModal(null)}><div className="modal-box" onClick={e => e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-check-circle" /> Confirm Task Completion</h3><button className="btn-close" onClick={() => setConfirmModal(null)}><i className="fas fa-times" /></button></div><div className="modal-body"><p>Are you satisfied with the completion of:</p><p className="mt-2"><strong>{confirmModal.taskDescription}</strong></p><div className="alert alert-info mt-3"><i className="fas fa-info-circle" /> You are confirming that the runner completed the task. This releases the runner's payout through Paystack. If there is a problem, close this dialog and raise a dispute instead. If you take no action for 24 hours, DFY automatically confirms the task.</div></div>{actionError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{actionError}</p>}<div className="modal-footer"><button className="btn btn-secondary" onClick={() => { setConfirmModal(null); setActionError('') }}>Cancel</button><button className="btn btn-primary" onClick={handleConfirm} disabled={actionLoading}>{actionLoading ? <><span className="spinner spinner-sm" /> Processing...</> : 'Confirm & Release Payout'}</button></div></div></div>}
 
