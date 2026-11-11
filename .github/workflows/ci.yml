@@ -128,7 +128,7 @@ jobs:
 
       - name: Build frontend for local 2FA UI tests
         env:
-          VITE_API_URL: https://dfy-be-staging.onrender.com/api/v1
+          VITE_API_URL: http://127.0.0.1:4173/api/v1
           VITE_SIGNALR_URL: https://dfy-be-staging.onrender.com/taskHub
         run: npm run build
 
