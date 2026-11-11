@@ -1,3 +1,4 @@
+import { loginTestAccount } from './helpers/totp-auth'
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
 import { runnerSecondFactorCode } from './helpers/runner-totp'
 
@@ -22,23 +23,20 @@ function requireEnv(name: string, value?: string) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  let response = await api.post(`${API_BASE_URL}/auth/login`, {
-    headers: { 'Content-Type': 'application/json' },
-    data: { email, password },
-  })
-  let body = await response.json()
-  if (!response.ok() && body?.requiresTwoFactor === true && email === RUNNER_EMAIL) {
-    response = await api.post(`${API_BASE_URL}/auth/login`, {
-      headers: { 'Content-Type': 'application/json' },
-      data: { email, password, secondFactorCode: await runnerSecondFactorCode() },
-    })
-    body = await response.json()
-  }
-  expect(response.ok(), `Login failed: HTTP ${response.status()} body=${JSON.stringify(body)}`).toBeTruthy()
-  expect(body.success, `Login returned success=false for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+  const normalized = email.trim().toLowerCase()
+  const secret = normalized === RUNNER_EMAIL?.trim().toLowerCase()
+    ? process.env.DFY_RUNNER_TOTP_SECRET
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase()
+      ? process.env.DFY_CREATOR_TOTP_SECRET
+      : normalized === ADMIN_EMAIL?.trim().toLowerCase()
+        ? process.env.DFY_ADMIN_TOTP_SECRET
+        : undefined
+  const label = normalized === RUNNER_EMAIL?.trim().toLowerCase() ? 'runner'
+    : normalized === CREATOR_EMAIL?.trim().toLowerCase() ? 'creator' : 'admin'
+  const body = await loginTestAccount(api, email, password, secret, label)
   const token = body.token || body.data?.token
   const user = body.user || body.data?.user
-  expect(token, `Login response did not contain a token for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+  expect(token, `Login response did not contain a token for ${email}.`).toBeTruthy()
   expect(user, `Login response did not contain a user profile for ${email}.`).toBeTruthy()
   authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
