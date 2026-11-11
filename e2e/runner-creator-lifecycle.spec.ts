@@ -13,16 +13,20 @@
  */
 
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { loginTestAccount } from './helpers/totp-auth'
 
 const API  = (process.env.DFY_API_URL  || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 const BASE = process.env.BASE_URL       || 'https://dfy-fe-staging.onrender.com'
 
 const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
 const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
+const RUNNER_TOTP_SECRET = process.env.DFY_RUNNER_TOTP_SECRET
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
+const CREATOR_TOTP_SECRET = process.env.DFY_CREATOR_TOTP_SECRET
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
+const ADMIN_TOTP_SECRET = process.env.DFY_ADMIN_TOTP_SECRET
 
 test.setTimeout(6 * 60 * 1000)
 
@@ -36,13 +40,8 @@ function requireEnv(name: string, value?: string): string {
   return value
 }
 
-async function apiLogin(api: APIRequestContext, email: string, password: string): Promise<string> {
-  const res  = await api.post(`${API}/auth/login`, { data: { email, password } })
-  const body = await res.json()
-  expect(
-    res.ok() && body.success !== false,
-    `Login failed for configured test account: HTTP ${res.status()} response=${JSON.stringify(body)}. Verify the matching DFY_* GitHub Actions secrets and that the account exists in the staging database.`,
-  ).toBeTruthy()
+async function apiLogin(api: APIRequestContext, email: string, password: string, totpSecret: string | undefined, label: string): Promise<string> {
+  const body = await loginTestAccount(api, email, password, totpSecret, label)
   const token = body.token ?? body.data?.token
   const user = body.user ?? body.data?.user
   expect(token, `Login succeeded without a token: ${JSON.stringify(body)}`).toBeTruthy()
@@ -134,9 +133,9 @@ test('runner accepts task → marks complete → creator confirms → payout que
   const adminPassword = requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD)
 
   // 1. Authenticate all three parties.
-  const runnerToken  = await apiLogin(request, runnerEmail, runnerPassword)
-  const creatorToken = await apiLogin(request, creatorEmail, creatorPassword)
-  const adminToken   = await apiLogin(request, adminEmail, adminPassword)
+  const runnerToken  = await apiLogin(request, runnerEmail, runnerPassword, RUNNER_TOTP_SECRET, 'runner')
+  const creatorToken = await apiLogin(request, creatorEmail, creatorPassword, CREATOR_TOTP_SECRET, 'creator')
+  const adminToken   = await apiLogin(request, adminEmail, adminPassword, ADMIN_TOTP_SECRET, 'admin')
 
   // 2. Confirm runner has a verified payout bank account.
   await ensureRunnerHasVerifiedBank(request, runnerToken)
