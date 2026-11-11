@@ -2,7 +2,7 @@ import { generateTotp } from './helpers/auth'
 import { test, expect } from '@playwright/test'
 
 const PROFILE = '**/api/v1/user/profile'
-const LOGIN = '**/api/v1/auth/login'
+const LOGIN = '**/auth/login**'
 
 function sessionResponse() {
   return {
