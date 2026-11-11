@@ -20,7 +20,7 @@ test('keeps the login page mounted and shows the backend 2FA challenge', async (
   await page.goto('/login')
   await page.getByPlaceholder('Email Address').fill('two-factor-regression@example.invalid')
   await page.getByPlaceholder('Password').fill('NotARealPassword123!')
-  await page.getByRole('button', { name: 'Sign In' }).click()
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click()
 
   await expect(page.getByRole('heading', { name: "Verify it's you" })).toBeVisible()
   await expect(page.locator('#second-factor-code')).toBeVisible()
