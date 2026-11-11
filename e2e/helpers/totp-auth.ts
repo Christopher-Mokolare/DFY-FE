@@ -35,7 +35,7 @@ export async function loginTestAccount(
   email: string,
   password: string,
   totpSecret: string | undefined,
-  accountLabel: string,
+  accountLabel = 'test',
 ) {
   const url = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '') + '/auth/login'
   const first = await api.post(url, { data: { email, password } })
