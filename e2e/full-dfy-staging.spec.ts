@@ -1,3 +1,4 @@
+import { loginTestAccount } from './helpers/totp-auth'
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
 
 // Staging E2E uses the versioned API route used by the deployed FE client.
@@ -21,16 +22,26 @@ function requireEnv(name: string, value?: string) {
 }
 
 async function apiLogin(api: APIRequestContext, email: string, password: string) {
-  const response = await api.post(`${API_BASE_URL}/auth/login`, {
-    headers: { 'Content-Type': 'application/json' },
-    data: { email, password },
-  })
-  expect(response.ok(), `Login failed: HTTP ${response.status()} body=${await response.text()}`).toBeTruthy()
-  const body = await response.json()
-  expect(body.success, `Login returned success=false for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+  const body = await loginTestAccount(
+    api,
+    email,
+    password,
+    email.trim().toLowerCase() === RUNNER_EMAIL?.trim().toLowerCase()
+      ? process.env.DFY_RUNNER_TOTP_SECRET
+      : email.trim().toLowerCase() === CREATOR_EMAIL?.trim().toLowerCase()
+        ? process.env.DFY_CREATOR_TOTP_SECRET
+        : email.trim().toLowerCase() === ADMIN_EMAIL?.trim().toLowerCase()
+          ? process.env.DFY_ADMIN_TOTP_SECRET
+          : undefined,
+    email.trim().toLowerCase() === RUNNER_EMAIL?.trim().toLowerCase()
+      ? 'runner'
+      : email.trim().toLowerCase() === CREATOR_EMAIL?.trim().toLowerCase()
+        ? 'creator'
+        : 'admin',
+  )
   const token = body.token || body.data?.token
   const user = body.user || body.data?.user
-  expect(token, `Login response did not contain a token for ${email}: ${JSON.stringify(body)}`).toBeTruthy()
+  expect(token, `Login response did not contain a token for ${email}.`).toBeTruthy()
   expect(user, `Login response did not contain a user profile for ${email}.`).toBeTruthy()
   authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
