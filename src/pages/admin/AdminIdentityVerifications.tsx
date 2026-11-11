@@ -54,7 +54,8 @@ export default function AdminIdentityVerifications() {
     if (!window.confirm('Are you sure you want to ' + actionLabel + ' this runner document review? This decision will be recorded in the audit trail.')) return
     setBusy(true); setError('')
     try {
-      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim())      if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
+      const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim())
+      if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
       setSelected(null); clearUrls(); await load()
     } catch (err: any) {
