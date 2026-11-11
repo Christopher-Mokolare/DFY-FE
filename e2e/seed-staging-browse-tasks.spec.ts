@@ -135,17 +135,42 @@ test('seed five real staging Browse Tasks through the authenticated API and veri
     await verifyTask(request, adminToken, tasks[i][0], taskIds[i])
   }
 
-  // Only the final assertion uses the real UI. Authentication is performed
-  // through the same /auth/login endpoint as the application so a loading,
-  // placeholder, or markup change on /login cannot falsely fail the seed.
+  // Confirm each task is actually published by the backend before checking
+  // the rendered Browse Tasks experience. The API returns only Posted tasks
+  // with EscrowHeld payment status, so this catches failed verification early.
+  for (let i = 0; i < tasks.length; i++) {
+    const [name] = tasks[i]
+    const response = await request.get(
+      `${API_BASE_URL}/tasks/available?page=1&pageSize=100&search=${encodeURIComponent(name)}`,
+      { headers: { Authorization: `Bearer ${creatorToken}` } },
+    )
+    if (!response.ok()) {
+      throw new Error(`Available tasks lookup failed for "${name}": ${response.status()} ${await response.text()}`)
+    }
+    const body = await response.json()
+    const available = body?.tasks || body?.data?.tasks || []
+    const published = available.find((item: any) =>
+      String(item?.taskId || item?.id) === taskIds[i] && item?.taskName === name,
+    )
+    if (!published) {
+      throw new Error(
+        `Task "${name}" was created and verified but is not returned by /tasks/available. ` +
+        `Check its TaskStatus, PaymentStatus, and deletion state before testing the UI.`,
+      )
+    }
+  }
+
+  // Browse Tasks is paginated and the reusable seed records may pre-date other
+  // staging activity. Search for each exact title so the UI assertion does not
+  // depend on a task happening to be in the first page of the shared staging feed.
   await setBrowserSession(page, creatorToken)
   await page.goto(`${BASE_URL}/tasks/browse`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+  const search = page.getByRole('searchbox', { name: 'Search tasks' })
 
   for (const [name] of tasks) {
-    // Seed data may already exist from another PR's staging E2E run. Match the
-    // first exact task heading instead of failing strict mode on duplicate cards.
+    await search.fill(name)
     await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible({ timeout: 30_000 })
   }
 
-  console.log('DFY STAGING PLAYWRIGHT SEED COMPLETE: 5/5 tasks created, verified, and visible in Browse Tasks.')
+  console.log('DFY STAGING PLAYWRIGHT SEED COMPLETE: 5/5 tasks created, verified, returned by the available-tasks API, and visible in Browse Tasks search.')
 })
