@@ -1,8 +1,6 @@
 import { test, expect, Page, request } from '@playwright/test'
 import { loginTestAccount } from './helpers/totp-auth'
 
-const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
-
 test.use({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 1,
