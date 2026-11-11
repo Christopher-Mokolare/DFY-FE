@@ -87,10 +87,23 @@ export async function loginWithTotp(
         `The staging account ${email} requires authenticator 2FA. Add the original Base32 enrollment key as GitHub Actions secret ${totpSecretNameForEmail(email)}; never use a rotating six-digit code as the secret.`
       )
     }
-    // Generate immediately before the second request. The backend accepts the
-    // current TOTP time step with its normal clock-skew window.
-    response = await postLogin(generateTotp(secret))
-    body = await response.json()
+    // Backend replay protection rejects a TOTP counter that was already
+    // consumed by another test or a manual sign-in. Retry once with the next
+    // time-step only when the server explicitly reports an invalid authenticator code.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) {
+        const remaining = 30_000 - (Date.now() % 30_000)
+        await new Promise(resolve => setTimeout(resolve, remaining + 150))
+      }
+      response = await postLogin(generateTotp(secret))
+      body = await response.json()
+      const invalidSecondFactor = response.status() === 401 &&
+        (body?.requiresTwoFactor === true || body?.RequiresTwoFactor === true) &&
+        /authenticator or recovery code is invalid/i.test(String(body?.message ?? body?.Message ?? ''))
+      if (response.ok() && body?.success !== false) break
+      if (attempt === 0 && invalidSecondFactor) continue
+      break
+    }
   }
 
   if (!response.ok() || body?.success === false) {
