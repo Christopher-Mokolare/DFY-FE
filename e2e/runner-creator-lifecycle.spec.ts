@@ -20,10 +20,13 @@ const BASE = process.env.BASE_URL       || 'https://dfy-fe-staging.onrender.com'
 
 const RUNNER_EMAIL = process.env.DFY_RUNNER_EMAIL
 const RUNNER_PASSWORD = process.env.DFY_RUNNER_PASSWORD
+const RUNNER_TOTP_SECRET = process.env.DFY_RUNNER_TOTP_SECRET
 const CREATOR_EMAIL = process.env.DFY_CREATOR_EMAIL
 const CREATOR_PASSWORD = process.env.DFY_CREATOR_PASSWORD
+const CREATOR_TOTP_SECRET = process.env.DFY_CREATOR_TOTP_SECRET
 const ADMIN_EMAIL = process.env.DFY_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.DFY_ADMIN_PASSWORD
+const ADMIN_TOTP_SECRET = process.env.DFY_ADMIN_TOTP_SECRET
 
 test.setTimeout(6 * 60 * 1000)
 
@@ -37,21 +40,11 @@ function requireEnv(name: string, value?: string): string {
   return value
 }
 
-async function apiLogin(api: APIRequestContext, email: string, password: string): Promise<string> {
-  const normalized = email.trim().toLowerCase()
-  const secret = normalized === RUNNER_EMAIL?.trim().toLowerCase()
-    ? process.env.DFY_RUNNER_TOTP_SECRET
-    : normalized === CREATOR_EMAIL?.trim().toLowerCase()
-      ? process.env.DFY_CREATOR_TOTP_SECRET
-      : normalized === ADMIN_EMAIL?.trim().toLowerCase()
-        ? process.env.DFY_ADMIN_TOTP_SECRET
-        : undefined
-  const label = normalized === RUNNER_EMAIL?.trim().toLowerCase() ? 'runner'
-    : normalized === CREATOR_EMAIL?.trim().toLowerCase() ? 'creator' : 'admin'
-  const body = await loginTestAccount(api, email, password, secret, label)
+async function apiLogin(api: APIRequestContext, email: string, password: string, totpSecret: string | undefined, label: string): Promise<string> {
+  const body = await loginTestAccount(api, email, password, totpSecret, label)
   const token = body.token ?? body.data?.token
   const user = body.user ?? body.data?.user
-  expect(token, `Login succeeded without a token for ${email}.`).toBeTruthy()
+  expect(token, `Login succeeded without a token: ${JSON.stringify(body)}`).toBeTruthy()
   expect(user, `Login succeeded without a user profile for ${email}.`).toBeTruthy()
   authenticatedSessions.set(email, { token: String(token), user })
   return String(token)
@@ -140,9 +133,9 @@ test('runner accepts task → marks complete → creator confirms → payout que
   const adminPassword = requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD)
 
   // 1. Authenticate all three parties.
-  const runnerToken  = await apiLogin(request, runnerEmail, runnerPassword)
-  const creatorToken = await apiLogin(request, creatorEmail, creatorPassword)
-  const adminToken   = await apiLogin(request, adminEmail, adminPassword)
+  const runnerToken  = await apiLogin(request, runnerEmail, runnerPassword, RUNNER_TOTP_SECRET, 'runner')
+  const creatorToken = await apiLogin(request, creatorEmail, creatorPassword, CREATOR_TOTP_SECRET, 'creator')
+  const adminToken   = await apiLogin(request, adminEmail, adminPassword, ADMIN_TOTP_SECRET, 'admin')
 
   // 2. Confirm runner has a verified payout bank account.
   await ensureRunnerHasVerifiedBank(request, runnerToken)
