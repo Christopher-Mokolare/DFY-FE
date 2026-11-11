@@ -73,7 +73,7 @@ export default function AdminIdentityVerifications() {
     try {
       if (decision === 'approve' && !verifiedDateOfBirth) { setError('Enter the date of birth exactly as shown on the document.'); return }
       const isSouthAfricanId = selected.documentType === 'south_african_id_card' || selected.documentType === 'south_african_id_book'
-      if (decision === 'approve' && isSouthAfricanId && !/^\\d{13}$/.test(southAfricanIdNumber)) { setError('Enter the 13-digit South African ID number shown on the document.'); return }
+      if (decision === 'approve' && isSouthAfricanId && !/^\d{13}$/.test(southAfricanIdNumber)) { setError('Enter the 13-digit South African ID number shown on the document.'); return }
       const response = await adminApi.decideManualIdentityVerification(selected.id, decision, reasonCode, runnerNote.trim(), internalNote.trim(), verifiedDateOfBirth || undefined, southAfricanIdNumber || undefined)
       if (response.data?.success === false) throw new Error(response.data?.message || 'The review decision failed.')
       setMessage(response.data?.message || 'Review decision saved.')
@@ -112,7 +112,7 @@ export default function AdminIdentityVerifications() {
           </div>
           {(selected.documentType === 'south_african_id_card' || selected.documentType === 'south_african_id_book') && <>
             <label className="form-label" htmlFor="southAfricanIdNumber">13-digit South African ID number (required for approval)</label>
-            <input id="southAfricanIdNumber" className="form-input" type="password" inputMode="numeric" autoComplete="off" maxLength={13} value={southAfricanIdNumber} onChange={e => setSouthAfricanIdNumber(e.target.value.replace(/\\D/g, '').slice(0, 13))} placeholder="Enter the number from the document" />
+            <input id="southAfricanIdNumber" className="form-input" type="password" inputMode="numeric" autoComplete="off" maxLength={13} value={southAfricanIdNumber} onChange={e => setSouthAfricanIdNumber(e.target.value.replace(/\D/g, '').slice(0, 13))} placeholder="Enter the number from the document" />
             <p className="text-muted text-xs">The backend validates the ID checksum and compares a keyed fingerprint for possible duplicate accounts. The raw ID number is not stored in the review record.</p>
           </>}
           {selected.duplicateIdDetected && <div className="alert alert-error" role="alert">A possible duplicate ID number has been detected. Do not approve this case; it requires a separate identity investigation.</div>}
