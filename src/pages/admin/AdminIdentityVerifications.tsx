@@ -46,9 +46,10 @@ export default function AdminIdentityVerifications() {
   }, [selected?.id])
 
   const open = async (row: Submission) => {
-    clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setMessage(''); setError('')
+    clearUrls(); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setMessage(''); setError('')
     try {
       await adminApi.claimManualIdentityReview(row.id)
+      setSelected(row)
       const front = await adminApi.getManualIdentityDocument(row.id, 'front')
       setFrontUrl(URL.createObjectURL(front.data))
       if (row.documentType === 'south_african_id_card') {
@@ -56,7 +57,9 @@ export default function AdminIdentityVerifications() {
         setBackUrl(URL.createObjectURL(back.data))
       }
     } catch (err: any) {
-      setError(err.response?.status === 403 ? 'Complete administrator authenticator verification before viewing identity documents.' : 'The encrypted identity documents could not be opened.')
+      await adminApi.releaseManualIdentityReview(row.id).catch(() => undefined)
+      setSelected(null)
+      setError(err.response?.data?.message || (err.response?.status === 403 ? 'Complete administrator authenticator verification before viewing identity documents.' : 'The encrypted identity documents could not be opened.'))
     }
   }
   const decide = async (decision: 'approve' | 'reject' | 'request_information') => {
