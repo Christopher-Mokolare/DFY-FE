@@ -1,4 +1,5 @@
 import { test, expect, Page, request } from '@playwright/test'
+import { loginTestAccount } from './helpers/totp-auth'
 
 const API_BASE_URL = (process.env.DFY_API_URL || 'https://dfy-be-staging.onrender.com/api/v1').replace(/\/$/, '')
 
@@ -66,29 +67,18 @@ function requireTestAccounts() {
 
 type AuthenticatedSession = { token: string; user: unknown }
 
-async function createAuthenticatedSession(email: string, password: string): Promise<AuthenticatedSession> {
+async function createAuthenticatedSession(
+  email: string,
+  password: string,
+  totpSecret: string | undefined,
+  accountLabel: 'creator' | 'runner',
+): Promise<AuthenticatedSession> {
   await waitForApiReady()
   const api = await request.newContext()
   try {
-    const response = await api.post(`${API_BASE_URL}/auth/login`, {
-      headers: { 'Content-Type': 'application/json' },
-      data: { email, password },
-      timeout: 30_000,
-    })
-    if (!response.ok()) {
-      const retryAfter = response.headers()['retry-after']
-      const rateLimitReset = response.headers()['x-ratelimit-reset']
-      throw new Error(
-        'Configured mobile E2E account login failed: ' + response.status() +
-        ' ' + await response.text() +
-        (retryAfter ? ' (Retry-After: ' + retryAfter + ')' : '') +
-        (rateLimitReset ? ' (Rate limit reset: ' + rateLimitReset + ')' : '')
-      )
-    }
-
-    const body = await response.json()
+    const body = await loginTestAccount(api, email, password, totpSecret, accountLabel)
     if (!body?.success || !body?.token || !body?.user) {
-      throw new Error('Configured mobile E2E account login returned no usable session.')
+      throw new Error(`Configured mobile E2E ${accountLabel} login returned no usable session.`)
     }
     return { token: String(body.token), user: body.user }
   } finally {
@@ -282,7 +272,7 @@ test.describe('mobile responsiveness - creator screens', () => {
 
   test.beforeAll(async () => {
     requireTestAccounts()
-    creatorSession = await createAuthenticatedSession(CREATOR_EMAIL!, CREATOR_PASSWORD!)
+    creatorSession = await createAuthenticatedSession(CREATOR_EMAIL!, CREATOR_PASSWORD!, process.env.DFY_CREATOR_TOTP_SECRET, 'creator')
   })
 
   test.beforeEach(async ({ page }) => {
@@ -312,7 +302,7 @@ test.describe('mobile responsiveness - runner screens', () => {
 
   test.beforeAll(async () => {
     requireTestAccounts()
-    runnerSession = await createAuthenticatedSession(RUNNER_EMAIL!, RUNNER_PASSWORD!)
+    runnerSession = await createAuthenticatedSession(RUNNER_EMAIL!, RUNNER_PASSWORD!, process.env.DFY_RUNNER_TOTP_SECRET, 'runner')
   })
 
   test.beforeEach(async ({ page }) => {
