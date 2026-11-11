@@ -200,9 +200,9 @@ test.describe('DFY escrow and dispute workflow', () => {
 
   test('runner dispute freezes escrow -> admin resolves dispute -> payout path is re-opened', async ({ browser, page, request }) => {
     // Preflight all existing privileged/test accounts before creating a creator or task.
-    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD))
+    const runnerToken = await apiLogin(request, requireEnv('DFY_RUNNER_EMAIL', RUNNER_EMAIL), requireEnv('DFY_RUNNER_PASSWORD', RUNNER_PASSWORD), RUNNER_TOTP_SECRET, 'runner')
     await ensureRunnerBank(request, runnerToken)
-    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD))
+    const adminToken = await apiLogin(request, requireEnv('DFY_ADMIN_EMAIL', ADMIN_EMAIL), requireEnv('DFY_ADMIN_PASSWORD', ADMIN_PASSWORD), ADMIN_TOTP_SECRET, 'admin')
 
     const freshCreator = await useConfiguredCreator(request)
     const creatorToken = freshCreator.token
