@@ -72,10 +72,28 @@ export default function SumsubVerificationWidget({
         const tokenResponse = await identityVerificationApi.exchange(handoffCode)
         const apiBody = tokenResponse.data
         const response = apiBody?.data || apiBody
-        if (apiBody?.success === false || !response?.accessToken) {
+        if (apiBody?.success === false) {
           throw new Error(apiBody?.message || response?.message || 'A verification session could not be opened.')
         }
 
+        // Didit uses a hosted verification URL, not a Sumsub WebSDK access token.
+        // Validate the destination before navigating so a compromised API response
+        // cannot send a runner to an arbitrary external site.
+        if (response?.verificationUrl) {
+          const hostedUrl = new URL(response.verificationUrl)
+          if (hostedUrl.protocol !== 'https:' || hostedUrl.hostname !== 'verify.didit.me') {
+            throw new Error('The verification provider returned an untrusted hosted URL.')
+          }
+          window.location.assign(hostedUrl.toString())
+          return
+        }
+
+        if (!response?.accessToken) {
+          throw new Error(apiBody?.message || response?.message || 'A verification session could not be opened.')
+        }
+
+        // Retain Sumsub SDK compatibility for existing in-flight accounts while
+        // the backend transitions the provider setting to Didit.
         await loadSumsubSdk()
         if (cancelled) return
         if (!window.snsWebSdk || !containerRef.current) {
@@ -131,7 +149,7 @@ export default function SumsubVerificationWidget({
         {onClose && <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>}
       </div>
       <p className="text-muted text-sm">
-        Complete the provider's identity document and liveness steps in this secure window. DoForYou receives the verification result, not a copy of the captured images or raw provider payload.
+        Complete the identity-document and liveness steps in the secure verification window. DoForYou receives the verification result, not a copy of the captured images or raw provider payload.
       </p>
       {loading && <p role="status">Preparing secure verification…</p>}
       {error && <div className="alert alert-error" role="alert">{error}</div>}
