@@ -30,6 +30,11 @@ export function generateTotp(secret: string, now = Date.now()): string {
   return String(binary % 1_000_000).padStart(6, '0')
 }
 
+async function waitForNextTotpStep(): Promise<void> {
+  const remaining = 30_000 - (Date.now() % 30_000)
+  await new Promise(resolve => setTimeout(resolve, remaining + 150))
+}
+
 export async function loginTestAccount(
   api: APIRequestContext,
   email: string,
@@ -48,14 +53,27 @@ export async function loginTestAccount(
         `${accountLabel} account requires authenticator 2FA, but its GitHub Actions secret is missing. Configure DFY_${accountLabel.toUpperCase()}_TOTP_SECRET with the original Base32 authenticator setup key (not a six-digit code).`,
       )
     }
-    const secondFactorCode = generateTotp(totpSecret)
-    const second = await api.post(url, { data: { email, password, secondFactorCode } })
-    let secondBody: any
-    try { secondBody = await second.json() } catch { secondBody = { message: await second.text() } }
-    if (!second.ok() || secondBody?.success === false || !(secondBody?.token || secondBody?.data?.token)) {
-      throw new Error(`${accountLabel} authenticator verification failed: HTTP ${second.status()} ${JSON.stringify(secondBody)}. Check that the Base32 secret matches this staging account and the runner clock is synchronized.`)
+
+    // The backend stores the last accepted TOTP counter and rejects replay.
+    // A previous test or a manual sign-in may already have consumed this
+    // 30-second counter, so retry once with a fresh counter on that response.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await waitForNextTotpStep()
+      const secondFactorCode = generateTotp(totpSecret)
+      const second = await api.post(url, { data: { email, password, secondFactorCode } })
+      let secondBody: any
+      try { secondBody = await second.json() } catch { secondBody = { message: await second.text() } }
+      if (second.ok() && secondBody?.success !== false && (secondBody?.token || secondBody?.data?.token)) {
+        return secondBody
+      }
+
+      const invalidSecondFactor = second.status() === 401 &&
+        (secondBody?.requiresTwoFactor === true || secondBody?.data?.requiresTwoFactor === true) &&
+        /authenticator or recovery code is invalid/i.test(String(secondBody?.message ?? ''))
+      if (attempt === 0 && invalidSecondFactor) continue
+
+      throw new Error(`${accountLabel} authenticator verification failed: HTTP ${second.status()} ${JSON.stringify(secondBody)}. Check that the Base32 secret matches this staging account and the runner clock is synchronized; the helper also retries once with a fresh TOTP time-step to handle backend replay protection.`)
     }
-    return secondBody
   }
 
   if (!first.ok() || body?.success === false || !(body?.token || body?.data?.token)) {
