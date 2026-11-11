@@ -36,7 +36,7 @@ export default function AdminIdentityVerifications() {
     try {
       const front = await adminApi.getManualIdentityDocument(row.id, 'front')
       setFrontUrl(URL.createObjectURL(front.data))
-      if (row.documentType === 'south_african_id') {
+      if (row.documentType === 'south_african_id_card') {
         const back = await adminApi.getManualIdentityDocument(row.id, 'back')
         setBackUrl(URL.createObjectURL(back.data))
       }
@@ -63,7 +63,7 @@ export default function AdminIdentityVerifications() {
       <div className="page-header"><div className="container"><h1><i className="fas fa-id-card" /> Runner identity review</h1></div></div>
       <div className="container">
         <div className="section-card">
-          <p className="text-muted">Review submitted South African ID cards and passports. Images are encrypted at rest and are only available to administrators with a recent authenticator verification. This is manual document review, not an automated Home Affairs or biometric check.</p>
+          <p className="text-muted">Review submitted South African Smart ID cards, green barcoded ID books and passports. Images are encrypted at rest and are only available to administrators with a recent authenticator verification. This is manual document review, not an automated Home Affairs or biometric check.</p>
           {message && <div className="alert alert-success" role="status">{message}</div>}
           {error && <div className="alert alert-error" role="alert">{error}</div>}
           {loading ? <div className="loading-state"><div className="spinner" /></div> : rows.length === 0 ? <p className="text-muted">There are no pending identity applications.</p> : (
@@ -71,7 +71,7 @@ export default function AdminIdentityVerifications() {
               <table className="admin-table">
                 <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Date of birth</th><th>Submitted</th><th /></tr></thead>
                 <tbody>{rows.map(row => <tr key={row.id}>
-                  <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id' ? 'South African ID card' : 'Passport'}</td><td>{row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString('en-ZA') : 'Not provided'}</td>
+                  <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id_card' ? 'South African Smart ID card' : row.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'}</td><td>{row.dateOfBirth ? new Date(row.dateOfBirth).toLocaleDateString('en-ZA') : 'Not provided'}</td>
                   <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)}>Review</button></td>
                 </tr>)}</tbody>
               </table>
@@ -80,9 +80,9 @@ export default function AdminIdentityVerifications() {
         </div>
         {selected && <div className="section-card" style={{ marginTop: '1rem' }}>
           <div className="section-header"><h2>Review {selected.userName}</h2><button className="btn btn-secondary btn-sm" onClick={() => { setSelected(null); clearUrls() }}>Close</button></div>
-          <p className="text-muted text-sm">{selected.email} · {selected.documentType} · Submitted {new Date(selected.submittedAt).toLocaleString('en-ZA')}</p>
+          <p className="text-muted text-sm">{selected.email} · {selected.documentType === 'south_african_id_card' ? 'South African Smart ID card' : selected.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'} · Submitted {new Date(selected.submittedAt).toLocaleString('en-ZA')}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1rem' }}>
-            {frontUrl && <figure><figcaption>Front / passport page</figcaption><img src={frontUrl} alt="Identity document front" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
+            {frontUrl && <figure><figcaption>{selected.documentType === 'south_african_id_book' ? 'ID book photo-information page' : selected.documentType === 'passport' ? 'Passport photo-information page' : 'Front of Smart ID card'}</figcaption><img src={frontUrl} alt="Identity document front" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
             {backUrl && <figure><figcaption>Back of ID card</figcaption><img src={backUrl} alt="Identity document back" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
           </div>
           <label className="form-label" htmlFor="reviewReason">Review reason (required)</label>
