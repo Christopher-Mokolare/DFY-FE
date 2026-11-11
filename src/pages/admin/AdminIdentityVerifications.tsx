@@ -34,9 +34,21 @@ export default function AdminIdentityVerifications() {
   }
   useEffect(() => { void load(); return () => clearUrls() }, [])
 
+  useEffect(() => {
+    if (!selected) return
+    const claimId = selected.id
+    const heartbeat = window.setInterval(() => {
+      void adminApi.heartbeatManualIdentityReview(claimId).catch(() => {
+        setError('Your review claim expired or was reassigned. Close this case and claim it again before continuing.')
+      })
+    }, 2 * 60 * 1000)
+    return () => window.clearInterval(heartbeat)
+  }, [selected?.id])
+
   const open = async (row: Submission) => {
     clearUrls(); setSelected(row); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setMessage(''); setError('')
     try {
+      await adminApi.claimManualIdentityReview(row.id)
       const front = await adminApi.getManualIdentityDocument(row.id, 'front')
       setFrontUrl(URL.createObjectURL(front.data))
       if (row.documentType === 'south_african_id_card') {
@@ -86,7 +98,7 @@ export default function AdminIdentityVerifications() {
           )}
         </div>
         {selected && <div className="section-card" style={{ marginTop: '1rem' }}>
-          <div className="section-header"><h2>Review {selected.userName}</h2><button className="btn btn-secondary btn-sm" onClick={() => { setSelected(null); clearUrls() }}>Close</button></div>
+          <div className="section-header"><h2>Review {selected.userName}</h2><button className="btn btn-secondary btn-sm" onClick={() => { void adminApi.releaseManualIdentityReview(selected.id).catch(() => undefined); setSelected(null); clearUrls() }}>Close</button></div>
           <p className="text-muted text-sm">{selected.email} · {selected.documentType === 'south_african_id_card' ? 'South African Smart ID card' : selected.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'} · Submitted {new Date(selected.submittedAt).toLocaleString('en-ZA')}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1rem' }}>
             {frontUrl && <figure><figcaption>{selected.documentType === 'south_african_id_book' ? 'ID book photo-information page' : selected.documentType === 'passport' ? 'Passport photo-information page' : 'Front of Smart ID card'}</figcaption><img src={frontUrl} alt="Identity document front" style={{ width: '100%', height: 'auto', borderRadius: 8 }} /></figure>}
