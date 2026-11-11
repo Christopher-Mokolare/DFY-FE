@@ -51,9 +51,10 @@ export default function Login() {
       finishSignIn(loggedInUser)
     } catch (err: any) {
       const responseData = err?.response?.data ?? err?.data ?? err
-      if (responseData?.requiresTwoFactor === true || responseData?.RequiresTwoFactor === true) {
+      const authResponse = responseData?.data ?? responseData
+      if (authResponse?.requiresTwoFactor === true || authResponse?.RequiresTwoFactor === true) {
         setRequiresTwoFactor(true)
-        setError(responseData?.message || responseData?.Message || 'Enter your authenticator code to continue.')
+        setError(authResponse?.message || authResponse?.Message || responseData?.message || responseData?.Message || 'Enter your authenticator code to continue.')
       } else if ((responseData?.requiresAccountSetup === true || responseData?.RequiresAccountSetup === true) && pendingGoogleToken) {
         navigate('/register', { state: { googleIdToken: pendingGoogleToken, returnToTaskId } })
       } else {
