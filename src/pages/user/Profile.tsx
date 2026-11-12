@@ -482,8 +482,8 @@ export default function Profile() {
                 <div className="alert alert-info mt-3" role="status">
                   {hasIdNumber
                     ? <p className="text-sm">An ID number is already on file ending {idNumberLastFour}. Do not send identity documents through this profile form.</p>
-                    : <p className="text-sm">Runner identity information will be collected through the dedicated verification flow once the verification provider and data protection controls are configured.</p>}
-                  <p className="text-sm" style={{ marginBottom: 0 }}>A valid ID format is not identity verification. Runner acceptance remains locked until identity/liveness checks and authenticator-based 2FA are completed.</p>
+                    : <p className="text-sm">Upload and manage your identity documents in the Runner Identity Verification section below. DFY administrators review submissions manually.</p>}
+                  <p className="text-sm" style={{ marginBottom: 0 }}>A valid ID format alone is not identity verification. Runner task acceptance remains locked until DFY approves your document review and authenticator 2FA is enabled.</p>
                 </div>
               )}
               <div className="form-group"><label className="form-label">Address</label><input className="form-input" value={form.address} onChange={set('address')} /></div>
@@ -518,8 +518,8 @@ export default function Profile() {
               ))}
             </div>
             {(form.userType === 'runner' || form.userType === 'both') && (
-              <div className="alert alert-info mt-4" role="status">
-                <strong>Runner eligibility</strong>
+              <div id="runner-identity" className="alert alert-info mt-4" role="region" aria-labelledby="runner-identity-heading">
+                <strong id="runner-identity-heading">Runner Identity Verification</strong>
                 <p className="text-sm" style={{ margin: '.4rem 0' }}>DFY Document Review: {identityVerificationStatus === 'passed' ? 'DFY Identity Document Reviewed' : identityVerificationStatus === 'more_info_requested' ? 'more information required' : identityVerificationStatus === 'failed' ? 'review unsuccessful' : identityVerificationStatus.replace(/_/g, ' ')}.</p>
                 <p className="text-sm" style={{ margin: '.4rem 0' }}>Authenticator 2FA: {authenticatorTwoFactorEnabled ? 'enabled' : 'not enabled'}.</p>
                 <p className="text-sm" style={{ margin: '.4rem 0' }}>Payout account: {hasVerifiedPayoutAccount ? 'bank recipient verified' : 'not verified'}.</p>
@@ -528,7 +528,7 @@ export default function Profile() {
                   <div style={{ display: 'grid', gap: '.75rem', marginTop: '.75rem' }}>
                     {!identityProviderConfigured && (
                       <p className="text-sm" style={{ margin: 0 }}>
-                        DFY's secure identity-document encryption is not configured on this staging API yet. Submissions remain disabled.
+                        Secure document submission is temporarily unavailable because one or more server-side safeguards are not ready. DFY requires document encryption, the current consent configuration and malware scanning before accepting identity documents. Do not email or message your documents; please try again later.
                       </p>
                     )}
                     {identityProviderConfigured && (
