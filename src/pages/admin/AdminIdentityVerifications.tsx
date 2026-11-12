@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../api'
 
-type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; reviewDueAt: string; reviewAgeMinutes: number; isOverdue: boolean; duplicateIdDetected?: boolean; userName: string; email: string }
+type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; reviewDueAt: string; reviewAgeMinutes: number; isOverdue: boolean; isNearDeadline: boolean; isResubmission: boolean; isClaimed: boolean; isClaimedByMe: boolean; claimedByName?: string | null; claimExpiresAt?: string | null; duplicateIdDetected?: boolean; userName: string; email: string }
+type QueueCounts = { total: number; nearDeadline: number; overdue: number; claimedByMe: number; unclaimed: number; resubmission: number }
+const queueFilters = [
+  { value: 'all', label: 'All pending' },
+  { value: 'near-deadline', label: 'Near deadline' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'claimed-by-me', label: 'Claimed by me' },
+  { value: 'unclaimed', label: 'Unclaimed' },
+  { value: 'resubmission', label: 'Resubmissions' },
+] as const
+type QueueFilter = typeof queueFilters[number]['value']
 
 export default function AdminIdentityVerifications() {
   const [rows, setRows] = useState<Submission[]>([])
@@ -15,6 +25,8 @@ export default function AdminIdentityVerifications() {
   const [southAfricanIdNumber, setSouthAfricanIdNumber] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [filter, setFilter] = useState<QueueFilter>('all')
+  const [queueCounts, setQueueCounts] = useState<QueueCounts | null>(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -27,13 +39,16 @@ export default function AdminIdentityVerifications() {
   const load = async () => {
     setLoading(true); setError('')
     try {
-      const response = await adminApi.getManualIdentityVerifications({ page: 1, pageSize: 50 })
-      setRows((response.data?.data || response.data)?.submissions || [])
+      const response = await adminApi.getManualIdentityVerifications({ page: 1, pageSize: 50, filter })
+      const data = response.data?.data || response.data
+      setRows(data?.submissions || [])
+      setQueueCounts(data?.queueCounts || null)
     } catch (err: any) {
       setError(err.response?.status === 403 ? 'Administrator access or a recent authenticator verification is required.' : err.response?.data?.message || 'Could not load pending identity applications.')
     } finally { setLoading(false) }
   }
-  useEffect(() => { void load(); return () => clearUrls() }, [])
+  useEffect(() => { void load() }, [filter])
+  useEffect(() => () => clearUrls(), [])
 
   useEffect(() => {
     if (!selected) return
@@ -91,13 +106,28 @@ export default function AdminIdentityVerifications() {
           <p className="text-muted">Review submitted South African Smart ID cards, green barcoded ID books and passports. Images are encrypted at rest and are only available to administrators with a recent authenticator verification. This is manual document review, not an automated Home Affairs or biometric check.</p>
           {message && <div className="alert alert-success" role="status">{message}</div>}
           {error && <div className="alert alert-error" role="alert">{error}</div>}
-          {loading ? <div className="loading-state"><div className="spinner" /></div> : rows.length === 0 ? <p className="text-muted">There are no pending identity applications.</p> : (
+          {queueCounts && <div className="admin-table-actions" style={{ flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <span className="badge badge-info">Queue {queueCounts.total}</span>
+            <span className="badge badge-warning">Near deadline {queueCounts.nearDeadline}</span>
+            <span className="badge badge-danger">Overdue {queueCounts.overdue}</span>
+            <span className="badge badge-info">Claimed by me {queueCounts.claimedByMe}</span>
+            <span className="badge badge-info">Unclaimed {queueCounts.unclaimed}</span>
+            <span className="badge badge-info">Resubmissions {queueCounts.resubmission}</span>
+          </div>}
+          <label className="form-label" htmlFor="identity-review-filter">Review queue</label>
+          <select id="identity-review-filter" className="form-select" value={filter} onChange={event => {
+            const selectedFilter = queueFilters.find(option => option.value === event.target.value)?.value
+            if (selectedFilter) setFilter(selectedFilter)
+          }} style={{ maxWidth: 320, marginBottom: '1rem' }}>
+            {queueFilters.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          {loading ? <div className="loading-state"><div className="spinner" /></div> : rows.length === 0 ? <p className="text-muted">There are no pending identity applications in this queue.</p> : (
             <div style={{ overflowX: 'auto' }}>
               <table className="admin-table">
-                <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Submitted</th><th>Review target</th><th /></tr></thead>
+                <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Submitted</th><th>Review target</th><th>Reviewer</th><th /></tr></thead>
                 <tbody>{rows.map(row => <tr key={row.id}>
                   <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id_card' ? 'South African Smart ID card' : row.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'}{row.duplicateIdDetected && <div className="text-danger text-xs"><strong>Potential duplicate ID — investigation required</strong></div>}</td>
-                  <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><span style={{ color: row.isOverdue ? '#b91c1c' : 'inherit', fontWeight: row.isOverdue ? 700 : 400 }}>{row.isOverdue ? 'OVERDUE · ' : ''}{new Date(row.reviewDueAt).toLocaleString('en-ZA')}</span><div className="text-muted text-xs">{Math.floor(row.reviewAgeMinutes / 60)}h {row.reviewAgeMinutes % 60}m in queue</div></td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)}>Review</button></td>
+                  <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><span style={{ color: row.isOverdue ? '#b91c1c' : 'inherit', fontWeight: row.isOverdue ? 700 : 400 }}>{row.isOverdue ? 'OVERDUE · ' : row.isNearDeadline ? 'NEAR DEADLINE · ' : ''}{new Date(row.reviewDueAt).toLocaleString('en-ZA')}</span><div className="text-muted text-xs">{Math.floor(row.reviewAgeMinutes / 60)}h {row.reviewAgeMinutes % 60}m in queue{row.isResubmission ? ' · resubmission' : ''}</div></td><td>{row.isClaimed ? `${row.claimedByName || 'Another reviewer'}${row.isClaimedByMe ? ' (you)' : ''}` : 'Unclaimed'}{row.claimExpiresAt && <div className="text-muted text-xs">Claim expires {new Date(row.claimExpiresAt).toLocaleTimeString('en-ZA')}</div>}</td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)} disabled={row.isClaimed && !row.isClaimedByMe}>{row.isClaimed && !row.isClaimedByMe ? 'In review' : 'Review'}</button></td>
                 </tr>)}</tbody>
               </table>
             </div>
