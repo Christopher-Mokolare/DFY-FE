@@ -60,6 +60,7 @@ export default function UserDashboardShell({ children }: UserDashboardShellProps
     { label: 'My Posted Tasks', to: '/tasks/my-posted', icon: 'fa-list-check', show: isCreator, section: 'TASKS' },
     { label: 'My Active Tasks', to: '/tasks/my-active', icon: 'fa-running', show: isRunner, section: 'TASKS' },
     { label: 'My Completed Tasks', to: '/tasks/my-completed', icon: 'fa-circle-check', show: true, section: 'TASKS' },
+    { label: 'Identity Verification', to: '/user/profile#runner-identity', icon: 'fa-id-card', show: isRunner, section: 'ACCOUNT' },
     { label: 'Bank Accounts', to: '/user/bank-accounts', icon: 'fa-university', show: true, section: 'ACCOUNT' },
     { label: 'Messages', to: '/messages', icon: 'fa-comments', show: true, badge: unreadMessages, section: 'COMMUNICATION' },
     { label: 'Notifications', to: '/notifications', icon: 'fa-bell', show: true, badge: unreadNotifications, section: 'COMMUNICATION' },
