@@ -37,12 +37,12 @@ jobs:
             echo "::error::DFY_BE_READ_TOKEN is required (read-only Contents access to DoForYou-ZA/DFY-BE)."
             exit 1
           fi
-          curl --fail --silent --show-error \
+          curl --location --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 \
             -H "Authorization: Bearer $DFY_BE_READ_TOKEN" \
             -H "Accept: application/vnd.github.raw+json" \
             "https://api.github.com/repos/DoForYou-ZA/DFY-BE/contents/docs/openapi.json?ref=main" \
             -o /tmp/canonical-openapi.json
-          python -m json.tool /tmp/canonical-openapi.json >/dev/null
+          jq -e 'type == "object" and has("openapi")' /tmp/canonical-openapi.json >/dev/null
       - name: Update contract snapshot and generated TypeScript declarations
         id: update
         run: |
