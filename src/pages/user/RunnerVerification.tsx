@@ -64,7 +64,7 @@ export default function RunnerVerification() {
             <form onSubmit={submit} className="section-card">
               <p className="text-muted text-sm">Your secure submission link expires in five minutes and can only be used once.</p>
               <label className="form-label" htmlFor="documentType">Identity document</label>
-              <select id="documentType" className="form-input" value={documentType} onChange={e => { setDocumentType(e.target.value as 'south_african_id_card' | 'passport'); setBackDocument(null) }}>
+              <select id="documentType" className="form-input" value={documentType} onChange={e => { setDocumentType(e.target.value as 'south_african_id_card' | 'south_african_id_book' | 'passport'); setBackDocument(null) }}>
                 <option value="south_african_id_card">South African Smart ID card (front and back)</option>
                 <option value="south_african_id_book">South African green barcoded ID book (photo-information page)</option>
                 <option value="passport">Passport</option>
