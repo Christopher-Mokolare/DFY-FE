@@ -35,6 +35,8 @@ interface Account {
   emailVerified: boolean
   authenticatorTwoFactorEnabled: boolean
   isArchived: boolean
+  isSuspended: boolean
+  suspendedAt?: string | null
   lastLoginAt?: string | null
   createdAt: string
 }
