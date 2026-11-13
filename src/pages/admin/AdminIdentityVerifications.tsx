@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../api'
+import { useAuth } from '../../context/AuthContext'
 
 type Submission = { id: number; userId: number; documentType: string; status: string; submittedAt: string; reviewDueAt: string; reviewAgeMinutes: number; isOverdue: boolean; isNearDeadline: boolean; isResubmission: boolean; isClaimed: boolean; isClaimedByMe: boolean; claimedByName?: string | null; claimExpiresAt?: string | null; duplicateIdDetected?: boolean; userName: string; email: string }
 type QueueCounts = { total: number; nearDeadline: number; overdue: number; claimedByMe: number; unclaimed: number; resubmission: number }
@@ -14,6 +15,7 @@ const queueFilters = [
 type QueueFilter = typeof queueFilters[number]['value']
 
 export default function AdminIdentityVerifications() {
+  const { isSuperAdmin } = useAuth()
   const [rows, setRows] = useState<Submission[]>([])
   const [selected, setSelected] = useState<Submission | null>(null)
   const [frontUrl, setFrontUrl] = useState('')
@@ -62,20 +64,29 @@ export default function AdminIdentityVerifications() {
   }, [selected?.id])
 
   const open = async (row: Submission) => {
+    if (!isSuperAdmin()) {
+      setError('Identity-document viewing is restricted to SuperAdmins. An authorised SuperAdmin must perform the document review.')
+      return
+    }
+    const accessReason = window.prompt('Why is it necessary to view this runner’s identity document? This reason is permanently audited (minimum 10 characters).')?.trim() || ''
+    if (accessReason.length < 10) {
+      setError('A specific access reason of at least 10 characters is required. No document was opened.')
+      return
+    }
     clearUrls(); setReasonCode(''); setRunnerNote(''); setInternalNote(''); setVerifiedDateOfBirth(''); setSouthAfricanIdNumber(''); setMessage(''); setError('')
     try {
       await adminApi.claimManualIdentityReview(row.id)
       setSelected(row)
-      const front = await adminApi.getManualIdentityDocument(row.id, 'front')
+      const front = await adminApi.getManualIdentityDocument(row.id, 'front', accessReason)
       setFrontUrl(URL.createObjectURL(front.data))
       if (row.documentType === 'south_african_id_card') {
-        const back = await adminApi.getManualIdentityDocument(row.id, 'back')
+        const back = await adminApi.getManualIdentityDocument(row.id, 'back', accessReason)
         setBackUrl(URL.createObjectURL(back.data))
       }
     } catch (err: any) {
       await adminApi.releaseManualIdentityReview(row.id).catch(() => undefined)
       setSelected(null)
-      setError(err.response?.data?.message || (err.response?.status === 403 ? 'Complete administrator authenticator verification before viewing identity documents.' : 'The encrypted identity documents could not be opened.'))
+      setError(err.response?.data?.message || (err.response?.status === 403 ? 'Only a SuperAdmin with fresh authenticator verification and a recorded access reason can view identity documents.' : 'The encrypted identity documents could not be opened.'))
     }
   }
   const decide = async (decision: 'approve' | 'reject' | 'request_information') => {
@@ -103,7 +114,7 @@ export default function AdminIdentityVerifications() {
       <div className="page-header"><div className="container"><h1><i className="fas fa-id-card" /> Runner identity review</h1></div></div>
       <div className="container">
         <div className="section-card">
-          <p className="text-muted">Review submitted South African Smart ID cards, green barcoded ID books and passports. Images are encrypted at rest and are only available to administrators with a recent authenticator verification. This is manual document review, not an automated Home Affairs or biometric check.</p>
+          <p className="text-muted">Review submitted South African Smart ID cards, green barcoded ID books and passports. Images are encrypted at rest. Only SuperAdmins with fresh authenticator verification and a case-specific access reason can view them; each view is audited. This is manual document review, not an automated Home Affairs or biometric check.</p>
           {message && <div className="alert alert-success" role="status">{message}</div>}
           {error && <div className="alert alert-error" role="alert">{error}</div>}
           {queueCounts && <div className="admin-table-actions" style={{ flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -127,7 +138,7 @@ export default function AdminIdentityVerifications() {
                 <thead><tr><th>Runner</th><th>Email</th><th>Document</th><th>Submitted</th><th>Review target</th><th>Reviewer</th><th /></tr></thead>
                 <tbody>{rows.map(row => <tr key={row.id}>
                   <td>{row.userName}</td><td>{row.email}</td><td>{row.documentType === 'south_african_id_card' ? 'South African Smart ID card' : row.documentType === 'south_african_id_book' ? 'South African green barcoded ID book' : 'South African passport'}{row.duplicateIdDetected && <div className="text-danger text-xs"><strong>Potential duplicate ID — investigation required</strong></div>}</td>
-                  <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><span style={{ color: row.isOverdue ? '#b91c1c' : 'inherit', fontWeight: row.isOverdue ? 700 : 400 }}>{row.isOverdue ? 'OVERDUE · ' : row.isNearDeadline ? 'NEAR DEADLINE · ' : ''}{new Date(row.reviewDueAt).toLocaleString('en-ZA')}</span><div className="text-muted text-xs">{Math.floor(row.reviewAgeMinutes / 60)}h {row.reviewAgeMinutes % 60}m in queue{row.isResubmission ? ' · resubmission' : ''}</div></td><td>{row.isClaimed ? `${row.claimedByName || 'Another reviewer'}${row.isClaimedByMe ? ' (you)' : ''}` : 'Unclaimed'}{row.claimExpiresAt && <div className="text-muted text-xs">Claim expires {new Date(row.claimExpiresAt).toLocaleTimeString('en-ZA')}</div>}</td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)} disabled={row.isClaimed && !row.isClaimedByMe}>{row.isClaimed && !row.isClaimedByMe ? 'In review' : 'Review'}</button></td>
+                  <td>{new Date(row.submittedAt).toLocaleString('en-ZA')}</td><td><span style={{ color: row.isOverdue ? '#b91c1c' : 'inherit', fontWeight: row.isOverdue ? 700 : 400 }}>{row.isOverdue ? 'OVERDUE · ' : row.isNearDeadline ? 'NEAR DEADLINE · ' : ''}{new Date(row.reviewDueAt).toLocaleString('en-ZA')}</span><div className="text-muted text-xs">{Math.floor(row.reviewAgeMinutes / 60)}h {row.reviewAgeMinutes % 60}m in queue{row.isResubmission ? ' · resubmission' : ''}</div></td><td>{row.isClaimed ? `${row.claimedByName || 'Another reviewer'}${row.isClaimedByMe ? ' (you)' : ''}` : 'Unclaimed'}{row.claimExpiresAt && <div className="text-muted text-xs">Claim expires {new Date(row.claimExpiresAt).toLocaleTimeString('en-ZA')}</div>}</td><td><button className="btn btn-primary btn-sm" onClick={() => void open(row)} disabled={!isSuperAdmin() || (row.isClaimed && !row.isClaimedByMe)}>{!isSuperAdmin() ? 'SuperAdmin only' : row.isClaimed && !row.isClaimedByMe ? 'In review' : 'Review'}</button></td>
                 </tr>)}</tbody>
               </table>
             </div>
