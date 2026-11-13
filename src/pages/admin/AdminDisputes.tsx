@@ -27,7 +27,7 @@ export default function AdminDisputes() {
   useEffect(() => { load() }, [filter])
 
   const resolve = async () => {
-    if (!resolveModal || !resolution.trim() || reason.trim().length < 10 || action !== 'refund_creator') {
+    if (!resolveModal || !resolution.trim() || reason.trim().length < 10 || !['refund_creator', 'release_to_runner'].includes(action)) {
       setResolveError('Enter the financial review notes and a reason of at least 10 characters.')
       return
     }
@@ -187,7 +187,7 @@ export default function AdminDisputes() {
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => { setResolveModal(null); setResolveError('') }}>Cancel</button>
               <button className="btn btn-primary" onClick={resolve} disabled={actionLoading || !resolution.trim() || reason.trim().length < 10 || action === 'none'}>
-                {actionLoading ? <><span className="spinner spinner-sm" /> Submitting...</> : 'Submit refund for independent approval'}
+                {actionLoading ? <><span className="spinner spinner-sm" /> Submitting...</> : action === 'refund_creator' ? 'Submit refund for independent approval' : 'Submit release for independent approval'}
               </button>
             </div>
           </div>
