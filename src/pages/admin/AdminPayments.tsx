@@ -28,6 +28,10 @@ export default function AdminPayments() {
   const [financialLedgerPage, setFinancialLedgerPage] = useState(1)
   const [financialLedgerLoading, setFinancialLedgerLoading] = useState(false)
   const [financialLedgerError, setFinancialLedgerError] = useState('')
+  const [financialReversals, setFinancialReversals] = useState<any[]>([])
+  const [financialReversalLoading, setFinancialReversalLoading] = useState(false)
+  const [financialReversalBusy, setFinancialReversalBusy] = useState(false)
+  const [financialReversalError, setFinancialReversalError] = useState('')
 
   const loadAll = () => Promise.all([
     adminApi.getPayments(),
@@ -75,6 +79,71 @@ export default function AdminPayments() {
       setFinancialLedgerError(error?.response?.data?.message || 'Unable to load the double-entry financial journal.')
     } finally {
       setFinancialLedgerLoading(false)
+    }
+  }
+
+  const loadFinancialReversals = async () => {
+    setFinancialReversalLoading(true)
+    setFinancialReversalError('')
+    try {
+      const response = await adminApi.getFinancialReversalRequests()
+      const payload = response.data?.data || response.data
+      setFinancialReversals(Array.isArray(payload) ? payload : [])
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'Unable to load immutable journal reversal requests.')
+    } finally {
+      setFinancialReversalLoading(false)
+    }
+  }
+
+  const requestJournalReversal = async (journal: any) => {
+    const reason = window.prompt('Explain why this exact original journal must be reversed (10–500 characters). No balance will be edited directly.')?.trim() || ''
+    if (reason.length < 10 || reason.length > 500) {
+      setFinancialReversalError('A reversal reason between 10 and 500 characters is required. No request was submitted.')
+      return
+    }
+    setFinancialReversalBusy(true)
+    setFinancialReversalError('')
+    try {
+      await adminApi.requestFinancialReversal(Number(journal.id), reason)
+      await Promise.all([loadFinancialReversals(), loadFinancialLedger(financialLedgerPage)])
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'Unable to request the exact journal reversal.')
+    } finally {
+      setFinancialReversalBusy(false)
+    }
+  }
+
+  const decideJournalReversal = async (id: number, decision: 'approve' | 'reject') => {
+    const reason = window.prompt('Record the independent review decision (10–500 characters). The requester cannot approve their own request.')?.trim() || ''
+    if (reason.length < 10 || reason.length > 500) {
+      setFinancialReversalError('A decision reason between 10 and 500 characters is required. No decision was submitted.')
+      return
+    }
+    setFinancialReversalBusy(true)
+    setFinancialReversalError('')
+    try {
+      await adminApi.decideFinancialReversal(id, decision, reason)
+      await loadFinancialReversals()
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'Unable to record the independent reversal decision.')
+    } finally {
+      setFinancialReversalBusy(false)
+    }
+  }
+
+  const executeJournalReversal = async (item: any) => {
+    if (!window.confirm('Execute the approved exact reversal? This posts the inverse of every original journal line; it does not edit or delete the original journal.')) return
+    setFinancialReversalBusy(true)
+    setFinancialReversalError('')
+    try {
+      await adminApi.executeFinancialReversal(item.id)
+      await Promise.all([loadFinancialReversals(), loadFinancialLedger(financialLedgerPage)])
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'The reversal could not be posted. Reconcile the request and original journal before retrying.')
+      await loadFinancialReversals()
+    } finally {
+      setFinancialReversalBusy(false)
     }
   }
 
@@ -196,6 +265,12 @@ export default function AdminPayments() {
 
   useEffect(() => { loadAll() }, [])
   useEffect(() => { void loadOperations() }, [])
+  useEffect(() => {
+    if (financeView === 'ledger') {
+      void loadFinancialLedger(1)
+      void loadFinancialReversals()
+    }
+  }, [financeView])
 
   const handleVerifyBank = async (id: number) => {
     setVerifyingId(id)
@@ -424,7 +499,7 @@ export default function AdminPayments() {
                     <>
                     <div className="admin-table-wrap">
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
-                        <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref', 'Lines'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                        <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref', 'Lines', 'Reversal'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
                         <tbody>{(financialLedger.journals || []).map((journal: any) => (
                           <tr key={journal.id} style={{ borderBottom: '1px solid var(--border)' }}>
                             <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>{new Date(journal.recordedAt).toLocaleString('en-ZA')}</td>
@@ -450,6 +525,11 @@ export default function AdminPayments() {
                                 </table>
                               </details>
                             </td>
+                            <td style={{ padding: '.65rem .5rem', minWidth: '10rem' }}>
+                              {journal.reversalOfJournalId ? <span className="text-muted">Reversal of #{journal.reversalOfJournalId}</span>
+                                : journal.isReversed ? <span className="text-muted">Already reversed</span>
+                                  : <button className="btn btn-secondary btn-sm" disabled={financialReversalBusy} onClick={() => void requestJournalReversal(journal)}>Request reversal</button>}
+                            </td>
                           </tr>
                         ))}</tbody>
                       </table>
@@ -465,6 +545,42 @@ export default function AdminPayments() {
                     </div>
                     </>
                   )}
+                  <section style={{ marginTop: '1.5rem' }} aria-labelledby="financial-reversal-requests-heading">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '.75rem', alignItems: 'center' }}>
+                      <h3 id="financial-reversal-requests-heading">Two-person journal reversals</h3>
+                      <button className="btn btn-secondary btn-sm" onClick={() => void loadFinancialReversals()} disabled={financialReversalLoading}>Refresh requests</button>
+                    </div>
+                    <p className="text-muted text-sm">Only exact reversals of existing journal lines are permitted. The original entry remains immutable. Requester, approver and executor separation is enforced by the backend.</p>
+                    {financialReversalError && <div className="alert alert-warning" role="alert">{financialReversalError}</div>}
+                    {financialReversalLoading ? <div className="loading-state"><div className="spinner" /></div> : financialReversals.length === 0 ? (
+                      <p className="text-muted">No journal reversal requests have been recorded.</p>
+                    ) : (
+                      <div className="admin-table-wrap">
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.8125rem' }}>
+                          <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Original journal', 'Event/source', 'Amount', 'Status', 'Requester', 'Approver', 'Reason', 'Actions'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                          <tbody>{financialReversals.map(item => (
+                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{item.originalJournalNumber || ('#' + item.originalJournalId)}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.originalEventType}<div className="text-muted">{item.originalSourceType}: {item.originalSourceId}</div></td>
+                              <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>{item.currency || 'ZAR'} {Number(item.originalAmount || 0).toFixed(2)}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.decidedByUserId || '—'}</td>
+                              <td style={{ padding: '.65rem .5rem', minWidth: '13rem' }}>{item.reason}{item.decisionReason && <div className="text-muted">Decision: {item.decisionReason}</div>}{item.failureReason && <div className="alert alert-warning">{item.failureReason}</div>}</td>
+                              <td style={{ padding: '.65rem .5rem', minWidth: '12rem' }}>
+                                {item.status === 'Pending' && <>
+                                  <button className="btn btn-primary btn-sm" style={{ marginRight: '.35rem' }} disabled={financialReversalBusy} onClick={() => void decideJournalReversal(item.id, 'approve')}>Approve</button>
+                                  <button className="btn btn-secondary btn-sm" disabled={financialReversalBusy} onClick={() => void decideJournalReversal(item.id, 'reject')}>Reject</button>
+                                </>}
+                                {item.status === 'Approved' && <button className="btn btn-primary btn-sm" disabled={financialReversalBusy} onClick={() => void executeJournalReversal(item)}>Execute exact reversal</button>}
+                                {item.executedAt && <div className="text-muted">Executed: {new Date(item.executedAt).toLocaleString('en-ZA')}</div>}
+                              </td>
+                            </tr>
+                          ))}</tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
                 </>
               )}
             </div>
