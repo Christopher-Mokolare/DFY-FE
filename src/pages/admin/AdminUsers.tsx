@@ -206,7 +206,7 @@ export default function AdminUsers() {
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                               {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
                               {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
-                         <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>
+                         {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>}
                             </>}
                             {u.isArchived && <>
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View retained history"><i className="fas fa-history" /></button>
@@ -261,7 +261,7 @@ export default function AdminUsers() {
                           <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                             {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
-                          <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>
+                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>}
                         </>}
                         {u.isArchived && <button className="btn btn-sm btn-primary" onClick={() => restoreUser(u)} disabled={actionLoading}>Restore</button>}
                       </div>
