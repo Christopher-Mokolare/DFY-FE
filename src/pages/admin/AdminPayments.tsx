@@ -325,7 +325,6 @@ export default function AdminPayments() {
                     </div>
                   )}
                   {(settlementReport.transactions || []).length > 0 && (
-                    <>
                     <div className="admin-table-wrap">
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
                         <thead><tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>{['Reference', 'Task', 'Status', 'Currency', 'Amount', 'Provider fee', 'Findings'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
@@ -422,6 +421,7 @@ export default function AdminPayments() {
                   </div>
                   <h3>Journal history</h3>
                   {(financialLedger.journals || []).length === 0 ? <p className="text-muted">No accounting events have been posted yet. Legacy records have not been fabricated into journal entries.</p> : (
+                    <>
                     <div className="admin-table-wrap">
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
                         <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref', 'Lines'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
