@@ -135,7 +135,7 @@ export const adminApi = {
   claimManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/claim`),
   heartbeatManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/heartbeat`),
   releaseManualIdentityReview: (id: number) => api.delete(`/manual-identity-verification/admin/${id}/claim`),
-  getManualIdentityDocument: (id: number, side: 'front' | 'back') => api.get(`/manual-identity-verification/admin/${id}/document/${side}`, { responseType: 'blob' }),
+  getManualIdentityDocument: (id: number, side: 'front' | 'back', reason: string) => api.get(`/manual-identity-verification/admin/${id}/document/${side}`, { params: { reason }, responseType: 'blob' }),
   decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reasonCode: string, runnerNote: string, internalNote?: string, verifiedDateOfBirth?: string, southAfricanIdNumber?: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reasonCode, runnerNote, internalNote, verifiedDateOfBirth, southAfricanIdNumber }),
 
   updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
