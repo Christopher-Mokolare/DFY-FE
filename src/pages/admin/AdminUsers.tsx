@@ -346,7 +346,7 @@ export default function AdminUsers() {
               <button className="btn-close" onClick={() => setProfileModal(null)}><i className="fas fa-times" /></button>
             </div>
             <div className="modal-body">
-              <p className="text-muted text-sm">Every correction is recorded in restricted before/after audit history. Changing email revokes sessions and requires verification of the new address. Changing phone clears its verified status. Administrator accounts use a separate workflow.</p>
+              <p className="text-muted text-sm">Every correction is recorded in restricted before/after audit history. Changing email revokes sessions and requires verification of the new address. Changing phone clears its verified status; this correction does not send an SMS code. Administrator accounts use a separate workflow.</p>
               <div className="form-group">
                 <label className="form-label">First name</label>
                 <input className="form-input" maxLength={80} value={profileForm.firstName} onChange={event => setProfileForm({ ...profileForm, firstName: event.target.value })} />
