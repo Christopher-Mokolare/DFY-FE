@@ -128,12 +128,8 @@ export default function AdminPayments() {
     setFinancialApprovalError('')
     try {
       if (item.action === 'refund_creator' || item.action === 'release_to_runner') {
-        const response = await adminApi.getDisputes({ page: 1, pageSize: 100, status: 'Open' })
-        const payload = response.data?.data || response.data
-        const disputes = payload?.disputes || []
-        const dispute = disputes.find((entry: any) => entry.taskId === item.taskReference && entry.status === 'Open')
-        if (!dispute) throw new Error('No open dispute is linked to this task in the current dispute page. No financial action was submitted.')
-        await adminApi.resolveDispute(dispute.id, executionReason, item.action, executionReason)
+        if (!item.disputeId) throw new Error('This approval is not bound to a dispute. No financial action was submitted.')
+        await adminApi.resolveDispute(item.disputeId, executionReason, item.action, executionReason)
       } else {
         await adminApi.executeFinancialApproval(item.id)
       }
@@ -469,10 +465,13 @@ export default function AdminPayments() {
               ) : (
                 <div className="admin-table-wrap">
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
-                    <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Action', 'Status', 'Requester', 'Approver', 'Reason', 'Expiry / execution'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                    <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Dispute', 'Amount', 'Approved charge', 'Action', 'Status', 'Requester', 'Approver', 'Reason', 'Expiry / execution'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
                     <tbody>{financialApprovals.map(item => (
                       <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '.65rem .5rem' }}>{item.taskReference || item.taskId}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.disputeId || '—'}</td>
+                        <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(item.amount || 0).toFixed(2)}</td>
+                        <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace', maxWidth: '12rem', overflowWrap: 'anywhere' }}>{item.paymentTransactionId || '—'}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.action === 'refund_creator' ? 'Creator refund' : item.action === 'release_to_runner' ? 'Dispute runner release' : 'Exceptional escrow release'}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
