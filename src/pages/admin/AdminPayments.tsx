@@ -25,6 +25,7 @@ export default function AdminPayments() {
   const [financialTaskId, setFinancialTaskId] = useState('')
   const [financialApprovalBusy, setFinancialApprovalBusy] = useState(false)
   const [financialLedger, setFinancialLedger] = useState<any>(null)
+  const [financialLedgerPage, setFinancialLedgerPage] = useState(1)
   const [financialLedgerLoading, setFinancialLedgerLoading] = useState(false)
   const [financialLedgerError, setFinancialLedgerError] = useState('')
 
@@ -63,12 +64,13 @@ export default function AdminPayments() {
     }
   }
 
-  const loadFinancialLedger = async () => {
+  const loadFinancialLedger = async (page = financialLedgerPage) => {
     setFinancialLedgerLoading(true)
     setFinancialLedgerError('')
     try {
-      const response = await adminApi.getFinancialLedger({ page: 1, pageSize: 100 })
+      const response = await adminApi.getFinancialLedger({ page, pageSize: 50 })
       setFinancialLedger(response.data?.data || response.data)
+      setFinancialLedgerPage(page)
     } catch (error: any) {
       setFinancialLedgerError(error?.response?.data?.message || 'Unable to load the double-entry financial journal.')
     } finally {
@@ -421,7 +423,7 @@ export default function AdminPayments() {
                   {(financialLedger.journals || []).length === 0 ? <p className="text-muted">No accounting events have been posted yet. Legacy records have not been fabricated into journal entries.</p> : (
                     <div className="admin-table-wrap">
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
-                        <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                        <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref', 'Lines'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
                         <tbody>{(financialLedger.journals || []).map((journal: any) => (
                           <tr key={journal.id} style={{ borderBottom: '1px solid var(--border)' }}>
                             <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>{new Date(journal.recordedAt).toLocaleString('en-ZA')}</td>
@@ -432,9 +434,33 @@ export default function AdminPayments() {
                             <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(journal.debitTotal || 0).toFixed(2)}</td>
                             <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(journal.creditTotal || 0).toFixed(2)}</td>
                             <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{journal.providerReference || '—'}</td>
+                            <td style={{ padding: '.65rem .5rem', minWidth: '14rem' }}>
+                              <details>
+                                <summary style={{ cursor: 'pointer' }}>View {journal.lineCount ?? journal.lines?.length ?? 0} lines</summary>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '.5rem' }}>
+                                  <thead><tr><th style={{ textAlign: 'left', padding: '.3rem' }}>Account</th><th style={{ textAlign: 'right', padding: '.3rem' }}>Debit</th><th style={{ textAlign: 'right', padding: '.3rem' }}>Credit</th></tr></thead>
+                                  <tbody>{(journal.lines || []).map((line: any, index: number) => (
+                                    <tr key={line.lineNumber ?? index}>
+                                      <td style={{ padding: '.3rem' }}>{line.accountCode} — {line.accountName}{line.memo ? <div className="text-muted">{line.memo}</div> : null}</td>
+                                      <td style={{ padding: '.3rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{line.debit > 0 ? 'R' + Number(line.debit).toFixed(2) : '—'}</td>
+                                      <td style={{ padding: '.3rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{line.credit > 0 ? 'R' + Number(line.credit).toFixed(2) : '—'}</td>
+                                    </tr>
+                                  ))}</tbody>
+                                </table>
+                              </details>
+                            </td>
                           </tr>
                         ))}</tbody>
                       </table>
+                    </div>
+                    <div className="admin-toolbar" style={{ justifyContent: 'space-between', marginTop: '.75rem' }}>
+                      <span className="text-muted text-sm">
+                        Showing {financialLedger.journals?.length || 0} of {financialLedger.totalCount || 0} journal entries · Page {financialLedger.page || financialLedgerPage} of {Math.max(1, Math.ceil((financialLedger.totalCount || 0) / (financialLedger.pageSize || 50)))}
+                      </span>
+                      <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
+                        <button className="btn btn-secondary btn-sm" disabled={financialLedgerLoading || financialLedgerPage <= 1} onClick={() => void loadFinancialLedger(financialLedgerPage - 1)}>Previous</button>
+                        <button className="btn btn-secondary btn-sm" disabled={financialLedgerLoading || financialLedgerPage >= Math.max(1, Math.ceil((financialLedger.totalCount || 0) / (financialLedger.pageSize || 50)))} onClick={() => void loadFinancialLedger(financialLedgerPage + 1)}>Next</button>
+                      </div>
                     </div>
                   )}
                 </>
