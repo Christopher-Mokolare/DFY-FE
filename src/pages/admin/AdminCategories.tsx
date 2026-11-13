@@ -177,8 +177,8 @@ export default function AdminCategories() {
                     <td>{category.description || '—'}</td>
                     <td>{category.icon || '—'}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <button type="button" className="btn btn-secondary btn-sm" disabled={busy || index === 0} onClick={() => void move(category, -1)} aria-label={`Move ${category.name} up'}>↑</button>{' '}
-                      <button type="button" className="btn btn-secondary btn-sm" disabled={busy || index === ordered.length - 1} onClick={() => void move(category, 1)} aria-label={`Move ${category.name} down'}>↓</button>{' '}
+                      <button type="button" className="btn btn-secondary btn-sm" disabled={busy || index === 0} onClick={() => void move(category, -1)} aria-label={`Move ${category.name} up`}>↑</button>{' '}
+                      <button type="button" className="btn btn-secondary btn-sm" disabled={busy || index === ordered.length - 1} onClick={() => void move(category, 1)} aria-label={`Move ${category.name} down`}>↓</button>{' '}
                       <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => edit(category)}>Edit</button>{' '}
                       <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void remove(category)}>Delete</button>
                     </td>
