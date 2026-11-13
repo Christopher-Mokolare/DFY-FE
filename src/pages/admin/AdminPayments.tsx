@@ -381,7 +381,7 @@ export default function AdminPayments() {
                     <tbody>{financialApprovals.map(item => (
                       <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '.65rem .5rem' }}>{item.taskReference || item.taskId}</td>
-                        <td style={{ padding: '.65rem .5rem' }}>{item.action === 'refund_creator' ? 'Creator refund' : 'Exceptional escrow release'}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.action === 'refund_creator' ? 'Creator refund' : item.action === 'release_to_runner' ? 'Dispute runner release' : 'Exceptional escrow release'}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.decidedByUserId || '—'}</td>
