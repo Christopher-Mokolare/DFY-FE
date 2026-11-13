@@ -187,11 +187,6 @@ export default function MyActiveTasks() {
                           <i className="fas fa-check" /> Mark as Complete
                         </button>
                       )}
-                      {['claimed', 'in_progress'].includes(t.taskStatus?.toLowerCase()) && (
-                        <button className="btn btn-outline btn-block btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={() => setDisputeModal(raw)}>
-                          <i className="fas fa-exclamation-triangle" /> Raise Dispute
-                        </button>
-                      )}
                       {['runnerpaid', 'runner_paid', 'completed'].includes(t.taskStatus?.toLowerCase()) && !ratedTaskIds.has(t.taskId) && (
                         <button className="btn btn-outline btn-block btn-sm" onClick={() => { setRatingModal(raw); setRatingReview(''); setRatingValue(5); setRatingError('') }}>
                           <i className="fas fa-star" /> Rate Creator

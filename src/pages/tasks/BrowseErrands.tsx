@@ -41,11 +41,14 @@ export default function BrowseErrands() {
       if (s) filters.search = s
       if (cat) filters.category = cat
       const res = await tasksApi.getAvailable(p, PAGE_SIZE, filters)
-      const data = res.data
-      const list = (data.tasks || []) as Task[]
+      // The API envelope may be returned as either the page itself or
+      // ApiResponse<Page>; normalize both shapes before rendering the list.
+      const envelope = res.data as any
+      const data = (envelope?.data || envelope) as any
+      const list = (data.tasks || data.Tasks || data.items || []) as Task[]
       setTasks(Array.isArray(list) ? list : [])
-      setTotalPages(data.totalPages || 1)
-      setTotalItems(data.count || list.length)
+      setTotalPages(data.totalPages || data.TotalPages || 1)
+      setTotalItems(data.count || data.totalCount || data.Count || list.length)
     } catch {
       setError('Failed to load available tasks. Please try again.')
     } finally {

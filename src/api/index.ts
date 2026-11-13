@@ -136,6 +136,11 @@ export const adminApi = {
   getAuditLogs: (page = 1, pageSize = 20) => api.get(`/admin/audit-logs?page=${page}&pageSize=${pageSize}`),
   getBankAccounts: (unverifiedOnly?: boolean) => api.get('/admin/bank-accounts', { params: { unverifiedOnly } }),
   verifyBankAccount: (id: number) => api.patch(`/admin/bank-accounts/${id}/verify`, {}),
+  getTaskIncidents: (params?: object) => api.get('/admin/incidents', { params }),
+  getTaskIncidentEvidence: (id: number) => api.get(`/admin/incidents/${id}/evidence`),
+  reviewTaskIncident: (id: number, status: string, adminNotes: string) => api.patch(`/admin/incidents/${id}`, { status, adminNotes }),
+  placeTaskIncidentEscrowHold: (id: number, reason: string) => api.post(`/admin/incidents/${id}/hold-escrow`, { reason }),
+  releaseTaskIncidentEscrowHold: (id: number, reason: string) => api.post(`/admin/incidents/${id}/release-escrow-hold`, { reason }),
   getDisputes: (params?: object) => api.get('/disputes', { params }),
   resolveDispute: (id: number, resolution: string, action: string, reason: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action, reason }),
   deleteTask: (taskId: string) => api.delete(`/admin/tasks/${taskId}`),
@@ -148,6 +153,12 @@ export const adminApi = {
   setTestimonialPublished: (id: number, isPublished: boolean) => api.patch(`/testimonials/${id}/publish`, { isPublished }),
   reorderTestimonial: (id: number, sortOrder: number) => api.patch(`/testimonials/${id}/reorder`, { sortOrder }),
   deleteTestimonial: (id: number) => api.delete(`/testimonials/${id}`),
+}
+
+export const taskIncidentsApi = {
+  report: (taskId: string, data: { category: string; description: string; evidenceMessageIds?: number[] }) =>
+    api.post(`/tasks/${encodeURIComponent(taskId)}/incidents`, data),
+  getMine: () => api.get('/incidents/my'),
 }
 
 export const disputesApi = {
