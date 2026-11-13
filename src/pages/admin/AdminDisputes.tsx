@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from '../../api'
+import { useAuth } from '../../context/AuthContext'
 
 export default function AdminDisputes() {
+  const { isSuperAdmin } = useAuth()
   const [disputes, setDisputes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
@@ -86,8 +88,9 @@ export default function AdminDisputes() {
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(d.createdAt).toLocaleDateString('en-ZA')}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
-                          {d.status === 'Open' && (
-                            <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('release_to_runner'); setResolveError('') }}>Resolve</button>
+                          {d.status === 'Open' && (isSuperAdmin()
+                            ? <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('release_to_runner'); setResolveError('') }}>Resolve</button>
+                            : <span className="text-muted text-sm">SuperAdmin resolution required</span>
                           )}
                           {d.status === 'Resolved' && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{d.resolution?.substring(0, 40)}...</span>
@@ -122,8 +125,9 @@ export default function AdminDisputes() {
                     </div>
                     <div className="admin-task-card-footer">
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(d.createdAt).toLocaleDateString('en-ZA')}</span>
-                      {d.status === 'Open' && (
-                        <button className="btn btn-primary btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setResolveModal(d)}>Resolve</button>
+                      {d.status === 'Open' && (isSuperAdmin()
+                        ? <button className="btn btn-primary btn-sm" style={{ marginLeft: 'auto' }} onClick={() => { setResolveModal(d); setAction('release_to_runner'); setResolution(''); setReason(''); setResolveError('') }}>Resolve</button>
+                        : <span className="text-muted text-sm">SuperAdmin resolution required</span>
                       )}
                     </div>
                   </div>
