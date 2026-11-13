@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useEffect } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
-import { RequireAuth, RequireAdmin, RequireRunnerAccess } from './context/Guards'
+import { RequireAuth, RequireAdmin, RequireSuperAdmin, RequireRunnerAccess } from './context/Guards'
 import Layout from './components/layout/Layout'
 
 import Home from './pages/Home'
@@ -42,6 +42,7 @@ import AdminPayments from './pages/admin/AdminPayments'
 import AdminDisputes from './pages/admin/AdminDisputes'
 import AdminAuditLog from './pages/admin/AdminAuditLog'
 import AdminTestimonials from './pages/admin/AdminTestimonials'
+import AdminManagement from './pages/admin/AdminManagement'
 import { PaymentSuccess, PaymentCancelled } from './pages/PaymentPages'
 
 function ScrollToTop() {
@@ -101,6 +102,7 @@ export default function App() {
               <Route path="/admin/disputes" element={<RequireAdmin><AdminDisputes /></RequireAdmin>} />
               <Route path="/admin/audit-log" element={<RequireAdmin><AdminAuditLog /></RequireAdmin>} />
               <Route path="/admin/testimonials" element={<RequireAdmin><AdminTestimonials /></RequireAdmin>} />
+              <Route path="/admin/admin-management" element={<RequireSuperAdmin><AdminManagement /></RequireSuperAdmin>} />
 
               <Route path="/browse-errands" element={<Navigate to="/tasks/browse" replace />} />
               <Route path="/post-errand" element={<Navigate to="/tasks/post" replace />} />
