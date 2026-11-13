@@ -169,7 +169,7 @@ export default function AdminUsers() {
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className="badge badge-info">{getMarketplaceRole(u)}</span></td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-secondary'}`}>{getSystemAccess(u)}</span></td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-info'}`}>{getSystemAccess(u)}</span></td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{u.tasksPosted ?? 0}</td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{u.tasksCompleted ?? 0}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>{u.rating?.toFixed(1) || '-'}</td>
