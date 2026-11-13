@@ -291,7 +291,7 @@ export default function AdminPayments() {
                   {settlementLoading ? <><span className="spinner spinner-sm" /> Retrieving Paystack data…</> : <><i className="fas fa-arrows-rotate" /> Run Paystack settlement reconciliation</>}
                 </button>
                 <button className="btn btn-secondary btn-sm" onClick={() => void runLedgerReconciliation()} disabled={ledgerLoading}>
-                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Checking ledger…</> : 'Compare task/payment records'}
+                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Comparing records…</> : 'Compare task/payment records'}
                 </button>
               </div>
               {settlementError && <div className="alert alert-warning" role="alert">{settlementError}</div>}
