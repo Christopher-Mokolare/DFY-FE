@@ -236,11 +236,14 @@ export default function AdminPayments() {
       <div className="page-header">
         <div className="container">
           <h1><i className="fas fa-credit-card" /> Payments Overview</h1>
-          <p>Paystack collections, direct runner payouts and bank verification</p>
+          <p>Operational task/payment statuses. Accounting balances are shown in the double-entry journal.</p>
         </div>
       </div>
 
       <div className="container">
+        <div className="alert alert-warning" role="note">
+          The summary below is calculated from task and payment-status records. It is not a general ledger and does not replace the double-entry journal or provider reconciliation.
+        </div>
         {data && (
           <div className="stats-grid" style={{ marginBottom: '2rem' }}>
             <div className="stat-card">
