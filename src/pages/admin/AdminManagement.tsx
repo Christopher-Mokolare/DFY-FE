@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
 import { useAuth } from '../../context/AuthContext'
+import AdminPermissionManagement from './AdminPermissionManagement'
 
 interface SuperAdminChange {
   id: number
@@ -320,6 +321,8 @@ export default function AdminManagement() {
             two-person approval workflow is required before another SuperAdmin can be created or removed.
           </p>
         </div>
+
+        <AdminPermissionManagement />
 
         <div className="section-card">
           <div className="admin-toolbar">
