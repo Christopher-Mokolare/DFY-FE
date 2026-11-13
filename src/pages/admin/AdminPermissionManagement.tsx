@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
 
 interface AdminAccount {
@@ -77,7 +78,7 @@ export default function AdminPermissionManagement() {
     account.isAdministrator && !account.isSuperAdmin && !account.isArchived &&
     !account.isSuspended && account.emailVerified && account.authenticatorTwoFactorEnabled)
 
-  const submitGrant = async (event: React.FormEvent) => {
+  const submitGrant = async (event: FormEvent) => {
     event.preventDefault()
     if (!userId || !permissionKey || reason.trim().length < 10) {
       setError('Select an eligible administrator and permission, and provide a reason of at least 10 characters.')
