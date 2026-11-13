@@ -117,7 +117,6 @@ export default function AdminCategories() {
     setError('')
     try {
       await adminApi.reorderCategory(category.id, other.sortOrder, reason)
-      await adminApi.reorderCategory(other.id, category.sortOrder, reason)
       await load()
     } catch (err: any) {
       setError(err.response?.data?.message || 'Unable to reorder categories.')
