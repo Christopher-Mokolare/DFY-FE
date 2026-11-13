@@ -42,7 +42,7 @@ export default function AdminUsers() {
   const isAdmin = (u: any) => u.role?.includes('Admin')
 
   const toggleVerify = async (id: number, current: boolean) => {
-    const reason = window.prompt(`${current ? 'Unverify' : 'Verify'} user — enter a reason:`)?.trim() || ''
+    const reason = window.prompt(`${current ? 'Unverify' : 'Verify'} admin verification — enter a reason:`)?.trim() || ''
     if (reason.length < 5) {
       setActionError('A reason of at least 5 characters is required')
       return
@@ -221,7 +221,7 @@ export default function AdminUsers() {
                         {!u.isArchived && <>
                           <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
                           <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
-                            {u.isVerified ? 'Unverify' : 'Verify'}
+                            {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
                           <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>
                         </>}
