@@ -250,8 +250,12 @@ export default function AdminManagement() {
                     <td>{new Date(item.expiresAt).toLocaleString('en-ZA')}</td>
                     <td>{item.reason}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => void decideSuperAdminChange(item, 'approve')}>Approve</button>{' '}
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => void decideSuperAdminChange(item, 'reject')}>Reject</button>
+                      {item.requestedByUserId !== user?.id && item.targetUserId !== user?.id
+                        ? <>
+                            <button type="button" className="btn btn-primary btn-sm" onClick={() => void decideSuperAdminChange(item, 'approve')}>Approve</button>{' '}
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => void decideSuperAdminChange(item, 'reject')}>Reject</button>
+                          </>
+                        : <span className="text-muted text-sm">Independent SuperAdmin required</span>}
                     </td>
                   </tr>
                 ))}</tbody>
