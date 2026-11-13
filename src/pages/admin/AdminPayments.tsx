@@ -96,15 +96,23 @@ export default function AdminPayments() {
     }
   }
 
-  const executeFinancialApproval = async (id: number) => {
+  const executeFinancialApproval = async (item: any) => {
     setFinancialApprovalBusy(true)
     setFinancialApprovalError('')
     try {
-      await adminApi.executeFinancialApproval(id)
+      if (item.action === 'refund_creator') {
+        const response = await adminApi.getDisputes()
+        const disputes = response.data?.data?.disputes || []
+        const dispute = disputes.find((entry: any) => entry.taskId === item.taskReference)
+        if (!dispute) throw new Error('The linked dispute could not be found. No refund was submitted.')
+        await adminApi.resolveDispute(dispute.id, item.reason, 'refund_creator', item.decisionReason || item.reason)
+      } else {
+        await adminApi.executeFinancialApproval(item.id)
+      }
       await loadFinancialApprovals()
       await loadOperations()
     } catch (error: any) {
-      setFinancialApprovalError(error?.response?.data?.message || 'Execution failed or requires manual reconciliation.')
+      setFinancialApprovalError(error?.response?.data?.message || error?.message || 'Execution failed or requires manual reconciliation.')
       await loadFinancialApprovals()
     } finally {
       setFinancialApprovalBusy(false)
@@ -354,10 +362,11 @@ export default function AdminPayments() {
               ) : (
                 <div className="admin-table-wrap">
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
-                    <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Status', 'Requester', 'Approver', 'Reason', 'Expiry / execution'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                    <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Action', 'Status', 'Requester', 'Approver', 'Reason', 'Expiry / execution'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
                     <tbody>{financialApprovals.map(item => (
                       <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '.65rem .5rem' }}>{item.taskReference || item.taskId}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.action === 'refund_creator' ? 'Creator refund' : 'Exceptional escrow release'}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
                         <td style={{ padding: '.65rem .5rem' }}>{item.decidedByUserId || '—'}</td>
@@ -367,10 +376,10 @@ export default function AdminPayments() {
                           {item.executedAt && <div>Executed: {new Date(item.executedAt).toLocaleString('en-ZA')}</div>}
                           {item.status === 'Pending' && <>
                             <button className="btn btn-primary btn-sm" style={{ margin: '.35rem .35rem .35rem 0' }} disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'approve')}>Approve</button>
-                            <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialRequestReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
+                            <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
                           </>}
-                          {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item.id)}>Execute approved release</button>}
-                          {item.status === 'Executing' && <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item.id)}>Reconcile execution</button>}
+                          {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>{item.action === 'refund_creator' ? 'Execute approved refund' : 'Execute approved release'}</button>}
+                          {item.status === 'Executing' && (item.action === 'refund_creator' ? <div className="alert alert-warning">Refund execution was interrupted. Reconcile the Paystack refund record before any retry; automatic resubmission is disabled.</div> : <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>Reconcile execution</button>)}
                         </td>
                       </tr>
                     ))}</tbody>
