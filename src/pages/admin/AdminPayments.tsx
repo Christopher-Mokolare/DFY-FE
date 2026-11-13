@@ -7,7 +7,7 @@ export default function AdminPayments() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations'>('payments')
+  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations' | 'approvals'>('payments')
   const [operations, setOperations] = useState<any>(null)
   const [settlementReport, setSettlementReport] = useState<any>(null)
   const [ledgerReport, setLedgerReport] = useState<any>(null)
@@ -17,6 +17,12 @@ export default function AdminPayments() {
   const [operationsError, setOperationsError] = useState('')
   const [settlementError, setSettlementError] = useState('')
   const [ledgerError, setLedgerError] = useState('')
+  const [financialApprovals, setFinancialApprovals] = useState<any[]>([])
+  const [financialApprovalLoading, setFinancialApprovalLoading] = useState(false)
+  const [financialApprovalError, setFinancialApprovalError] = useState('')
+  const [financialApprovalReason, setFinancialApprovalReason] = useState('')
+  const [financialTaskId, setFinancialTaskId] = useState('')
+  const [financialApprovalBusy, setFinancialApprovalBusy] = useState(false)
 
   const loadAll = () => Promise.all([
     adminApi.getPayments(),
@@ -36,6 +42,71 @@ export default function AdminPayments() {
       setOperationsError(error?.response?.data?.message || 'Unable to load the payment operations queue.')
     } finally {
       setOperationsLoading(false)
+    }
+  }
+
+  const loadFinancialApprovals = async () => {
+    setFinancialApprovalLoading(true)
+    setFinancialApprovalError('')
+    try {
+      const response = await adminApi.getFinancialApprovals()
+      const payload = response.data?.data || response.data
+      setFinancialApprovals(Array.isArray(payload) ? payload : [])
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Unable to load financial approval requests. A SuperAdmin with fresh authenticator verification is required.')
+    } finally {
+      setFinancialApprovalLoading(false)
+    }
+  }
+
+  const createFinancialApproval = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!financialTaskId.trim() || financialApprovalReason.trim().length < 10) return
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      await adminApi.requestFinancialApproval(financialTaskId.trim(), financialApprovalReason.trim())
+      setFinancialTaskId('')
+      setFinancialApprovalReason('')
+      await loadFinancialApprovals()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Unable to create the financial approval request.')
+    } finally {
+      setFinancialApprovalBusy(false)
+    }
+  }
+
+  const decideFinancialApproval = async (id: number, decision: 'approve' | 'reject') => {
+    if (financialApprovalReason.trim().length < 10) {
+      setFinancialApprovalError('Enter a decision reason of at least 10 characters before approving or rejecting.')
+      return
+    }
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      if (decision === 'approve') await adminApi.approveFinancialRequest(id, financialApprovalReason.trim())
+      else await adminApi.rejectFinancialRequest(id, financialApprovalReason.trim())
+      setFinancialApprovalReason('')
+      await loadFinancialApprovals()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Unable to record the independent decision.')
+    } finally {
+      setFinancialApprovalBusy(false)
+    }
+  }
+
+  const executeFinancialApproval = async (id: number) => {
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      await adminApi.executeFinancialApproval(id)
+      await loadFinancialApprovals()
+      await loadOperations()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Execution failed or requires manual reconciliation.')
+      await loadFinancialApprovals()
+    } finally {
+      setFinancialApprovalBusy(false)
     }
   }
 
@@ -159,6 +230,7 @@ export default function AdminPayments() {
             <button className={financeView === 'payments' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('payments')}>Payments overview</button>
             <button className={financeView === 'reconciliation' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('reconciliation')}>Reconciliation</button>
             <button className={financeView === 'operations' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('operations')}>Operations queue</button>
+            <button className={financeView === 'approvals' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => { setFinanceView('approvals'); void loadFinancialApprovals() }}>Two-person approvals</button>
           </div>
           {financeView === 'reconciliation' && (
             <div>
@@ -252,6 +324,61 @@ export default function AdminPayments() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+          {financeView === 'approvals' && (
+            <div>
+              <div className="alert alert-warning" role="note">
+                Exceptional escrow release requires two different SuperAdmins with fresh authenticator verification. Execution queues the normal payout; it does not bypass the manual payout gate or send a Paystack transfer. Refunds and compensating adjustments are not enabled in this workflow.
+              </div>
+              {financialApprovalError && <div className="alert alert-warning" role="alert">{financialApprovalError}</div>}
+              <form onSubmit={event => void createFinancialApproval(event)} style={{ display: 'grid', gap: '.75rem', maxWidth: '44rem', marginBottom: '1.5rem' }}>
+                <h3>Request exceptional escrow release</h3>
+                <label>Task reference
+                  <input className="form-input" value={financialTaskId} onChange={event => setFinancialTaskId(event.target.value)} placeholder="DFY task reference" required />
+                </label>
+                <label>Request reason
+                  <textarea className="form-input" rows={3} minLength={10} maxLength={500} value={financialApprovalReason} onChange={event => setFinancialApprovalReason(event.target.value)} placeholder="Explain the exceptional circumstances and supporting review." required />
+                </label>
+                <div><button className="btn btn-primary btn-sm" type="submit" disabled={financialApprovalBusy || financialApprovalReason.trim().length < 10 || !financialTaskId.trim()}>
+                  {financialApprovalBusy ? 'Saving…' : 'Submit for independent approval'}
+                </button></div>
+              </form>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '.75rem', alignItems: 'center', marginBottom: '.75rem' }}>
+                <h3 style={{ margin: 0 }}>Approval history</h3>
+                <button className="btn btn-secondary btn-sm" onClick={() => void loadFinancialApprovals()} disabled={financialApprovalLoading}>Refresh</button>
+              </div>
+              {financialApprovalLoading ? <div className="loading-state"><div className="spinner" /></div> : financialApprovals.length === 0 ? (
+                <p className="text-muted">No financial approval requests have been recorded.</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                    <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Status', 'Requester', 'Approver', 'Reason', 'Expiry / execution'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                    <tbody>{financialApprovals.map(item => (
+                      <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.taskReference || item.taskId}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.decidedByUserId || '—'}</td>
+                        <td style={{ padding: '.65rem .5rem', minWidth: '14rem' }}>{item.reason}{item.decisionReason && <div className="text-muted">Decision: {item.decisionReason}</div>}{item.lastExecutionError && <div className="alert alert-warning">{item.lastExecutionError}</div>}</td>
+                        <td style={{ padding: '.65rem .5rem', minWidth: '13rem' }}>
+                          <div>{item.expiresAt ? new Date(item.expiresAt).toLocaleString('en-ZA') : '—'}</div>
+                          {item.executedAt && <div>Executed: {new Date(item.executedAt).toLocaleString('en-ZA')}</div>}
+                          {item.status === 'Pending' && <>
+                            <button className="btn btn-primary btn-sm" style={{ margin: '.35rem .35rem .35rem 0' }} disabled={financialApprovalBusy || financialApprovalReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'approve')}>Approve</button>
+                            <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialApprovalReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
+                          </>}
+                          {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item.id)}>Execute approved release</button>}
+                          {item.status === 'Executing' && <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item.id)}>Reconcile execution</button>}
+                        </td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+              <label style={{ display: 'block', maxWidth: '44rem', marginTop: '1rem' }}>Independent decision reason
+                <textarea className="form-input" rows={2} minLength={10} maxLength={500} value={financialApprovalReason} onChange={event => setFinancialApprovalReason(event.target.value)} placeholder="Required for approve/reject; explain the independent review." />
+              </label>
             </div>
           )}
           {financeView === 'operations' && (
