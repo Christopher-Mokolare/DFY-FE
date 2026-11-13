@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
 
+interface SuperAdminChange {
+  id: number
+  action: 'grant' | 'revoke'
+  targetUserId: number
+  targetEmail: string
+  targetName: string
+  requestedByUserId: number
+  reason: string
+  createdAt: string
+  expiresAt: string
+}
+
 interface Invitation {
   id: number
   email: string
@@ -41,6 +53,11 @@ export default function AdminManagement() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteReason, setInviteReason] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
+  const [superAdminChanges, setSuperAdminChanges] = useState<SuperAdminChange[]>([])
+  const [changeAction, setChangeAction] = useState<'grant' | 'revoke'>('grant')
+  const [changeTargetId, setChangeTargetId] = useState('')
+  const [changeReason, setChangeReason] = useState('')
+  const [changeBusy, setChangeBusy] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -56,6 +73,8 @@ export default function AdminManagement() {
       try {
         const inviteResponse = await adminApi.getAdminInvitations()
         setInvitations(inviteResponse.data?.data || [])
+        const changeResponse = await adminApi.getSuperAdminChanges()
+        setSuperAdminChanges(changeResponse.data?.data || [])
       } catch {
         setInvitations([])
       }
@@ -72,6 +91,45 @@ export default function AdminManagement() {
     event.preventDefault()
     setPage(1)
     setSubmittedSearch(search.trim())
+  }
+
+  const submitSuperAdminChange = async (event: FormEvent) => {
+    event.preventDefault()
+    const targetId = Number(changeTargetId)
+    if (!targetId || changeReason.trim().length < 10) {
+      setError('Select an account and provide a reason of at least 10 characters.')
+      return
+    }
+    setChangeBusy(true)
+    setError('')
+    try {
+      await adminApi.createSuperAdminChange(changeAction, targetId, changeReason.trim())
+      setChangeTargetId('')
+      setChangeReason('')
+      await load()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Unable to submit the two-person SuperAdmin request.')
+    } finally {
+      setChangeBusy(false)
+    }
+  }
+
+  const decideSuperAdminChange = async (item: SuperAdminChange, decision: 'approve' | 'reject') => {
+    const reason = window.prompt(
+      `Provide the independent second-person reason to ${decision} ${item.action} SuperAdmin request for ${item.targetEmail} (requested by account #${item.requestedByUserId}).`,
+    )?.trim() || ''
+    if (reason.length < 10) {
+      setError('A decision reason of at least 10 characters is required.')
+      return
+    }
+    if (!window.confirm(`Confirm ${decision} for ${item.targetEmail}? This action is audited.`)) return
+    setError('')
+    try {
+      await adminApi.decideSuperAdminChange(item.id, decision, reason)
+      await load()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'The second-person decision was rejected.')
+    }
   }
 
   const submitInvitation = async (event: FormEvent) => {
@@ -145,6 +203,61 @@ export default function AdminManagement() {
         </div>
       </div>
       <div className="container">
+        <div className="section-card" style={{ marginBottom: '1rem' }}>
+          <h2 style={{ marginTop: 0 }}>SuperAdmin access — two-person approval</h2>
+          <p className="text-muted text-sm">
+            Granting or revoking SuperAdmin access requires two different SuperAdmins, each with recent authenticator verification.
+            The final active SuperAdmin cannot be removed. Promotion targets must already have verified email and authenticator MFA.
+          </p>
+          <form onSubmit={event => void submitSuperAdminChange(event)} style={{ display: 'grid', gap: '.75rem', maxWidth: '42rem' }}>
+            <label><span className="text-sm">Requested change</span>
+              <select className="form-input" value={changeAction} onChange={event => { setChangeAction(event.target.value as 'grant' | 'revoke'); setChangeTargetId('') }}>
+                <option value="grant">Grant SuperAdmin</option>
+                <option value="revoke">Revoke SuperAdmin</option>
+              </select>
+            </label>
+            <label><span className="text-sm">Target account</span>
+              <select className="form-input" required value={changeTargetId} onChange={event => setChangeTargetId(event.target.value)}>
+                <option value="">Select account...</option>
+                {accounts.filter(account => !account.isArchived && (changeAction === 'grant'
+                  ? !account.isSuperAdmin && account.emailVerified && account.authenticatorTwoFactorEnabled
+                  : account.isSuperAdmin)).map(account => (
+                  <option key={account.id} value={account.id}>{account.name} — {account.email}</option>
+                ))}
+              </select>
+            </label>
+            <label><span className="text-sm">Business reason</span>
+              <textarea className="form-input" rows={3} minLength={10} maxLength={500} required
+                value={changeReason} onChange={event => setChangeReason(event.target.value)}
+                placeholder="Explain why this SuperAdmin privilege change is necessary." />
+            </label>
+            <div><button className="btn btn-primary btn-sm" type="submit" disabled={changeBusy || !changeTargetId || changeReason.trim().length < 10}>
+              {changeBusy ? 'Submitting...' : 'Submit for second-person approval'}
+            </button></div>
+          </form>
+          <h3 style={{ marginTop: '1.5rem' }}>Pending approval requests</h3>
+          {superAdminChanges.length === 0 ? <p className="text-muted text-sm">No pending SuperAdmin changes.</p> : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table" style={{ width: '100%' }}>
+                <thead><tr><th>Change</th><th>Target</th><th>Requested by</th><th>Expires</th><th>Reason</th><th>Decision</th></tr></thead>
+                <tbody>{superAdminChanges.map(item => (
+                  <tr key={item.id}>
+                    <td>{item.action === 'grant' ? 'Grant SuperAdmin' : 'Revoke SuperAdmin'}</td>
+                    <td>{item.targetName}<div className="text-muted text-sm">{item.targetEmail}</div></td>
+                    <td>Account #{item.requestedByUserId}</td>
+                    <td>{new Date(item.expiresAt).toLocaleString('en-ZA')}</td>
+                    <td>{item.reason}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => void decideSuperAdminChange(item, 'approve')}>Approve</button>{' '}
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => void decideSuperAdminChange(item, 'reject')}>Reject</button>
+                    </td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         <div className="section-card" style={{ marginBottom: '1rem' }}>
           <h2 style={{ marginTop: 0 }}>Invite a new administrator</h2>
           <p className="text-muted text-sm">
