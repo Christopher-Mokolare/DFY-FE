@@ -59,6 +59,10 @@ export default function AdminShell() {
         <div className="admin-sidebar-spacer" />
 
         <div className="admin-sidebar-footer">
+          <NavLink to="/user/profile" className="admin-profile-mini admin-profile-link" title="Profile and security settings">
+            <div className="admin-avatar"><i className="fas fa-user-cog" /></div>
+            <div><strong>Profile & security</strong><span>Authenticator MFA settings</span></div>
+          </NavLink>
           <div className="admin-profile-mini admin-profile-link">
             <div className="admin-avatar">
               {(user?.firstName || user?.name || 'A').charAt(0).toUpperCase()}
