@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { adminApi } from '../../api'
 
 export default function AdminInvitationAccept() {
-  const [params] = useSearchParams()
-  const token = params.get('token') || ''
+  const location = useLocation()
+  const token = new URLSearchParams(location.hash.replace(/^#/, '')).get('token') || ''
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
