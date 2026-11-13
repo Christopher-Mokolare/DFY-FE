@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
 
 interface Account {
@@ -66,7 +67,7 @@ export default function AdminDuplicateAccountCases() {
     return `${name} — ${account.email}`
   }
 
-  const createCase = async (event: React.FormEvent) => {
+  const createCase = async (event: FormEvent) => {
     event.preventDefault()
     if (!primaryUserId || !candidateUserId || primaryUserId === candidateUserId || reason.trim().length < 10) {
       setError('Select two different accounts and provide a reason of at least 10 characters.')
@@ -83,7 +84,7 @@ export default function AdminDuplicateAccountCases() {
     } finally { setBusy(false) }
   }
 
-  const resolveCase = async (event: React.FormEvent) => {
+  const resolveCase = async (event: FormEvent) => {
     event.preventDefault()
     if (!selectedCaseId || resolutionNote.trim().length < 10) {
       setError('Select an open case and provide a resolution note of at least 10 characters.')
