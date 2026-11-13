@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { adminApi } from '../../api'
 
 export default function AdminInvitationAccept() {
   const location = useLocation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
   const returnState = { from: { pathname: location.pathname, search: location.search, hash: location.hash } }
   const token = new URLSearchParams(location.hash.replace(/^#/, '')).get('token') || ''
   const [busy, setBusy] = useState(false)
@@ -42,7 +43,13 @@ export default function AdminInvitationAccept() {
           <li>Use this page to activate the invitation before it expires.</li>
         </ul>
         {error && <div className="alert alert-error" role="alert">{error}</div>}
-        {message && <div className="alert alert-success" role="status">{message}</div>}
+        {message && <>
+          <div className="alert alert-success" role="status">{message}</div>
+          <button type="button" className="btn btn-primary" onClick={() => {
+            logout()
+            navigate('/login', { state: returnState, replace: true })
+          }}>Sign out and sign in again</button>
+        </>}
         {!message && (isAuthenticated()
           ? <button type="button" className="btn btn-primary" onClick={() => void accept()} disabled={busy || !token}>
               {busy ? 'Activating...' : 'Accept Admin invitation'}
