@@ -451,6 +451,26 @@ export default function AdminUsers() {
                     </>
                   )}
 
+                  {historyData.profileChanges?.length > 0 && (
+                    <>
+                      <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Profile correction audit ({historyData.profileChanges.length})</p>
+                      <div style={{ maxHeight: 260, overflowY: 'auto', marginBottom: '1rem' }}>
+                        {historyData.profileChanges.map((change: any, index: number) => (
+                          <details key={`${change.createdAt}-${index}`} style={{ padding: '.65rem 0', borderBottom: '1px solid var(--border)' }}>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+                              {new Date(change.createdAt).toLocaleString('en-ZA')} · Admin #{change.userId}
+                            </summary>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginTop: '.5rem' }}>
+                              <div><span className="text-muted text-sm">Before</span><pre style={{ whiteSpace: 'pre-wrap', fontSize: '.75rem' }}>{change.oldValues}</pre></div>
+                              <div><span className="text-muted text-sm">After / reason</span><pre style={{ whiteSpace: 'pre-wrap', fontSize: '.75rem' }}>{change.newValues}</pre></div>
+                            </div>
+                            <div className="text-muted text-sm">Source IP: {change.ipAddress || 'Not recorded'}</div>
+                          </details>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
                   {historyData.acceptedTasks?.length > 0 && (
                     <>
                       <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Accepted Tasks ({historyData.acceptedTasks.length})</p>
