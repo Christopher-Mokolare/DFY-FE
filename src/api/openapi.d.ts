@@ -459,6 +459,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/superadmin/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    search?: string;
+                    includeArchived?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{userId}/status": {
         parameters: {
             query?: never;
@@ -486,6 +528,51 @@ export interface paths {
                     "application/json": components["schemas"]["UpdateUserStatusRequest"];
                     "text/json": components["schemas"]["UpdateUserStatusRequest"];
                     "application/*+json": components["schemas"]["UpdateUserStatusRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/suspension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateUserSuspensionRequest"];
+                    "text/json": components["schemas"]["UpdateUserSuspensionRequest"];
+                    "application/*+json": components["schemas"]["UpdateUserSuspensionRequest"];
                 };
             };
             responses: {
@@ -676,6 +763,348 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/admin/financial-approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/{id}/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/tasks/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Int32ApiResponse"];
+                        "application/json": components["schemas"]["Int32ApiResponse"];
+                        "text/json": components["schemas"]["Int32ApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/refunds/tasks/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Int32ApiResponse"];
+                        "application/json": components["schemas"]["Int32ApiResponse"];
+                        "text/json": components["schemas"]["Int32ApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/disputes/release/tasks/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Int32ApiResponse"];
+                        "application/json": components["schemas"]["Int32ApiResponse"];
+                        "text/json": components["schemas"]["Int32ApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/financial-approvals/{id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/tasks/{taskId}/force-release-escrow": {
         parameters: {
             query?: never;
@@ -740,7 +1169,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -779,7 +1214,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UserLifecycleReasonRequest"];
+                    "text/json": components["schemas"]["UserLifecycleReasonRequest"];
+                    "application/*+json": components["schemas"]["UserLifecycleReasonRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -817,7 +1258,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UserLifecycleReasonRequest"];
+                    "text/json": components["schemas"]["UserLifecycleReasonRequest"];
+                    "application/*+json": components["schemas"]["UserLifecycleReasonRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -1222,7 +1669,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminActionReasonRequest"];
+                    "text/json": components["schemas"]["AdminActionReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminActionReasonRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -1281,6 +1734,206 @@ export interface paths {
                         "text/plain": components["schemas"]["BooleanApiResponse"];
                         "application/json": components["schemas"]["BooleanApiResponse"];
                         "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/permissions/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/permissions/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    userId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GrantAdminPermissionRequest"];
+                    "text/json": components["schemas"]["GrantAdminPermissionRequest"];
+                    "application/*+json": components["schemas"]["GrantAdminPermissionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/permissions/grants/{grantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    grantId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RevokeAdminPermissionRequest"];
+                    "text/json": components["schemas"]["RevokeAdminPermissionRequest"];
+                    "application/*+json": components["schemas"]["RevokeAdminPermissionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/profile-correction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminUserProfileCorrectionRequest"];
+                    "text/json": components["schemas"]["AdminUserProfileCorrectionRequest"];
+                    "application/*+json": components["schemas"]["AdminUserProfileCorrectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
                     };
                 };
             };
@@ -2687,6 +3340,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/duplicate-account-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: string;
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateDuplicateAccountCaseRequest"];
+                    "text/json": components["schemas"]["CreateDuplicateAccountCaseRequest"];
+                    "application/*+json": components["schemas"]["CreateDuplicateAccountCaseRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/duplicate-account-cases/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolveDuplicateAccountCaseRequest"];
+                    "text/json": components["schemas"]["ResolveDuplicateAccountCaseRequest"];
+                    "application/*+json": components["schemas"]["ResolveDuplicateAccountCaseRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/identity-notifications/dead-letters": {
         parameters: {
             query?: never;
@@ -2982,6 +3736,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/manual-identity-verification/admin/overrides/rejected": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/manual-identity-verification/admin/{id}/claim": {
         parameters: {
             query?: never;
@@ -3092,7 +3886,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    reason?: string;
+                };
                 header?: never;
                 path: {
                     id: number;
@@ -3113,6 +3909,51 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/manual-identity-verification/admin/{id}/override/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["KycOverrideReopenRequest"];
+                    "text/json": components["schemas"]["KycOverrideReopenRequest"];
+                    "application/*+json": components["schemas"]["KycOverrideReopenRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4165,9 +5006,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["BusinessRule"];
-                    "text/json": components["schemas"]["BusinessRule"];
-                    "application/*+json": components["schemas"]["BusinessRule"];
+                    "application/json": components["schemas"]["AdminBusinessRuleRequest"];
+                    "text/json": components["schemas"]["AdminBusinessRuleRequest"];
+                    "application/*+json": components["schemas"]["AdminBusinessRuleRequest"];
                 };
             };
             responses: {
@@ -4232,9 +5073,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["BusinessRule"];
-                    "text/json": components["schemas"]["BusinessRule"];
-                    "application/*+json": components["schemas"]["BusinessRule"];
+                    "application/json": components["schemas"]["AdminBusinessRuleRequest"];
+                    "text/json": components["schemas"]["AdminBusinessRuleRequest"];
+                    "application/*+json": components["schemas"]["AdminBusinessRuleRequest"];
                 };
             };
             responses: {
@@ -4261,7 +5102,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminRuleReasonRequest"];
+                    "text/json": components["schemas"]["AdminRuleReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminRuleReasonRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -4299,7 +5146,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AdminRuleReasonRequest"];
+                    "text/json": components["schemas"]["AdminRuleReasonRequest"];
+                    "application/*+json": components["schemas"]["AdminRuleReasonRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -4341,6 +5194,239 @@ export interface paths {
                     "application/json": components["schemas"]["SuperAdminBootstrapRequest"];
                     "text/json": components["schemas"]["SuperAdminBootstrapRequest"];
                     "application/*+json": components["schemas"]["SuperAdminBootstrapRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateSuperAdminChangeRequest"];
+                    "text/json": components["schemas"]["CreateSuperAdminChangeRequest"];
+                    "application/*+json": components["schemas"]["CreateSuperAdminChangeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/changes/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DecideSuperAdminChangeRequest"];
+                    "text/json": components["schemas"]["DecideSuperAdminChangeRequest"];
+                    "application/*+json": components["schemas"]["DecideSuperAdminChangeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateAdminInvitationRequest"];
+                    "text/json": components["schemas"]["CreateAdminInvitationRequest"];
+                    "application/*+json": components["schemas"]["CreateAdminInvitationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/invitations/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RevokeAdminInvitationRequest"];
+                    "text/json": components["schemas"]["RevokeAdminInvitationRequest"];
+                    "application/*+json": components["schemas"]["RevokeAdminInvitationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/super-admin/invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AcceptAdminInvitationRequest"];
+                    "text/json": components["schemas"]["AcceptAdminInvitationRequest"];
+                    "application/*+json": components["schemas"]["AcceptAdminInvitationRequest"];
                 };
             };
             responses: {
@@ -6680,6 +7766,9 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptAdminInvitationRequest: {
+            token?: string | null;
+        };
         AccountResetPasswordRequest: {
             token: string;
             newPassword: string;
@@ -6695,6 +7784,29 @@ export interface components {
         };
         AdminActionReasonRequest: {
             reason: string;
+        };
+        AdminBusinessRuleRequest: {
+            ruleName: string;
+            ruleType: string;
+            entity: string;
+            condition: string;
+            action: string;
+            errorMessage?: string | null;
+            isActive?: boolean;
+            /** Format: int32 */
+            priority?: number;
+            reason: string;
+        };
+        AdminRuleReasonRequest: {
+            reason: string;
+        };
+        AdminUserProfileCorrectionRequest: {
+            firstName?: string | null;
+            lastName?: string | null;
+            email?: string | null;
+            phoneNumber?: string | null;
+            address?: string | null;
+            reason?: string | null;
         };
         AuthResponse: {
             success?: boolean;
@@ -6756,6 +7868,7 @@ export interface components {
             icon?: string | null;
             /** Format: int32 */
             sortOrder?: number | null;
+            reason: string;
         };
         ChangePasswordRequest: {
             currentPassword: string;
@@ -6765,6 +7878,24 @@ export interface components {
             helperName: string;
             helperContact: string;
             termsAccepted: boolean;
+        };
+        CreateAdminInvitationRequest: {
+            email?: string | null;
+            reason?: string | null;
+        };
+        CreateDuplicateAccountCaseRequest: {
+            /** Format: int32 */
+            primaryUserId?: number;
+            /** Format: int32 */
+            candidateUserId?: number;
+            reason: string;
+            evidenceReference?: string | null;
+        };
+        CreateSuperAdminChangeRequest: {
+            action?: string | null;
+            /** Format: int32 */
+            targetUserId?: number;
+            reason?: string | null;
         };
         CreateSupportTicketRequest: {
             name?: string | null;
@@ -6796,6 +7927,10 @@ export interface components {
             /** Format: double */
             longitude?: number | null;
         };
+        DecideSuperAdminChangeRequest: {
+            decision?: string | null;
+            reason?: string | null;
+        };
         DisableTwoFactorRequest: {
             currentPassword?: string | null;
             code: string;
@@ -6823,6 +7958,14 @@ export interface components {
             privacyVersion: string;
             marketingConsent?: boolean;
         };
+        GrantAdminPermissionRequest: {
+            /** Format: int32 */
+            userId?: number;
+            permissionKey: string;
+            reason: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         IncidentEscrowHoldRequest: {
             reason?: string | null;
         };
@@ -6835,6 +7978,9 @@ export interface components {
             data?: number;
             message?: string | null;
             error?: string | null;
+        };
+        KycOverrideReopenRequest: {
+            reason: string;
         };
         LoginRequest: {
             /** Format: email */
@@ -6901,6 +8047,7 @@ export interface components {
         ReorderRequest: {
             /** Format: int32 */
             sortOrder?: number;
+            reason: string;
         };
         ReorderTestimonialRequest: {
             /** Format: int32 */
@@ -6917,9 +8064,19 @@ export interface components {
             email?: string | null;
             newPassword?: string | null;
         };
+        ResolveDuplicateAccountCaseRequest: {
+            outcome: string;
+            resolutionNote: string;
+        };
         ReviewTaskIncidentRequest: {
             status?: string | null;
             adminNotes?: string | null;
+        };
+        RevokeAdminInvitationRequest: {
+            reason?: string | null;
+        };
+        RevokeAdminPermissionRequest: {
+            reason: string;
         };
         SendMessageRequest: {
             content?: string | null;
@@ -7061,6 +8218,10 @@ export interface components {
             isVerified?: boolean;
             reason: string;
         };
+        UpdateUserSuspensionRequest: {
+            isSuspended?: boolean;
+            reason: string;
+        };
         UserDto: {
             /** Format: int32 */
             id?: number;
@@ -7095,6 +8256,9 @@ export interface components {
             identityVerificationStatus?: string | null;
             authenticatorTwoFactorEnabled?: boolean;
             hasGoogleLogin?: boolean;
+        };
+        UserLifecycleReasonRequest: {
+            reason: string;
         };
         UserPreferencesRequest: {
             canCreateTasks?: boolean;
