@@ -59,6 +59,9 @@ export default function AdminInvitationAccept() {
               <Link className="btn btn-secondary" to="/login" state={returnState}>Sign in</Link>
             </div>
         )}
+        {isAuthenticated() && !message && <p className="text-muted text-sm" style={{ marginTop: '.75rem' }}>
+          Need to enable authenticator MFA first? <Link to="/user/profile" state={returnState}>Open profile security settings</Link>, then return to this invitation.
+        </p>}
         <p className="text-muted text-sm" style={{ marginTop: '1rem', marginBottom: 0 }}>
           The invitation is single-use and expires after 48 hours. If it has expired, contact the inviting SuperAdmin.
         </p>
