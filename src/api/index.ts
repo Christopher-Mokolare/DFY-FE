@@ -127,6 +127,7 @@ export const adminApi = {
   approveFinancialRequest: (id: number, reason: string) => api.post(`/admin/financial-approvals/${id}/approve`, { reason }),
   rejectFinancialRequest: (id: number, reason: string) => api.post(`/admin/financial-approvals/${id}/reject`, { reason }),
   executeFinancialApproval: (id: number) => api.post(`/admin/financial-approvals/${id}/execute`),
+  reconcileFinancialApproval: (id: number) => api.post(`/admin/financial-approvals/${id}/reconcile`),
   getUsers: (params?: object) => api.get('/admin/users', { params }),
   getSuperAdminAccounts: (params?: object) => api.get('/admin/superadmin/accounts', { params }),
   createAdminInvitation: (email: string, reason: string) => api.post('/admin/super-admin/invitations', { email, reason }),
