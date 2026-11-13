@@ -94,11 +94,28 @@ export default function AdminUsers() {
     } catch { /* ignore */ } finally { setHistoryLoading(false) }
   }
 
-  const archiveUser = async (u: any) => {
-    if (!window.confirm(`Archive ${u.name} (${u.email})? They will no longer be able to sign in, and their audit/task history will be retained.`)) return
+  const suspendUser = async (u: any) => {
+    const next = !u.isSuspended
+    const reason = window.prompt(`Reason to ${next ? 'suspend' : 'reinstate'} ${u.name} (${u.email}) (minimum 10 characters):`)?.trim() || ''
+    if (reason.length < 10) { setActionError('A reason of at least 10 characters is required'); return }
+    if (!window.confirm(`${next ? 'Suspend' : 'Reinstate'} ${u.email}? Active sessions will be revoked.`)) return
     setActionLoading(true); setActionError('')
     try {
-      const r = await adminApi.deleteUser(u.id)
+      const r = await adminApi.updateUserSuspension(u.id, next, reason)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to update account access'); return }
+      load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to update account access')
+    } finally { setActionLoading(false) }
+  }
+
+  const archiveUser = async (u: any) => {
+    const reason = window.prompt(`Reason to archive ${u.name} (${u.email}) (minimum 5 characters):`)?.trim() || ''
+    if (reason.length < 5) { setActionError('A reason of at least 5 characters is required'); return }
+    if (!window.confirm(`Archive ${u.email}? Their audit/task history will be retained.`)) return
+    setActionLoading(true); setActionError('')
+    try {
+      const r = await adminApi.deleteUser(u.id, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to archive user'); return }
       load()
     } catch (err: any) {
@@ -107,10 +124,12 @@ export default function AdminUsers() {
   }
 
   const restoreUser = async (u: any) => {
-    if (!window.confirm(`Restore ${u.name} (${u.email}) and allow them to sign in again?`)) return
+    const reason = window.prompt(`Reason to restore ${u.name} (${u.email}) (minimum 5 characters):`)?.trim() || ''
+    if (reason.length < 5) { setActionError('A reason of at least 5 characters is required'); return }
+    if (!window.confirm(`Restore ${u.email}? A suspended account remains suspended until separately reinstated.`)) return
     setActionLoading(true); setActionError('')
     try {
-      const r = await adminApi.restoreUser(u.id)
+      const r = await adminApi.restoreUser(u.id, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to restore user'); return }
       load()
     } catch (err: any) {
@@ -122,7 +141,7 @@ export default function AdminUsers() {
     const r = await adminApi.getUsers({ page: 1, pageSize: 10000, includeArchived })
     return r.data?.data?.users || []
   }
-  const mapUserRow = (u: any) => [u.name, u.email, getMarketplaceRole(u), getSystemAccess(u), u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
+  const mapUserRow = (u: any) => [u.name, u.email, getMarketplaceRole(u), getSystemAccess(u), u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : u.isSuspended ? 'Suspended' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
   const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Marketplace role', 'System access', 'Tasks Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
   const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Marketplace role', 'System access', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
@@ -167,7 +186,7 @@ export default function AdminUsers() {
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500 }}>
                           {isAdmin(u) && <i className="fas fa-shield-alt" style={{ color: '#EF4444', marginRight: '0.375rem', fontSize: '0.75rem' }} />}
                           {u.name}
-                          {u.isArchived && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Archived</span>}
+                          {u.isArchived && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Archived</span>}{!u.isArchived && u.isSuspended && <span className="badge badge-danger" style={{ marginLeft: '0.5rem' }}>Suspended</span>}
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className="badge badge-info">{getMarketplaceRole(u)}</span></td>
@@ -185,7 +204,9 @@ export default function AdminUsers() {
                               </button>
                               {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
-                              <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>
+                              {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
+                              {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
+                         <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>
                             </>}
                             {u.isArchived && <>
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View retained history"><i className="fas fa-history" /></button>
@@ -231,7 +252,7 @@ export default function AdminUsers() {
                         <i className={`fas fa-${u.emailVerified ? 'check-circle' : 'clock'}`} /> Email {u.emailVerified ? 'verified' : 'pending'}
                       </span>
                       <span className={`badge ${u.isArchived ? 'badge-warning' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
-                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
+                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : u.isSuspended ? 'Suspended' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
                       </span>
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
