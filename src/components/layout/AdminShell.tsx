@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 const navigation: Array<{ label: string; to: string; icon: string; section: string; superAdminOnly?: boolean }> = [
   { label: 'Overview', to: '/admin/dashboard', icon: 'fa-chart-pie', section: 'WORKSPACE' },
   { label: 'Tasks', to: '/admin/tasks', icon: 'fa-list-check', section: 'OPERATIONS' },
+  { label: 'Categories', to: '/admin/categories', icon: 'fa-layer-group', section: 'OPERATIONS' },
   { label: 'Users', to: '/admin/users', icon: 'fa-users', section: 'OPERATIONS' },
   { label: 'Identity review', to: '/admin/identity-verifications', icon: 'fa-id-card', section: 'OPERATIONS' },
   { label: 'Disputes', to: '/admin/disputes', icon: 'fa-gavel', section: 'OPERATIONS' },
