@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { adminApi, ratingsApi } from '../../api'
 import { exportAllCSV, exportAllPDF } from '../../utils/export'
+import AdminDuplicateAccountCases from './AdminDuplicateAccountCases'
 
 export default function AdminUsers() {
   const { isSuperAdmin } = useAuth()
@@ -150,6 +151,7 @@ export default function AdminUsers() {
     <div style={{ paddingBottom: '3rem' }}>
       <div className="page-header"><div className="container"><h1><i className="fas fa-users" /> Manage Users</h1></div></div>
       <div className="container">
+        <AdminDuplicateAccountCases />
         <div className="section-card">
           <div className="admin-toolbar">
             <input className="form-input" placeholder="Filter by name or email..." value={search}
