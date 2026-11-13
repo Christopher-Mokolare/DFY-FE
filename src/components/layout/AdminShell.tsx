@@ -11,16 +11,18 @@ const navigation = [
   { label: 'Payments', to: '/admin/payments', icon: 'fa-credit-card', section: 'FINANCE' },
   { label: 'Testimonials', to: '/admin/testimonials', icon: 'fa-quote-left', section: 'CONTENT' },
   { label: 'Audit Log', to: '/admin/audit-log', icon: 'fa-shield-halved', section: 'SYSTEM' },
+  { label: 'Admin management', to: '/admin/admin-management', icon: 'fa-user-shield', section: 'SYSTEM', superAdminOnly: true },
 ]
 
 const sections = ['WORKSPACE', 'OPERATIONS', 'FINANCE', 'CONTENT', 'SYSTEM'] as const
 
 export default function AdminShell() {
-  const { user, logout } = useAuth()
+  const { user, logout, isSuperAdmin } = useAuth()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const closeMobile = () => setMobileOpen(false)
-  const currentPage = navigation.find(item => item.to === location.pathname)?.label || 'Operations'
+  const visibleNavigation = navigation.filter(item => !item.superAdminOnly || isSuperAdmin())
+  const currentPage = visibleNavigation.find(item => item.to === location.pathname)?.label || 'Operations'
 
   return (
     <div className="admin-shell">
@@ -37,7 +39,7 @@ export default function AdminShell() {
           {sections.map(section => (
             <div className="admin-nav-section" key={section}>
               <div className="admin-sidebar-section-label">{section}</div>
-              {navigation.filter(item => item.section === section).map(item => (
+              {visibleNavigation.filter(item => item.section === section).map(item => (
                 <NavLink
                   key={item.to}
                   to={item.to}
