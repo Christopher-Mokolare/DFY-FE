@@ -92,7 +92,7 @@ export default function AdminDisputes() {
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(d.createdAt).toLocaleDateString('en-ZA')}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           {d.status === 'Open' && (isSuperAdmin()
-                            ? <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('refund_creator'); setResolveError('') }}>Request refund review</button>
+                            ? <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('refund_creator'); setResolveError('') }}>Request financial review</button>
                             : <span className="text-muted text-sm">SuperAdmin resolution required</span>
                           )}
                           {d.status === 'Resolved' && (
@@ -146,7 +146,7 @@ export default function AdminDisputes() {
         <div className="modal-overlay" onClick={() => setResolveModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3><i className="fas fa-gavel" /> Request Two-person Refund Review</h3>
+              <h3><i className="fas fa-gavel" /> Request Two-person Financial Review</h3>
               <button className="btn-close" onClick={() => setResolveModal(null)}><i className="fas fa-times" /></button>
             </div>
             <div className="modal-body">
@@ -166,7 +166,7 @@ export default function AdminDisputes() {
                   <option value="release_to_runner">Request two-person runner release approval</option>
                   <option value="refund_creator">Request two-person creator refund approval</option>
                 </select>
-                <p className="text-muted text-sm">This submits a request only. A different SuperAdmin must approve it before the refund can be executed. No money moves at this stage.</p>
+                <p className="text-muted text-sm">This submits a request only. A different SuperAdmin must approve it before the selected financial action can execute. No money moves at this stage.</p>
               </div>
               <div className="form-group">
                 <label className="form-label">Resolution Notes *</label>
