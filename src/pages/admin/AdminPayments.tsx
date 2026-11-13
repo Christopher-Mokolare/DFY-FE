@@ -100,12 +100,12 @@ export default function AdminPayments() {
     setFinancialApprovalBusy(true)
     setFinancialApprovalError('')
     try {
-      if (item.action === 'refund_creator') {
+      if (item.action === 'refund_creator' || item.action === 'release_to_runner') {
         const response = await adminApi.getDisputes()
         const disputes = response.data?.data?.disputes || []
         const dispute = disputes.find((entry: any) => entry.taskId === item.taskReference)
         if (!dispute) throw new Error('The linked dispute could not be found. No refund was submitted.')
-        await adminApi.resolveDispute(dispute.id, item.reason, 'refund_creator', item.decisionReason || item.reason)
+        await adminApi.resolveDispute(dispute.id, item.reason, item.action, item.decisionReason || item.reason)
       } else {
         await adminApi.executeFinancialApproval(item.id)
       }
@@ -378,7 +378,7 @@ export default function AdminPayments() {
                             <button className="btn btn-primary btn-sm" style={{ margin: '.35rem .35rem .35rem 0' }} disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'approve')}>Approve</button>
                             <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
                           </>}
-                          {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>{item.action === 'refund_creator' ? 'Execute approved refund' : 'Execute approved release'}</button>}
+                          {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>{item.action === 'refund_creator' ? 'Execute approved refund' : item.action === 'release_to_runner' ? 'Execute approved dispute release' : 'Execute approved release'}</button>}
                           {item.status === 'Executing' && (item.action === 'refund_creator' ? <div className="alert alert-warning">Refund execution was interrupted. Reconcile the Paystack refund record before any retry; automatic resubmission is disabled.</div> : <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>Reconcile execution</button>)}
                         </td>
                       </tr>
