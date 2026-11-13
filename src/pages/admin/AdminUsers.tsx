@@ -251,7 +251,6 @@ export default function AdminUsers() {
                                 {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                               </button>
                               {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
-                              {!isAdmin(u) && !u.isSuspended && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
                               {!isAdmin(u) && !u.isSuspended && !u.isArchived && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                               {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
@@ -306,7 +305,8 @@ export default function AdminUsers() {
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                         {!u.isArchived && <>
-                          {isSuperAdmin() && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
+                          {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
+                          {!isAdmin(u) && !u.isSuspended && !u.isArchived && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
                           <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                             {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
