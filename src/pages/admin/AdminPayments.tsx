@@ -325,6 +325,7 @@ export default function AdminPayments() {
                     </div>
                   )}
                   {(settlementReport.transactions || []).length > 0 && (
+                    <>
                     <div className="admin-table-wrap">
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
                         <thead><tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>{['Reference', 'Task', 'Status', 'Currency', 'Amount', 'Provider fee', 'Findings'].map(h => <th key={h} style={{ padding: '0.65rem 0.5rem' }}>{h}</th>)}</tr></thead>
@@ -462,6 +463,7 @@ export default function AdminPayments() {
                         <button className="btn btn-secondary btn-sm" disabled={financialLedgerLoading || financialLedgerPage >= Math.max(1, Math.ceil((financialLedger.totalCount || 0) / (financialLedger.pageSize || 50)))} onClick={() => void loadFinancialLedger(financialLedgerPage + 1)}>Next</button>
                       </div>
                     </div>
+                    </>
                   )}
                 </>
               )}
