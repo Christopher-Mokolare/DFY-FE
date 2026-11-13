@@ -261,7 +261,7 @@ export default function AdminUsers() {
                             {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
                           {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
-                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>
+                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>}
                         </>}
                         {u.isArchived && <button className="btn btn-sm btn-primary" onClick={() => restoreUser(u)} disabled={actionLoading}>Restore</button>}
                       </div>
