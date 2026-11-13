@@ -528,7 +528,9 @@ export default function AdminPayments() {
                             <td style={{ padding: '.65rem .5rem', minWidth: '10rem' }}>
                               {journal.reversalOfJournalId ? <span className="text-muted">Reversal of #{journal.reversalOfJournalId}</span>
                                 : journal.isReversed ? <span className="text-muted">Already reversed</span>
-                                  : <button className="btn btn-secondary btn-sm" disabled={financialReversalBusy} onClick={() => void requestJournalReversal(journal)}>Request reversal</button>}
+                                  : financialReversals.find(item => Number(item.originalJournalId) === Number(journal.id) && ['Pending', 'Approved', 'Executing'].includes(item.status))
+                                    ? <span className="text-muted">Reversal {financialReversals.find(item => Number(item.originalJournalId) === Number(journal.id) && ['Pending', 'Approved', 'Executing'].includes(item.status))?.status}</span>
+                                    : <button className="btn btn-secondary btn-sm" disabled={financialReversalBusy} onClick={() => void requestJournalReversal(journal)}>Request reversal</button>}
                             </td>
                           </tr>
                         ))}</tbody>
