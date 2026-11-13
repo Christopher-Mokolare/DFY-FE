@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { adminApi, ratingsApi } from '../../api'
 import { exportAllCSV, exportAllPDF } from '../../utils/export'
 
 export default function AdminUsers() {
+  const { isSuperAdmin } = useAuth()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -181,7 +183,7 @@ export default function AdminUsers() {
                               <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                                 {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                               </button>
-                              <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
+                              {isSuperAdmin() && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                               <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>
                             </>}
@@ -234,7 +236,7 @@ export default function AdminUsers() {
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                         {!u.isArchived && <>
-                          <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
+                          {isSuperAdmin() && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
                           <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                             {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
