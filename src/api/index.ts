@@ -123,6 +123,7 @@ export const adminApi = {
   bulkVerify: (ids: string[], reason: string) => api.patch('/admin/tasks/bulk-verify', { taskIds: ids, reason }),
   forceReleaseEscrow: (id: string, reason: string) => api.patch(`/admin/tasks/${id}/force-release-escrow`, { reason }),
   getUsers: (params?: object) => api.get('/admin/users', { params }),
+  getSuperAdminAccounts: (params?: object) => api.get('/admin/superadmin/accounts', { params }),
   getManualIdentityVerifications: (params?: { page?: number; pageSize?: number; filter?: 'all' | 'near-deadline' | 'overdue' | 'claimed-by-me' | 'unclaimed' | 'resubmission' }) => api.get('/manual-identity-verification/admin/pending', { params }),
   claimManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/claim`),
   heartbeatManualIdentityReview: (id: number) => api.post(`/manual-identity-verification/admin/${id}/heartbeat`),
