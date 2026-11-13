@@ -28,13 +28,16 @@ export default function AdminDisputes() {
 
   const resolve = async () => {
     if (!resolveModal || !resolution.trim() || reason.trim().length < 10 || action !== 'refund_creator') {
-      setResolveError('Enter refund review notes and a reason of at least 10 characters.')
+      setResolveError('Enter the financial review notes and a reason of at least 10 characters.')
       return
     }
     setActionLoading(true); setResolveError('')
     try {
-      const res = await adminApi.requestFinancialRefundApproval(resolveModal.taskId, `${reason.trim()} — ${resolution.trim()}`.slice(0, 500))
-      if (res.data?.success === false) { setResolveError(res.data?.message || 'Failed to request refund approval'); return }
+      const approvalReason = `${reason.trim()} — ${resolution.trim()}`.slice(0, 500)
+      const res = action === 'refund_creator'
+        ? await adminApi.requestFinancialRefundApproval(resolveModal.taskId, approvalReason)
+        : await adminApi.requestDisputeReleaseApproval(resolveModal.taskId, approvalReason)
+      if (res.data?.success === false) { setResolveError(res.data?.message || 'Failed to request independent financial approval'); return }
       setResolveModal(null)
       setResolution('')
       setReason('')
@@ -160,7 +163,8 @@ export default function AdminDisputes() {
               <div className="form-group">
                 <label className="form-label">Financial Action</label>
                 <select className="form-select" value={action} onChange={e => setAction(e.target.value)}>
-                  <option value="refund_creator">Request two-person refund approval</option>
+                  <option value="release_to_runner">Request two-person runner release approval</option>
+                  <option value="refund_creator">Request two-person creator refund approval</option>
                 </select>
                 <p className="text-muted text-sm">This submits a request only. A different SuperAdmin must approve it before the refund can be executed. No money moves at this stage.</p>
               </div>
@@ -168,7 +172,7 @@ export default function AdminDisputes() {
                 <label className="form-label">Resolution Notes *</label>
                 <textarea
                   className="form-textarea"
-                  placeholder="Summarise the evidence supporting a refund request..."
+                  placeholder="Summarise the evidence supporting the selected financial action..."
                   value={resolution}
                   onChange={e => setResolution(e.target.value)}
                   rows={4}
@@ -176,7 +180,7 @@ export default function AdminDisputes() {
               </div>
               <div className="form-group">
                 <label className="form-label">Admin Reason *</label>
-                <textarea className="form-textarea" placeholder="Why should this refund be considered?" value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} />
+                <textarea className="form-textarea" placeholder="Why should this financial action be considered?" value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} />
               </div>
             </div>
             {resolveError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{resolveError}</p>}
