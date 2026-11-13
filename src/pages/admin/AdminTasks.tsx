@@ -49,6 +49,7 @@ export default function AdminTasks() {
   const [deleteModal, setDeleteModal] = useState<any | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [deleteReason, setDeleteReason] = useState('')
   const [actionError, setActionError] = useState('')
 
   useEffect(() => { load() }, [page, filter])
@@ -85,10 +86,12 @@ export default function AdminTasks() {
 
   const confirmDelete = async () => {
     if (!deleteModal) return
+    const reason = deleteReason.trim()
+    if (reason.length < 5) { setDeleteError('A reason of at least 5 characters is required.'); return }
     setDeleteLoading(true)
     setDeleteError('')
     try {
-      const r = await adminApi.deleteTask(deleteModal.taskId)
+      const r = await adminApi.deleteTask(deleteModal.taskId, reason)
       if (r.data?.success === false) { setDeleteError(r.data?.message || 'Delete failed'); return }
       setDeleteModal(null)
       load()
@@ -202,7 +205,7 @@ export default function AdminTasks() {
                             {t.paymentStatus === 'Completed' && t.taskStatus === 'Posted' && (
                               <button className="btn btn-secondary btn-sm" onClick={() => unverify(t.taskId)}>Unverify</button>
                             )}
-                            <button className="btn btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444', background: 'transparent' }} onClick={() => { setDeleteError(''); setDeleteModal(t) }}>
+                            <button className="btn btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444', background: 'transparent' }} onClick={() => { setDeleteError(''); setDeleteReason(''); setDeleteModal(t) }}>
                               <i className="fas fa-trash" />
                             </button>
                           </div>
@@ -284,7 +287,9 @@ export default function AdminTasks() {
               <div className="alert alert-warning" style={{ marginBottom: '1rem' }}>
                 <i className="fas fa-exclamation-triangle" /> This is a soft delete — the task will be hidden from the platform but data is preserved.
               </div>
-              <p>Delete task: <strong>{deleteModal.taskDescription}</strong>?</p>
+              <p>Archive task: <strong>{deleteModal.taskDescription}</strong>?</p>
+              <label className="form-label" htmlFor="admin-task-archive-reason">Reason (required)</label>
+              <textarea id="admin-task-archive-reason" className="form-input" rows={3} maxLength={500} minLength={5} value={deleteReason} onChange={event => setDeleteReason(event.target.value)} placeholder="Explain why this task must be removed from the marketplace." />
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                 {deleteModal.taskId} · R{deleteModal.budget} · {deleteModal.taskStatus}
               </p>
@@ -297,7 +302,7 @@ export default function AdminTasks() {
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setDeleteModal(null)}>Cancel</button>
-              <button className="btn" style={{ background: '#EF4444', color: '#fff' }} onClick={confirmDelete} disabled={deleteLoading || deleteModal.escrowStatus === 'held'}>
+              <button className="btn" style={{ background: '#EF4444', color: '#fff' }} onClick={confirmDelete} disabled={deleteLoading || deleteModal.escrowStatus === 'held' || deleteReason.trim().length < 5}>
                 {deleteLoading ? <><span className="spinner spinner-sm" /> Deleting...</> : 'Delete Task'}
               </button>
             </div>
