@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
-const navigation = [
+const navigation: Array<{ label: string; to: string; icon: string; section: string; superAdminOnly?: boolean }> = [
   { label: 'Overview', to: '/admin/dashboard', icon: 'fa-chart-pie', section: 'WORKSPACE' },
   { label: 'Tasks', to: '/admin/tasks', icon: 'fa-list-check', section: 'OPERATIONS' },
   { label: 'Users', to: '/admin/users', icon: 'fa-users', section: 'OPERATIONS' },
