@@ -339,7 +339,7 @@ export default function AdminPayments() {
                   <input className="form-input" value={financialTaskId} onChange={event => setFinancialTaskId(event.target.value)} placeholder="DFY task reference" required />
                 </label>
                 <label>Request reason
-                  <textarea className="form-input" rows={3} minLength={10} maxLength={500} value={financialApprovalReason} onChange={event => setFinancialApprovalReason(event.target.value)} placeholder="Explain the exceptional circumstances and supporting review." required />
+                  <textarea className="form-input" rows={3} minLength={10} maxLength={500} value={financialRequestReason} onChange={event => setFinancialRequestReason(event.target.value)} placeholder="Explain the exceptional circumstances and supporting review." required />
                 </label>
                 <div><button className="btn btn-primary btn-sm" type="submit" disabled={financialApprovalBusy || financialRequestReason.trim().length < 10 || !financialTaskId.trim()}>
                   {financialApprovalBusy ? 'Saving…' : 'Submit for independent approval'}
@@ -378,7 +378,7 @@ export default function AdminPayments() {
                 </div>
               )}
               <label style={{ display: 'block', maxWidth: '44rem', marginTop: '1rem' }}>Independent decision reason
-                <textarea className="form-input" rows={2} minLength={10} maxLength={500} value={financialApprovalReason} onChange={event => setFinancialApprovalReason(event.target.value)} placeholder="Required for approve/reject; explain the independent review." />
+                <textarea className="form-input" rows={2} minLength={10} maxLength={500} value={financialDecisionReason} onChange={event => setFinancialDecisionReason(event.target.value)} placeholder="Required for approve/reject; explain the independent review." />
               </label>
             </div>
           )}
