@@ -14,7 +14,6 @@ function Stars({ value }: { value: number }) {
 export default function AdminTasks() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<string[]>([])
   const [filter, setFilter] = useState('')
   const [searchParams] = useSearchParams()
   const highlight = searchParams.get('highlight') || ''
@@ -50,39 +49,9 @@ export default function AdminTasks() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [deleteReason, setDeleteReason] = useState('')
-  const [actionError, setActionError] = useState('')
 
   useEffect(() => { load() }, [page, filter])
   useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, filter, search, true) }, 400); return () => clearTimeout(t) }, [search])
-
-  const verify = async (id: string) => {
-    const reason = window.prompt('Reason for manually verifying this payment?')?.trim()
-    if (!reason) return
-    try {
-      const r = await adminApi.verifyPayment(id, reason)
-      if (r.data?.success === false) { setActionError(r.data?.message || 'Verify failed'); return }
-      setActionError(''); load()
-    } catch { setActionError('Verify failed') }
-  }
-  const unverify = async (id: string) => {
-    const reason = window.prompt('Reason for reversing this payment verification?')?.trim()
-    if (!reason) return
-    try {
-      const r = await adminApi.unverifyPayment(id, reason)
-      if (r.data?.success === false) { setActionError(r.data?.message || 'Unverify failed'); return }
-      setActionError(''); load()
-    } catch { setActionError('Unverify failed') }
-  }
-  const bulkVerify = async () => {
-    const reason = window.prompt('Reason for manually verifying the selected payments?')?.trim()
-    if (!reason) return
-    try {
-      const r = await adminApi.bulkVerify(selected, reason)
-      if (r.data?.success === false) { setActionError(r.data?.message || 'Bulk verify failed'); return }
-      setActionError(''); setSelected([]); load()
-    } catch { setActionError('Bulk verify failed') }
-  }
-  const toggleSelect = (id: string) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
 
   const confirmDelete = async () => {
     if (!deleteModal) return
@@ -133,18 +102,12 @@ export default function AdminTasks() {
               style={{ flex: 1, minWidth: 160 }}
             />
             <button className="btn btn-secondary btn-sm" onClick={() => load(1, filter, search)}><i className="fas fa-search" /></button>
-            {selected.length > 0 && (
-              <button className="btn btn-primary btn-sm" onClick={bulkVerify}>
-                <i className="fas fa-check-double" /> Bulk Verify ({selected.length})
-              </button>
-            )}
             <span className="text-muted text-sm admin-toolbar-spacer admin-toolbar-label">{totalCount} tasks</span>
             <div className="admin-toolbar-actions">
               <button className="btn btn-secondary btn-sm" onClick={exportTasksCSV} disabled={tasks.length === 0}><i className="fas fa-file-csv" /><span> CSV</span></button>
               <button className="btn btn-secondary btn-sm" onClick={exportTasksPDF} disabled={tasks.length === 0}><i className="fas fa-file-pdf" /><span> PDF</span></button>
             </div>
           </div>
-          {actionError && <div className="alert alert-error" style={{ margin: '0.75rem 0' }}><i className="fas fa-exclamation-circle" /> {actionError}</div>}
           {loading ? <div className="loading-state"><div className="spinner" /></div> : (
             <>
               {/* Desktop table */}
@@ -152,9 +115,6 @@ export default function AdminTasks() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                      <th style={{ padding: '0.75rem 0.5rem', width: 32 }}>
-                        <input type="checkbox" onChange={e => setSelected(e.target.checked ? tasks.map(t => t.taskId) : [])} />
-                      </th>
                       {['Task ID', 'Description', 'Area', 'Budget', 'Payment', 'Status', 'Runner / Rating', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
                       ))}
@@ -164,9 +124,6 @@ export default function AdminTasks() {
                     {tasks.map((t: any) => (
                       <tr key={t.taskId || t.id} ref={t.taskId === highlight ? highlightRef : null}
                         style={{ borderBottom: '1px solid var(--border)', background: t.taskId === highlight ? 'var(--primary-light, #eff6ff)' : undefined, transition: 'background 0.3s' }}>
-                        <td style={{ padding: '0.75rem 0.5rem' }}>
-                          <input type="checkbox" checked={selected.includes(t.taskId)} onChange={() => toggleSelect(t.taskId)} />
-                        </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>{t.taskId}</td>
                         <td style={{ padding: '0.75rem 0.5rem', maxWidth: 200 }}>
                           <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.taskName || t.taskDescription}</div>
@@ -199,12 +156,6 @@ export default function AdminTasks() {
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           <div className="admin-table-actions">
-                            {(t.paymentStatus === 'Pending' || t.taskStatus === 'PendingPayment') && (
-                              <button className="btn btn-primary btn-sm" onClick={() => verify(t.taskId)}>Verify</button>
-                            )}
-                            {t.paymentStatus === 'Completed' && t.taskStatus === 'Posted' && (
-                              <button className="btn btn-secondary btn-sm" onClick={() => unverify(t.taskId)}>Unverify</button>
-                            )}
                             <button className="btn btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444', background: 'transparent' }} onClick={() => { setDeleteError(''); setDeleteReason(''); setDeleteModal(t) }}>
                               <i className="fas fa-trash" />
                             </button>
@@ -223,7 +174,6 @@ export default function AdminTasks() {
                 {tasks.map((t: any) => (
                   <div key={t.taskId || t.id} className="admin-task-card">
                     <div className="admin-task-card-header">
-                      <input type="checkbox" checked={selected.includes(t.taskId)} onChange={() => toggleSelect(t.taskId)} />
                       <span className="admin-task-id">{t.taskId}</span>
                       <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--primary)' }}>R{t.budget}</span>
                     </div>
@@ -245,12 +195,6 @@ export default function AdminTasks() {
                     <div className="admin-task-card-footer">
                       <span className={`badge badge-${(t.paymentStatus || '').toLowerCase()}`}>{t.paymentStatus}</span>
                       <span className={`badge badge-${(t.taskStatus || '').toLowerCase().replace(/ /g, '_')}`}>{t.taskStatus}</span>
-                      {(t.paymentStatus === 'Pending' || t.taskStatus === 'PendingPayment') && (
-                        <button className="btn btn-primary btn-sm" onClick={() => verify(t.taskId)}>Verify</button>
-                      )}
-                      {t.paymentStatus === 'Completed' && t.taskStatus === 'Posted' && (
-                        <button className="btn btn-secondary btn-sm" onClick={() => unverify(t.taskId)}>Unverify</button>
-                      )}
                       <button className="btn btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444', background: 'transparent', marginLeft: 'auto' }} onClick={() => { setDeleteError(''); setDeleteModal(t) }}>
                         <i className="fas fa-trash" />
                       </button>
