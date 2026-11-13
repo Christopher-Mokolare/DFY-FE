@@ -17,6 +17,8 @@ type QueueFilter = typeof queueFilters[number]['value']
 export default function AdminIdentityVerifications() {
   const { isSuperAdmin } = useAuth()
   const [rows, setRows] = useState<Submission[]>([])
+  const [rejectedCases, setRejectedCases] = useState<any[]>([])
+  const [overrideLoading, setOverrideLoading] = useState(false)
   const [selected, setSelected] = useState<Submission | null>(null)
   const [frontUrl, setFrontUrl] = useState('')
   const [backUrl, setBackUrl] = useState('')
@@ -62,6 +64,34 @@ export default function AdminIdentityVerifications() {
     }, 2 * 60 * 1000)
     return () => window.clearInterval(heartbeat)
   }, [selected?.id])
+
+  const loadRejectedCases = async () => {
+    setOverrideLoading(true); setError('')
+    try {
+      const response = await adminApi.getRejectedKycOverrideCases({ page: 1, pageSize: 50 })
+      const data = response.data?.data || response.data
+      setRejectedCases(data?.cases || [])
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Could not load rejected KYC cases for override review.')
+    } finally { setOverrideLoading(false) }
+  }
+
+  const reopenRejectedCase = async (item: any) => {
+    const reason = window.prompt('Why should this rejected KYC case be reopened for a new independent review? This reason is permanently audited (minimum 10 characters).')?.trim() || ''
+    if (reason.length < 10) {
+      setError('A specific override reason of at least 10 characters is required. No case was changed.')
+      return
+    }
+    if (!window.confirm('Reopen this rejected case for normal KYC review? This does not approve the runner.')) return
+    setOverrideLoading(true); setError('')
+    try {
+      await adminApi.reopenRejectedKycSubmission(item.id, reason)
+      setMessage('Rejected case reopened. A separate authorised reviewer must complete the normal review.')
+      await Promise.all([loadRejectedCases(), load()])
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'The KYC override could not reopen this case.')
+    } finally { setOverrideLoading(false) }
+  }
 
   const open = async (row: Submission) => {
     if (!isSuperAdmin()) {
@@ -117,6 +147,29 @@ export default function AdminIdentityVerifications() {
           <p className="text-muted">Review submitted South African Smart ID cards, green barcoded ID books and passports. Images are encrypted at rest. Only SuperAdmins with fresh authenticator verification and a case-specific access reason can view them; each view is audited. This is manual document review, not an automated Home Affairs or biometric check.</p>
           {message && <div className="alert alert-success" role="status">{message}</div>}
           {error && <div className="alert alert-error" role="alert">{error}</div>}
+          {isSuperAdmin() && <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '.75rem', flexWrap: 'wrap' }}>
+              <div>
+                <strong>Rejected KYC cases — controlled override</strong>
+                <p className="text-muted text-sm" style={{ margin: '.25rem 0 0' }}>Reopen a rejected case for a fresh normal review only. This action cannot approve a runner or restore purged documents.</p>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={() => void loadRejectedCases()} disabled={overrideLoading}>
+                {overrideLoading ? 'Loading…' : 'Load rejected cases'}
+              </button>
+            </div>
+            {rejectedCases.length > 0 && <div className="admin-table-wrap" style={{ marginTop: '1rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.8125rem' }}>
+                <thead><tr style={{ textAlign: 'left' }}>{['Runner', 'Document', 'Reviewed', 'Previous reason', 'Action'].map(label => <th key={label} style={{ padding: '.6rem' }}>{label}</th>)}</tr></thead>
+                <tbody>{rejectedCases.map(item => <tr key={item.id} style={{ borderTop: '1px solid var(--border)' }}>
+                  <td style={{ padding: '.6rem' }}>{item.userName}<div className="text-muted">{item.email}</div></td>
+                  <td style={{ padding: '.6rem' }}>{item.documentType}</td>
+                  <td style={{ padding: '.6rem' }}>{item.reviewedAt ? new Date(item.reviewedAt).toLocaleString('en-ZA') : '—'}</td>
+                  <td style={{ padding: '.6rem' }}>{item.reviewReason || 'No reason recorded'}</td>
+                  <td style={{ padding: '.6rem' }}><button className="btn btn-secondary btn-sm" disabled={overrideLoading} onClick={() => void reopenRejectedCase(item)}>Reopen for review</button></td>
+                </tr>)}</tbody>
+              </table>
+            </div>}
+          </div>}
           {queueCounts && <div className="admin-table-actions" style={{ flexWrap: 'wrap', marginBottom: '1rem' }}>
             <span className="badge badge-info">Queue {queueCounts.total}</span>
             <span className="badge badge-warning">Near deadline {queueCounts.nearDeadline}</span>
