@@ -12,6 +12,9 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [roleModal, setRoleModal] = useState<any | null>(null)
+  const [profileModal, setProfileModal] = useState<any | null>(null)
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', email: '', phoneNumber: '', address: '' })
+  const [profileReason, setProfileReason] = useState('')
   const [roleValue, setRoleValue] = useState('')
   const [roleReason, setRoleReason] = useState('')
   const [historyModal, setHistoryModal] = useState<any | null>(null)
@@ -69,6 +72,49 @@ export default function AdminUsers() {
   }
 
   const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleReason(''); setRoleModal(u); setActionError('') }
+
+  const openProfileCorrection = async (u: any) => {
+    setActionLoading(true); setActionError('')
+    try {
+      const response = await adminApi.getUserProfileForCorrection(u.id)
+      const profile = response.data?.data || response.data
+      setProfileForm({
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        email: profile.email || '',
+        phoneNumber: profile.phoneNumber || '',
+        address: profile.address || ''
+      })
+      setProfileReason('')
+      setProfileModal(u)
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Could not load the user profile for correction.')
+    } finally { setActionLoading(false) }
+  }
+
+  const saveProfileCorrection = async () => {
+    if (!profileModal) return
+    if (profileReason.trim().length < 10) {
+      setActionError('A reason of at least 10 characters is required.')
+      return
+    }
+    if (!window.confirm('Apply this profile correction? Email changes require the new address to be verified and phone changes clear its verified status.')) return
+    setActionLoading(true); setActionError('')
+    try {
+      const response = await adminApi.correctUserProfile(profileModal.id, { ...profileForm, reason: profileReason.trim() })
+      if (response.data?.success === false) {
+        setActionError(response.data?.message || 'Profile correction failed.')
+        return
+      }
+      setProfileModal(null)
+      setActionError('')
+      load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Profile correction failed.')
+    } finally { setActionLoading(false) }
+  }
+
+
 
   const saveRole = async () => {
     if (!roleModal) return
@@ -205,7 +251,9 @@ export default function AdminUsers() {
                                 {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                               </button>
                               {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
-                              <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
+                              {!isAdmin(u) && !u.isSuspended && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
+                              {!isAdmin(u) && !u.isSuspended && !u.isArchived && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
+                        <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                               {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>}
                             </>}
@@ -288,6 +336,52 @@ export default function AdminUsers() {
           )}
         </div>
       </div>
+
+      {/* Audited Profile Correction Modal */}
+      {profileModal && (
+        <div className="modal-overlay" onClick={() => setProfileModal(null)}>
+          <div className="modal-box" onClick={event => event.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-user-edit" /> Correct profile — {profileModal.name}</h3>
+              <button className="btn-close" onClick={() => setProfileModal(null)}><i className="fas fa-times" /></button>
+            </div>
+            <div className="modal-body">
+              <p className="text-muted text-sm">Every correction is recorded in restricted before/after audit history. Changing email revokes sessions and requires verification of the new address. Changing phone clears its verified status. Administrator accounts use a separate workflow.</p>
+              <div className="form-group">
+                <label className="form-label">First name</label>
+                <input className="form-input" maxLength={80} value={profileForm.firstName} onChange={event => setProfileForm({ ...profileForm, firstName: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Last name</label>
+                <input className="form-input" maxLength={80} value={profileForm.lastName} onChange={event => setProfileForm({ ...profileForm, lastName: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email address</label>
+                <input className="form-input" type="email" maxLength={254} value={profileForm.email} onChange={event => setProfileForm({ ...profileForm, email: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">South African mobile number</label>
+                <input className="form-input" value={profileForm.phoneNumber} onChange={event => setProfileForm({ ...profileForm, phoneNumber: event.target.value })} placeholder="082 123 4567" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Address</label>
+                <textarea className="form-input" rows={2} maxLength={300} value={profileForm.address} onChange={event => setProfileForm({ ...profileForm, address: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Correction reason (required)</label>
+                <textarea className="form-input" rows={3} maxLength={500} value={profileReason} onChange={event => setProfileReason(event.target.value)} placeholder="Reference the verified support request or evidence." />
+              </div>
+              {actionError && <div className="alert alert-error">{actionError}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setProfileModal(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => void saveProfileCorrection()} disabled={actionLoading || profileReason.trim().length < 10}>
+                {actionLoading ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save audited correction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Role Change Modal */}
       {roleModal && (
