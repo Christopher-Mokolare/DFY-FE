@@ -39,7 +39,18 @@ export default function AdminUsers() {
   useEffect(() => { const t = setTimeout(() => { setPage(1); load(1, search, true) }, 400); return () => clearTimeout(t) }, [search, includeArchived])
 
   const regularUserCount = users.filter(u => !u.role?.includes('Admin')).length
-  const isAdmin = (u: any) => u.role?.includes('Admin')
+  const getMarketplaceRole = (u: any) => {
+    switch (String(u.userType || '').trim().toLowerCase()) {
+      case 'creator': return 'Creator'
+      case 'runner': return 'Runner'
+      case 'both': return 'Creator & Runner'
+      default: return 'Not selected'
+    }
+  }
+  const getSystemRoles = (u: any): string[] =>
+    String(u.role || '').split(',').map((role: string) => role.trim()).filter(Boolean)
+  const isAdmin = (u: any) => getSystemRoles(u).some(role => role === 'Admin' || role === 'SuperAdmin')
+  const getSystemAccess = (u: any) => getSystemRoles(u).filter(role => role !== 'User').join(', ') || 'Standard'
 
   const toggleVerify = async (id: number, current: boolean) => {
     const reason = window.prompt(`${current ? 'Unverify' : 'Verify'} admin verification — enter a reason:`)?.trim() || ''
@@ -109,10 +120,10 @@ export default function AdminUsers() {
     const r = await adminApi.getUsers({ page: 1, pageSize: 10000, includeArchived })
     return r.data?.data?.users || []
   }
-  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
+  const mapUserRow = (u: any) => [u.name, u.email, getMarketplaceRole(u), getSystemAccess(u), u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
-  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
-  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Marketplace role', 'System access', 'Tasks Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Marketplace role', 'System access', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -143,7 +154,7 @@ export default function AdminUsers() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                      {['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Actions'].map(h => (
+                      {['Name', 'Email', 'Marketplace role', 'System access', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
@@ -157,7 +168,8 @@ export default function AdminUsers() {
                           {u.isArchived && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Archived</span>}
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-info'}`}>{u.role || 'User'}</span></td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}><span className="badge badge-info">{getMarketplaceRole(u)}</span></td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-secondary'}`}>{getSystemAccess(u)}</span></td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{u.tasksPosted ?? 0}</td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{u.tasksCompleted ?? 0}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>{u.rating?.toFixed(1) || '-'}</td>
@@ -199,7 +211,10 @@ export default function AdminUsers() {
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
                       </div>
-                      <span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-info'}`}>{u.role || 'User'}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                        <span className="badge badge-info">{getMarketplaceRole(u)}</span>
+                        <span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-secondary'}`}>{getSystemAccess(u)}</span>
+                      </div>
                     </div>
                     <div className="admin-task-card-body">
                       <div className="admin-task-meta">
@@ -254,12 +269,12 @@ export default function AdminUsers() {
         <div className="modal-overlay" onClick={() => setRoleModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3><i className="fas fa-user-tag" /> Change Role — {roleModal.name}</h3>
+              <h3><i className="fas fa-user-tag" /> Change system access — {roleModal.name}</h3>
               <button className="btn-close" onClick={() => setRoleModal(null)}><i className="fas fa-times" /></button>
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label className="form-label">Role</label>
+                <label className="form-label">System access role</label>
                 <select className="form-select" value={roleValue} onChange={e => setRoleValue(e.target.value)}>
                   <option value="User">User</option>
                   <option value="Admin">Admin</option>
