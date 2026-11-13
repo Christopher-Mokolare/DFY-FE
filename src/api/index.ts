@@ -160,6 +160,7 @@ export const adminApi = {
   getDisputes: (params?: object) => api.get('/disputes', { params }),
   resolveDispute: (id: number, resolution: string, action: string, reason: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action, reason }),
   requestFinancialRefundApproval: (taskId: string, reason: string) => api.post(`/admin/financial-approvals/refunds/tasks/${encodeURIComponent(taskId)}`, { reason }),
+  requestDisputeReleaseApproval: (taskId: string, reason: string) => api.post(`/admin/financial-approvals/disputes/release/tasks/${encodeURIComponent(taskId)}`, { reason }),
   deleteTask: (taskId: string, reason: string) => api.delete(`/admin/tasks/${taskId}`, { data: { reason } }),
   deleteUser: (userId: number, reason: string) => api.delete(`/admin/users/${userId}`, { data: { reason } }),
   restoreUser: (userId: number, reason: string) => api.post(`/admin/users/${userId}/restore`, { reason }),
