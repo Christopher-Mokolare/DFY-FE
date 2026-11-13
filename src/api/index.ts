@@ -139,6 +139,7 @@ export const adminApi = {
   decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reasonCode: string, runnerNote: string, internalNote?: string, verifiedDateOfBirth?: string, southAfricanIdNumber?: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reasonCode, runnerNote, internalNote, verifiedDateOfBirth, southAfricanIdNumber }),
 
   updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
+  updateUserSuspension: (id: number, isSuspended: boolean, reason: string) => api.patch(`/admin/users/${id}/suspension`, { isSuspended, reason }),
   updateUserRole: (id: number, role: string, reason: string) => api.patch(`/admin/users/${id}/role`, { role, reason }),
   getUserTaskHistory: (id: number) => api.get(`/admin/users/${id}/tasks`),
   getAuditLogs: (page = 1, pageSize = 20) => api.get(`/admin/audit-logs?page=${page}&pageSize=${pageSize}`),
@@ -147,8 +148,8 @@ export const adminApi = {
   getDisputes: (params?: object) => api.get('/disputes', { params }),
   resolveDispute: (id: number, resolution: string, action: string, reason: string) => api.patch(`/disputes/${id}/resolve`, { resolution, action, reason }),
   deleteTask: (taskId: string) => api.delete(`/admin/tasks/${taskId}`),
-  deleteUser: (userId: number) => api.delete(`/admin/users/${userId}`),
-  restoreUser: (userId: number) => api.post(`/admin/users/${userId}/restore`),
+  deleteUser: (userId: number, reason: string) => api.delete(`/admin/users/${userId}`, { data: { reason } }),
+  restoreUser: (userId: number, reason: string) => api.post(`/admin/users/${userId}/restore`, { reason }),
   getTaskMessages: (taskId: string) => api.get(`/admin/tasks/${taskId}/messages`),
   getAdminCategories: () => api.get('/admin/categories'),
   createCategory: (data: { name: string; description?: string; icon?: string; sortOrder?: number; reason: string }) => api.post('/admin/categories', data),
