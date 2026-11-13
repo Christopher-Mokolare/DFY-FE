@@ -150,6 +150,8 @@ export const adminApi = {
   releaseManualIdentityReview: (id: number) => api.delete(`/manual-identity-verification/admin/${id}/claim`),
   getManualIdentityDocument: (id: number, side: 'front' | 'back', reason: string) => api.get(`/manual-identity-verification/admin/${id}/document/${side}`, { params: { reason }, responseType: 'blob' }),
   decideManualIdentityVerification: (id: number, decision: 'approve' | 'reject' | 'request_information', reasonCode: string, runnerNote: string, internalNote?: string, verifiedDateOfBirth?: string, southAfricanIdNumber?: string) => api.post(`/manual-identity-verification/admin/${id}/decision`, { decision, reasonCode, runnerNote, internalNote, verifiedDateOfBirth, southAfricanIdNumber }),
+  getRejectedKycOverrideCases: (params?: object) => api.get('/manual-identity-verification/admin/overrides/rejected', { params }),
+  reopenRejectedKycSubmission: (id: number, reason: string) => api.post(`/manual-identity-verification/admin/${id}/override/reopen`, { reason }),
 
   updateUserStatus: (id: number, isVerified: boolean, reason: string) => api.patch(`/admin/users/${id}/status`, { isVerified, reason }),
   updateUserSuspension: (id: number, isSuspended: boolean, reason: string) => api.patch(`/admin/users/${id}/suspension`, { isSuspended, reason }),
