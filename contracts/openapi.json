@@ -62,6 +62,62 @@
         }
       }
     },
+    "/api/v1/admin/financial-reconciliation/paystack-transfers": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "maxPages",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/financial-reconciliation": {
       "get": {
         "tags": [
@@ -2840,6 +2896,80 @@
         }
       }
     },
+    "/api/v1/admin/identity-notifications/dead-letters": {
+      "get": {
+        "tags": [
+          "IdentityNotificationOperations"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/identity-notifications/{id}/replay": {
+      "post": {
+        "tags": [
+          "IdentityNotificationOperations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayDeadLetterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayDeadLetterRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayDeadLetterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/manual-identity-verification/status": {
       "get": {
         "tags": [
@@ -4485,6 +4615,37 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/bootstrap/super-admin": {
+      "post": {
+        "tags": [
+          "SuperAdminBootstrap"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuperAdminBootstrapRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuperAdminBootstrapRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuperAdminBootstrapRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -7915,6 +8076,20 @@
         },
         "additionalProperties": false
       },
+      "ReplayDeadLetterRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ResendVerificationRequest": {
         "required": [
           "email"
@@ -8006,6 +8181,26 @@
           "review": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SuperAdminBootstrapRequest": {
+        "required": [
+          "authenticatorCode",
+          "bootstrapSecret"
+        ],
+        "type": "object",
+        "properties": {
+          "bootstrapSecret": {
+            "maxLength": 512,
+            "minLength": 32,
+            "type": "string"
+          },
+          "authenticatorCode": {
+            "minLength": 1,
+            "pattern": "^[0-9]{6}$",
+            "type": "string"
           }
         },
         "additionalProperties": false
