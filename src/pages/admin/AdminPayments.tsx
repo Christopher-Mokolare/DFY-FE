@@ -97,15 +97,27 @@ export default function AdminPayments() {
   }
 
   const executeFinancialApproval = async (item: any) => {
+    let executionReason = ''
+    if (item.action === 'refund_creator' || item.action === 'release_to_runner') {
+      executionReason = window.prompt(
+        'Record the execution reason and the final dispute-resolution decision (10–500 characters).',
+      )?.trim() || ''
+      if (executionReason.length < 10 || executionReason.length > 500) {
+        setFinancialApprovalError('A separate execution reason between 10 and 500 characters is required. No action was submitted.')
+        return
+      }
+    }
+
     setFinancialApprovalBusy(true)
     setFinancialApprovalError('')
     try {
       if (item.action === 'refund_creator' || item.action === 'release_to_runner') {
-        const response = await adminApi.getDisputes()
-        const disputes = response.data?.data?.disputes || []
-        const dispute = disputes.find((entry: any) => entry.taskId === item.taskReference)
-        if (!dispute) throw new Error('The linked dispute could not be found. No refund was submitted.')
-        await adminApi.resolveDispute(dispute.id, item.reason, item.action, item.decisionReason || item.reason)
+        const response = await adminApi.getDisputes({ page: 1, pageSize: 100, status: 'Open' })
+        const payload = response.data?.data || response.data
+        const disputes = payload?.disputes || []
+        const dispute = disputes.find((entry: any) => entry.taskId === item.taskReference && entry.status === 'Open')
+        if (!dispute) throw new Error('No open dispute is linked to this task in the current dispute page. No financial action was submitted.')
+        await adminApi.resolveDispute(dispute.id, executionReason, item.action, executionReason)
       } else {
         await adminApi.executeFinancialApproval(item.id)
       }
