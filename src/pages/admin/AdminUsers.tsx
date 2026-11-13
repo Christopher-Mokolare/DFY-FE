@@ -213,7 +213,7 @@ export default function AdminUsers() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
                         <span className="badge badge-info">{getMarketplaceRole(u)}</span>
-                        <span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-secondary'}`}>{getSystemAccess(u)}</span>
+                        <span className={`badge ${isAdmin(u) ? 'badge-danger' : 'badge-info'}`}>{getSystemAccess(u)}</span>
                       </div>
                     </div>
                     <div className="admin-task-card-body">
