@@ -7,7 +7,7 @@ export default function AdminPayments() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations' | 'approvals'>('payments')
+  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations' | 'approvals' | 'ledger'>('payments')
   const [operations, setOperations] = useState<any>(null)
   const [settlementReport, setSettlementReport] = useState<any>(null)
   const [ledgerReport, setLedgerReport] = useState<any>(null)
@@ -24,6 +24,9 @@ export default function AdminPayments() {
   const [financialDecisionReason, setFinancialDecisionReason] = useState('')
   const [financialTaskId, setFinancialTaskId] = useState('')
   const [financialApprovalBusy, setFinancialApprovalBusy] = useState(false)
+  const [financialLedger, setFinancialLedger] = useState<any>(null)
+  const [financialLedgerLoading, setFinancialLedgerLoading] = useState(false)
+  const [financialLedgerError, setFinancialLedgerError] = useState('')
 
   const loadAll = () => Promise.all([
     adminApi.getPayments(),
@@ -57,6 +60,19 @@ export default function AdminPayments() {
       setFinancialApprovalError(error?.response?.data?.message || 'Unable to load financial approval requests. A SuperAdmin with fresh authenticator verification is required.')
     } finally {
       setFinancialApprovalLoading(false)
+    }
+  }
+
+  const loadFinancialLedger = async () => {
+    setFinancialLedgerLoading(true)
+    setFinancialLedgerError('')
+    try {
+      const response = await adminApi.getFinancialLedger({ page: 1, pageSize: 100 })
+      setFinancialLedger(response.data?.data || response.data)
+    } catch (error: any) {
+      setFinancialLedgerError(error?.response?.data?.message || 'Unable to load the double-entry financial journal.')
+    } finally {
+      setFinancialLedgerLoading(false)
     }
   }
 
@@ -267,6 +283,7 @@ export default function AdminPayments() {
             <button className={financeView === 'reconciliation' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('reconciliation')}>Reconciliation</button>
             <button className={financeView === 'operations' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('operations')}>Operations queue</button>
             <button className={financeView === 'approvals' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => { setFinanceView('approvals'); void loadFinancialApprovals() }}>Two-person approvals</button>
+            <button className={financeView === 'ledger' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => { setFinanceView('ledger'); void loadFinancialLedger() }}>Double-entry journal</button>
           </div>
           {financeView === 'reconciliation' && (
             <div>
@@ -275,7 +292,7 @@ export default function AdminPayments() {
                   {settlementLoading ? <><span className="spinner spinner-sm" /> Retrieving Paystack data…</> : <><i className="fas fa-arrows-rotate" /> Run Paystack settlement reconciliation</>}
                 </button>
                 <button className="btn btn-secondary btn-sm" onClick={() => void runLedgerReconciliation()} disabled={ledgerLoading}>
-                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Checking ledger…</> : 'Run DFY ledger check'}
+                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Checking ledger…</> : 'Compare task/payment records'}
                 </button>
               </div>
               {settlementError && <div className="alert alert-warning" role="alert">{settlementError}</div>}
@@ -352,13 +369,76 @@ export default function AdminPayments() {
               {ledgerError && <div className="alert alert-warning" role="alert" style={{ marginTop: '1rem' }}>{ledgerError}</div>}
               {ledgerReport && (
                 <div style={{ marginTop: '1rem' }}>
-                  <h3>DFY ledger consistency</h3>
+                  <h3>Task/payment record comparison (not an accounting ledger)</h3>
                   <div className="stats-grid">
                     <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.returnedTaskCount ?? 0}</h3><p>Tasks checked</p></div></div>
                     <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.tasksWithFindings ?? 0}</h3><p>Tasks with findings</p></div></div>
                     <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.findingCount ?? 0}</h3><p>Total findings</p></div></div>
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+          {financeView === 'ledger' && (
+            <div>
+              <div className="alert alert-warning" role="note">
+                This is the new double-entry accounting journal. It does not read or convert retired wallet balances, task totals or audit-log text. Coverage starts with the first journal entry; historical backfill has not been performed.
+              </div>
+              {financialLedgerError && <div className="alert alert-warning" role="alert">{financialLedgerError}</div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+                <p className="text-muted text-sm" style={{ margin: 0 }}>
+                  {financialLedger?.firstJournalAtUtc
+                    ? `Journal coverage begins ${new Date(financialLedger.firstJournalAtUtc).toLocaleString('en-ZA')}.`
+                    : 'No journal entries have been posted yet.'}
+                </p>
+                <button className="btn btn-secondary btn-sm" onClick={() => void loadFinancialLedger()} disabled={financialLedgerLoading}>Refresh journal</button>
+              </div>
+              {financialLedgerLoading ? <div className="loading-state"><div className="spinner" /></div> : financialLedger && (
+                <>
+                  <div className="stats-grid" style={{ marginBottom: '1rem' }}>
+                    <div className="stat-card"><div className="stat-content"><h3>R{Number(financialLedger.totalDebits || 0).toFixed(2)}</h3><p>Total debits</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>R{Number(financialLedger.totalCredits || 0).toFixed(2)}</h3><p>Total credits</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{financialLedger.totalCount ?? 0}</h3><p>Journal entries</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{financialLedger.isBalanced ? 'Balanced' : 'Review required'}</h3><p>Journal integrity</p></div></div>
+                  </div>
+                  <h3>Chart of accounts</h3>
+                  <div className="admin-table-wrap" style={{ marginBottom: '1.25rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                      <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Code', 'Account', 'Type', 'Currency', 'Debits', 'Credits', 'Raw debit less credit'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                      <tbody>{(financialLedger.accounts || []).map((account: any) => (
+                        <tr key={account.code} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{account.code}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>{account.name}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>{account.accountType}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>{account.currency}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>R{Number(account.debitTotal || 0).toFixed(2)}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>R{Number(account.creditTotal || 0).toFixed(2)}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>R{Number(account.rawDebitMinusCreditBalance || 0).toFixed(2)}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                  <h3>Journal history</h3>
+                  {(financialLedger.journals || []).length === 0 ? <p className="text-muted">No accounting events have been posted yet. Legacy records have not been fabricated into journal entries.</p> : (
+                    <div className="admin-table-wrap">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                        <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                        <tbody>{(financialLedger.journals || []).map((journal: any) => (
+                          <tr key={journal.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>{new Date(journal.recordedAt).toLocaleString('en-ZA')}</td>
+                            <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{journal.journalNumber}</td>
+                            <td style={{ padding: '.65rem .5rem' }}>{journal.eventType}</td>
+                            <td style={{ padding: '.65rem .5rem' }}>{journal.sourceType}: {journal.sourceId}</td>
+                            <td style={{ padding: '.65rem .5rem', minWidth: '12rem' }}>{journal.description}</td>
+                            <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(journal.debitTotal || 0).toFixed(2)}</td>
+                            <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(journal.creditTotal || 0).toFixed(2)}</td>
+                            <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{journal.providerReference || '—'}</td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
