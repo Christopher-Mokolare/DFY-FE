@@ -115,6 +115,7 @@ export const adminApi = {
   getDashboard: () => api.get('/admin/dashboard'),
   getPayments: () => api.get('/admin/payments'),
   getFinancialReconciliation: (params?: object) => api.get('/admin/financial-reconciliation', { params }),
+  getFinancialLedger: (params?: object) => api.get('/admin/financial-ledger', { params }),
   getPaystackSettlementReconciliation: (params?: object) => api.get('/admin/financial-reconciliation/paystack-settlements', { params }),
   getPaymentOperations: (params?: object) => api.get('/admin/payment-operations', { params }),
   getTasks: (params?: object) => api.get('/admin/tasks', { params }),
