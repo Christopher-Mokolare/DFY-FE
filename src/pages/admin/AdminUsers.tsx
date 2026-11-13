@@ -205,7 +205,6 @@ export default function AdminUsers() {
                               {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                               {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
-                              {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>}
                             </>}
                             {u.isArchived && <>
@@ -251,8 +250,8 @@ export default function AdminUsers() {
                       <span className={`badge ${u.emailVerified ? 'badge-verified' : 'badge-warning'}`}>
                         <i className={`fas fa-${u.emailVerified ? 'check-circle' : 'clock'}`} /> Email {u.emailVerified ? 'verified' : 'pending'}
                       </span>
-                      <span className={`badge ${u.isArchived ? 'badge-warning' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
-                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : u.isSuspended ? 'Suspended' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
+                      <span className={`badge ${u.isArchived ? 'badge-warning' : u.isSuspended ? 'badge-danger' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
+                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isSuspended ? 'ban' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : u.isSuspended ? 'Suspended' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
                       </span>
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
@@ -261,7 +260,8 @@ export default function AdminUsers() {
                           <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                             {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
-                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>}
+                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
+                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>
                         </>}
                         {u.isArchived && <button className="btn btn-sm btn-primary" onClick={() => restoreUser(u)} disabled={actionLoading}>Restore</button>}
                       </div>
