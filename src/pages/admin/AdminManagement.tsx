@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
 
 interface Account {
@@ -155,7 +156,7 @@ export default function AdminManagement() {
                         ) : account.isAdministrator ? (
                           <span className="badge badge-info">Admin</span>
                         ) : (
-                          <span className="badge badge-secondary">User</span>
+                          <span className="badge badge-info">User</span>
                         )}
                         {account.isArchived && <div className="text-muted text-sm">Archived</div>}
                       </td>
