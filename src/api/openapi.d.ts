@@ -45,6 +45,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/financial-reconciliation/paystack-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string;
+                    to?: string;
+                    maxPages?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/financial-reconciliation": {
         parameters: {
             query?: never;
@@ -2603,6 +2644,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/identity-notifications/dead-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/identity-notifications/{id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReplayDeadLetterRequest"];
+                    "text/json": components["schemas"]["ReplayDeadLetterRequest"];
+                    "application/*+json": components["schemas"]["ReplayDeadLetterRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/manual-identity-verification/status": {
         parameters: {
             query?: never;
@@ -4150,6 +4268,45 @@ export interface paths {
                         "application/json": components["schemas"]["BooleanApiResponse"];
                         "text/json": components["schemas"]["BooleanApiResponse"];
                     };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/bootstrap/super-admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SuperAdminBootstrapRequest"];
+                    "text/json": components["schemas"]["SuperAdminBootstrapRequest"];
+                    "application/*+json": components["schemas"]["SuperAdminBootstrapRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -6706,6 +6863,9 @@ export interface components {
             /** Format: int32 */
             sortOrder?: number;
         };
+        ReplayDeadLetterRequest: {
+            reason: string;
+        };
         ResendVerificationRequest: {
             /** Format: email */
             email: string;
@@ -6730,6 +6890,10 @@ export interface components {
             /** Format: int32 */
             ratingValue: number;
             review?: string | null;
+        };
+        SuperAdminBootstrapRequest: {
+            bootstrapSecret: string;
+            authenticatorCode: string;
         };
         TaskBudgetLimitsDto: {
             /** Format: double */
