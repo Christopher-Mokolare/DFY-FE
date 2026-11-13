@@ -27,14 +27,14 @@ export default function AdminDisputes() {
   useEffect(() => { load() }, [filter])
 
   const resolve = async () => {
-    if (!resolveModal || !resolution.trim() || reason.trim().length < 5 || action === 'none') {
-      setResolveError('Select a financial action, enter resolution notes, and provide a reason of at least 5 characters.')
+    if (!resolveModal || !resolution.trim() || reason.trim().length < 10 || action !== 'refund_creator') {
+      setResolveError('Enter refund review notes and a reason of at least 10 characters.')
       return
     }
     setActionLoading(true); setResolveError('')
     try {
-      const res = await adminApi.resolveDispute(resolveModal.id, resolution, action, reason.trim())
-      if (res.data?.success === false) { setResolveError(res.data?.message || 'Failed to resolve dispute'); return }
+      const res = await adminApi.requestFinancialRefundApproval(resolveModal.taskId, `${reason.trim()} — ${resolution.trim()}`.slice(0, 500))
+      if (res.data?.success === false) { setResolveError(res.data?.message || 'Failed to request refund approval'); return }
       setResolveModal(null)
       setResolution('')
       setReason('')
@@ -89,7 +89,7 @@ export default function AdminDisputes() {
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(d.createdAt).toLocaleDateString('en-ZA')}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           {d.status === 'Open' && (isSuperAdmin()
-                            ? <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('release_to_runner'); setResolveError('') }}>Resolve</button>
+                            ? <button className="btn btn-primary btn-sm" onClick={() => { setResolveModal(d); setResolution(''); setReason(''); setAction('refund_creator'); setResolveError('') }}>Resolve</button>
                             : <span className="text-muted text-sm">SuperAdmin resolution required</span>
                           )}
                           {d.status === 'Resolved' && (
@@ -160,15 +160,15 @@ export default function AdminDisputes() {
               <div className="form-group">
                 <label className="form-label">Financial Action</label>
                 <select className="form-select" value={action} onChange={e => setAction(e.target.value)}>
-                  <option value="release_to_runner">Release escrow to runner</option>
-                  <option value="refund_creator">Refund creator (cancel task)</option>
+                  <option value="refund_creator">Request two-person refund approval</option>
                 </select>
+                <p className="text-muted text-sm">This submits a request only. A different SuperAdmin must approve it before the refund can be executed. No money moves at this stage.</p>
               </div>
               <div className="form-group">
                 <label className="form-label">Resolution Notes *</label>
                 <textarea
                   className="form-textarea"
-                  placeholder="Describe the resolution..."
+                  placeholder="Summarise the evidence supporting a refund request..."
                   value={resolution}
                   onChange={e => setResolution(e.target.value)}
                   rows={4}
@@ -176,14 +176,14 @@ export default function AdminDisputes() {
               </div>
               <div className="form-group">
                 <label className="form-label">Admin Reason *</label>
-                <textarea className="form-textarea" placeholder="Why is this financial resolution being applied?" value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} />
+                <textarea className="form-textarea" placeholder="Why should this refund be considered?" value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} />
               </div>
             </div>
             {resolveError && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', padding: '0 1.5rem 0.5rem' }}>{resolveError}</p>}
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => { setResolveModal(null); setResolveError('') }}>Cancel</button>
-              <button className="btn btn-primary" onClick={resolve} disabled={actionLoading || !resolution.trim() || reason.trim().length < 5 || action === 'none'}>
-                {actionLoading ? <><span className="spinner spinner-sm" /> Resolving...</> : 'Resolve Dispute'}
+              <button className="btn btn-primary" onClick={resolve} disabled={actionLoading || !resolution.trim() || reason.trim().length < 10 || action === 'none'}>
+                {actionLoading ? <><span className="spinner spinner-sm" /> Submitting...</> : 'Submit refund for independent approval'}
               </button>
             </div>
           </div>
