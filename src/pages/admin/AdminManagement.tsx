@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
+import { useAuth } from '../../context/AuthContext'
 
 interface SuperAdminChange {
   id: number
@@ -39,6 +40,7 @@ interface Account {
 }
 
 export default function AdminManagement() {
+  const { user } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -219,7 +221,7 @@ export default function AdminManagement() {
             <label><span className="text-sm">Target account</span>
               <select className="form-input" required value={changeTargetId} onChange={event => setChangeTargetId(event.target.value)}>
                 <option value="">Select account...</option>
-                {accounts.filter(account => !account.isArchived && (changeAction === 'grant'
+                {accounts.filter(account => account.id !== user?.id && !account.isArchived && (changeAction === 'grant'
                   ? !account.isSuperAdmin && account.emailVerified && account.authenticatorTwoFactorEnabled
                   : account.isSuperAdmin)).map(account => (
                   <option key={account.id} value={account.id}>{account.name} — {account.email}</option>
