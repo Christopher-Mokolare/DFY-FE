@@ -20,7 +20,8 @@ export default function AdminPayments() {
   const [financialApprovals, setFinancialApprovals] = useState<any[]>([])
   const [financialApprovalLoading, setFinancialApprovalLoading] = useState(false)
   const [financialApprovalError, setFinancialApprovalError] = useState('')
-  const [financialApprovalReason, setFinancialApprovalReason] = useState('')
+  const [financialRequestReason, setFinancialRequestReason] = useState('')
+  const [financialDecisionReason, setFinancialDecisionReason] = useState('')
   const [financialTaskId, setFinancialTaskId] = useState('')
   const [financialApprovalBusy, setFinancialApprovalBusy] = useState(false)
 
@@ -61,13 +62,13 @@ export default function AdminPayments() {
 
   const createFinancialApproval = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!financialTaskId.trim() || financialApprovalReason.trim().length < 10) return
+    if (!financialTaskId.trim() || financialRequestReason.trim().length < 10) return
     setFinancialApprovalBusy(true)
     setFinancialApprovalError('')
     try {
-      await adminApi.requestFinancialApproval(financialTaskId.trim(), financialApprovalReason.trim())
+      await adminApi.requestFinancialApproval(financialTaskId.trim(), financialRequestReason.trim())
       setFinancialTaskId('')
-      setFinancialApprovalReason('')
+      setFinancialRequestReason('')
       await loadFinancialApprovals()
     } catch (error: any) {
       setFinancialApprovalError(error?.response?.data?.message || 'Unable to create the financial approval request.')
@@ -77,16 +78,16 @@ export default function AdminPayments() {
   }
 
   const decideFinancialApproval = async (id: number, decision: 'approve' | 'reject') => {
-    if (financialApprovalReason.trim().length < 10) {
+    if (financialDecisionReason.trim().length < 10) {
       setFinancialApprovalError('Enter a decision reason of at least 10 characters before approving or rejecting.')
       return
     }
     setFinancialApprovalBusy(true)
     setFinancialApprovalError('')
     try {
-      if (decision === 'approve') await adminApi.approveFinancialRequest(id, financialApprovalReason.trim())
-      else await adminApi.rejectFinancialRequest(id, financialApprovalReason.trim())
-      setFinancialApprovalReason('')
+      if (decision === 'approve') await adminApi.approveFinancialRequest(id, financialDecisionReason.trim())
+      else await adminApi.rejectFinancialRequest(id, financialDecisionReason.trim())
+      setFinancialDecisionReason('')
       await loadFinancialApprovals()
     } catch (error: any) {
       setFinancialApprovalError(error?.response?.data?.message || 'Unable to record the independent decision.')
@@ -340,7 +341,7 @@ export default function AdminPayments() {
                 <label>Request reason
                   <textarea className="form-input" rows={3} minLength={10} maxLength={500} value={financialApprovalReason} onChange={event => setFinancialApprovalReason(event.target.value)} placeholder="Explain the exceptional circumstances and supporting review." required />
                 </label>
-                <div><button className="btn btn-primary btn-sm" type="submit" disabled={financialApprovalBusy || financialApprovalReason.trim().length < 10 || !financialTaskId.trim()}>
+                <div><button className="btn btn-primary btn-sm" type="submit" disabled={financialApprovalBusy || financialRequestReason.trim().length < 10 || !financialTaskId.trim()}>
                   {financialApprovalBusy ? 'Saving…' : 'Submit for independent approval'}
                 </button></div>
               </form>
@@ -365,8 +366,8 @@ export default function AdminPayments() {
                           <div>{item.expiresAt ? new Date(item.expiresAt).toLocaleString('en-ZA') : '—'}</div>
                           {item.executedAt && <div>Executed: {new Date(item.executedAt).toLocaleString('en-ZA')}</div>}
                           {item.status === 'Pending' && <>
-                            <button className="btn btn-primary btn-sm" style={{ margin: '.35rem .35rem .35rem 0' }} disabled={financialApprovalBusy || financialApprovalReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'approve')}>Approve</button>
-                            <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialApprovalReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
+                            <button className="btn btn-primary btn-sm" style={{ margin: '.35rem .35rem .35rem 0' }} disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'approve')}>Approve</button>
+                            <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialRequestReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
                           </>}
                           {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item.id)}>Execute approved release</button>}
                           {item.status === 'Executing' && <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item.id)}>Reconcile execution</button>}
