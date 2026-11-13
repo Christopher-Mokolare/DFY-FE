@@ -119,6 +119,21 @@ export default function AdminPayments() {
     }
   }
 
+  const reconcileFinancialApproval = async (id: number) => {
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      await adminApi.reconcileFinancialApproval(id)
+      await loadFinancialApprovals()
+      await loadOperations()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Provider state could not be reconciled. Do not resubmit the financial action.')
+      await loadFinancialApprovals()
+    } finally {
+      setFinancialApprovalBusy(false)
+    }
+  }
+
   const runSettlementReconciliation = async () => {
     setSettlementLoading(true)
     setSettlementError('')
@@ -379,7 +394,7 @@ export default function AdminPayments() {
                             <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
                           </>}
                           {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>{item.action === 'refund_creator' ? 'Execute approved refund' : item.action === 'release_to_runner' ? 'Execute approved dispute release' : 'Execute approved release'}</button>}
-                          {item.status === 'Executing' && (item.action === 'refund_creator' ? <div className="alert alert-warning">Refund execution was interrupted. Reconcile the Paystack refund record before any retry; automatic resubmission is disabled.</div> : <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>Reconcile execution</button>)}
+                          {item.status === 'Executing' && (item.action === 'refund_creator' || item.action === 'release_to_runner' ? <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void reconcileFinancialApproval(item.id)}>Reconcile provider state</button> : <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>Reconcile execution</button>)}
                         </td>
                       </tr>
                     ))}</tbody>
