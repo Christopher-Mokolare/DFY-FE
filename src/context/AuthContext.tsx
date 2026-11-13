@@ -15,6 +15,7 @@ interface AuthContextType {
   refreshUser: () => void
   isAuthenticated: () => boolean
   isAdmin: () => boolean
+  isSuperAdmin: () => boolean
   isProfileComplete: () => boolean
   isProfileIncomplete: () => boolean
   canPostErrands: () => boolean
@@ -238,6 +239,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return user.userType === 'Admin'
   }, [user])
 
+  const isSuperAdmin = useCallback(() => {
+    if (!user) return false
+    const roles = Array.isArray(user.roles) ? user.roles : String(user.roles || '').split(',')
+    return roles.some(role => String(role).trim() === 'SuperAdmin')
+  }, [user])
+
   // These values are presentation mirrors of backend policy. The FE never
   // independently validates profile completeness or role capabilities.
   const isProfileComplete = useCallback(() => user?.profileCompleted === true, [user])
@@ -258,7 +265,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user, token, loading, loginTransitioning,
       login, googleLogin, googleRegister, logout, refreshUser,
-      isAuthenticated, isAdmin,
+      isAuthenticated, isAdmin, isSuperAdmin,
       isProfileComplete, isProfileIncomplete,
       canPostErrands, canAcceptTasks,
       getProfileCompletion,
