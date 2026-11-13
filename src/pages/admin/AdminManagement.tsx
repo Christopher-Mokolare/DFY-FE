@@ -189,10 +189,10 @@ export default function AdminManagement() {
         <div className="section-card" style={{ marginBottom: '1rem' }}>
           <h2 style={{ marginTop: 0 }}>Provisioning an administrator</h2>
           <p>
-            Have the intended person register using their own email address and verify that email first.
-            Find their account below and grant Admin access. The change requires your recent authenticator
-            verification and a recorded reason. This controlled promotion flow does not create an account
-            or send an invitation email.
+            Use the invitation form above to invite someone who does not yet have an account. They must register
+            or sign in using the invited email, verify it, enable authenticator MFA and accept the one-time invitation.
+            You can also grant access to an existing verified account below. Both paths require a recorded reason
+            and fresh authenticator verification.
           </p>
           <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
             SuperAdmin accounts are intentionally excluded from one-person role changes. A separate
