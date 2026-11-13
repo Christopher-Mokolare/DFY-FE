@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { adminApi } from '../../api'
 
+interface Invitation {
+  id: number
+  email: string
+  reason: string
+  status: string
+  createdAt: string
+  expiresAt: string
+  acceptedAt?: string | null
+}
+
 interface Account {
   id: number
   name: string
@@ -27,6 +37,10 @@ export default function AdminManagement() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
+  const [invitations, setInvitations] = useState<Invitation[]>([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteReason, setInviteReason] = useState('')
+  const [inviteBusy, setInviteBusy] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -39,6 +53,12 @@ export default function AdminManagement() {
       setAccounts(data?.accounts || [])
       setTotalPages(data?.totalPages || 1)
       setTotalCount(data?.totalCount || 0)
+      try {
+        const inviteResponse = await adminApi.getAdminInvitations()
+        setInvitations(inviteResponse.data?.data || [])
+      } catch {
+        setInvitations([])
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Unable to load administrative accounts.')
     } finally {
@@ -52,6 +72,42 @@ export default function AdminManagement() {
     event.preventDefault()
     setPage(1)
     setSubmittedSearch(search.trim())
+  }
+
+  const submitInvitation = async (event: FormEvent) => {
+    event.preventDefault()
+    if (inviteReason.trim().length < 5) {
+      setError('Provide a reason of at least 5 characters for this invitation.')
+      return
+    }
+    setInviteBusy(true)
+    setError('')
+    try {
+      await adminApi.createAdminInvitation(inviteEmail.trim(), inviteReason.trim())
+      setInviteEmail('')
+      setInviteReason('')
+      await load()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Unable to send the administrator invitation.')
+    } finally {
+      setInviteBusy(false)
+    }
+  }
+
+  const revokeInvitation = async (invitation: Invitation) => {
+    const reason = window.prompt(`Why are you revoking the invitation sent to ${invitation.email}?`)?.trim() || ''
+    if (reason.length < 5) {
+      setError('A revocation reason of at least 5 characters is required.')
+      return
+    }
+    if (!window.confirm(`Revoke the pending invitation for ${invitation.email}?`)) return
+    setError('')
+    try {
+      await adminApi.revokeAdminInvitation(invitation.id, reason)
+      await load()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Unable to revoke this invitation.')
+    }
   }
 
   const changeAccess = async (account: Account) => {
@@ -89,6 +145,47 @@ export default function AdminManagement() {
         </div>
       </div>
       <div className="container">
+        <div className="section-card" style={{ marginBottom: '1rem' }}>
+          <h2 style={{ marginTop: 0 }}>Invite a new administrator</h2>
+          <p className="text-muted text-sm">
+            Invitations expire after 48 hours and can only grant Admin access. The recipient must register or sign in
+            with the invited email, verify it, enable authenticator MFA and complete the acceptance step.
+          </p>
+          <form onSubmit={event => void submitInvitation(event)} style={{ display: 'grid', gap: '.75rem', maxWidth: '42rem' }}>
+            <label>
+              <span className="text-sm">Email address</span>
+              <input className="form-input" type="email" required maxLength={320} value={inviteEmail}
+                onChange={event => setInviteEmail(event.target.value)} placeholder="admin@example.com" />
+            </label>
+            <label>
+              <span className="text-sm">Business reason</span>
+              <textarea className="form-input" required minLength={5} maxLength={500} rows={3}
+                value={inviteReason} onChange={event => setInviteReason(event.target.value)}
+                placeholder="Why does this person need administrator access?" />
+            </label>
+            <div><button className="btn btn-primary btn-sm" type="submit" disabled={inviteBusy || !inviteEmail.trim() || inviteReason.trim().length < 5}>
+              {inviteBusy ? 'Sending invitation...' : 'Send Admin invitation'}
+            </button></div>
+          </form>
+          {invitations.length > 0 && (
+            <div style={{ overflowX: 'auto', marginTop: '1.25rem' }}>
+              <h3>Recent invitations</h3>
+              <table className="admin-table" style={{ width: '100%' }}>
+                <thead><tr><th>Email</th><th>Status</th><th>Expires</th><th>Reason</th><th>Action</th></tr></thead>
+                <tbody>{invitations.map(invitation => (
+                  <tr key={invitation.id}>
+                    <td>{invitation.email}</td>
+                    <td>{invitation.status}</td>
+                    <td>{new Date(invitation.expiresAt).toLocaleString('en-ZA')}</td>
+                    <td>{invitation.reason}</td>
+                    <td>{invitation.status === 'pending' && <button type="button" className="btn btn-secondary btn-sm" onClick={() => void revokeInvitation(invitation)}>Revoke</button>}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         <div className="section-card" style={{ marginBottom: '1rem' }}>
           <h2 style={{ marginTop: 0 }}>Provisioning an administrator</h2>
           <p>
