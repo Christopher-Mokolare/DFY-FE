@@ -51,9 +51,17 @@ jobs:
             echo "::error::DFY_BE_READ_TOKEN is required to verify this client against the canonical DFY-BE contract. Configure a read-only Contents token in repository Actions secrets."
             exit 1
           fi
-          # This PR targets the active staging branch; compare against that API contract.
+          # The coordinated SuperAdmin PRs share a feature-branch contract.
+          # Prefer that branch while it exists; after backend merge/branch cleanup,
+          # staging becomes the canonical contract automatically.
+          FEATURE_REF="feat/superadmin-platform-control"
           CANONICAL_REF="staging"
-          curl --location --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 -H "Authorization: Bearer $DFY_BE_READ_TOKEN" -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/DoForYou-ZA/DFY-BE/contents/docs/openapi.json?ref=$CANONICAL_REF" -o /tmp/dfy-canonical-openapi.json
+          if curl --location --fail --silent --show-error -H "Authorization: Bearer $DFY_BE_READ_TOKEN" -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/DoForYou-ZA/DFY-BE/contents/docs/openapi.json?ref=$FEATURE_REF" -o /tmp/dfy-feature-openapi.json; then
+            CANONICAL_REF="$FEATURE_REF"
+            mv /tmp/dfy-feature-openapi.json /tmp/dfy-canonical-openapi.json
+          else
+            curl --location --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 -H "Authorization: Bearer $DFY_BE_READ_TOKEN" -H "Accept: application/vnd.github.raw+json" "https://api.github.com/repos/DoForYou-ZA/DFY-BE/contents/docs/openapi.json?ref=$CANONICAL_REF" -o /tmp/dfy-canonical-openapi.json
+          fi
           jq -e 'type == "object" and has("openapi")' /tmp/dfy-canonical-openapi.json >/dev/null
           diff -u contracts/openapi.json /tmp/dfy-canonical-openapi.json
 
