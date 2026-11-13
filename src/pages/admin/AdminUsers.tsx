@@ -109,10 +109,10 @@ export default function AdminUsers() {
     const r = await adminApi.getUsers({ page: 1, pageSize: 10000, includeArchived })
     return r.data?.data?.users || []
   }
-  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.isVerified ? 'Yes' : 'No', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
+  const mapUserRow = (u: any) => [u.name, u.email, u.role || 'User', u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
-  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
-  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Role', 'Tasks Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
+  const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
 
   return (
     <div style={{ paddingBottom: '3rem' }}>
@@ -143,7 +143,7 @@ export default function AdminUsers() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                      {['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Verified', 'Actions'].map(h => (
+                      {['Name', 'Email', 'Role', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
@@ -161,12 +161,13 @@ export default function AdminUsers() {
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{u.tasksPosted ?? 0}</td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{u.tasksCompleted ?? 0}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>{u.rating?.toFixed(1) || '-'}</td>
-                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${u.isVerified ? 'badge-verified' : 'badge-warning'}`}>{u.isVerified ? 'Yes' : 'No'}</span></td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${u.emailVerified ? 'badge-verified' : 'badge-warning'}`}>{u.emailVerified ? 'Verified' : 'Pending'}</span></td>
+                        <td style={{ padding: '0.75rem 0.5rem' }}><span className={`badge ${u.isVerified ? 'badge-verified' : 'badge-warning'}`}>{u.isVerified ? 'Verified' : 'Pending'}</span></td>
                         <td style={{ padding: '0.75rem 0.5rem' }}>
                           <div className="admin-table-actions">
                             {!u.isArchived && <>
                               <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
-                                {u.isVerified ? 'Unverify' : 'Verify'}
+                                {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                               </button>
                               <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
@@ -209,8 +210,11 @@ export default function AdminUsers() {
                       </div>
                     </div>
                     <div className="admin-task-card-footer">
+                      <span className={`badge ${u.emailVerified ? 'badge-verified' : 'badge-warning'}`}>
+                        <i className={`fas fa-${u.emailVerified ? 'check-circle' : 'clock'}`} /> Email {u.emailVerified ? 'verified' : 'pending'}
+                      </span>
                       <span className={`badge ${u.isArchived ? 'badge-warning' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
-                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : u.isVerified ? 'Verified' : 'Unverified'}
+                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
                       </span>
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
