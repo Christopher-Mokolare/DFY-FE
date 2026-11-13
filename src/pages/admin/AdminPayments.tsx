@@ -588,7 +588,7 @@ export default function AdminPayments() {
           {financeView === 'approvals' && (
             <div>
               <div className="alert alert-warning" role="note">
-                Exceptional escrow release requires two different SuperAdmins with fresh authenticator verification. Execution queues the normal payout; it does not bypass the manual payout gate or send a Paystack transfer. Refunds and compensating adjustments are not enabled in this workflow.
+                Exceptional escrow release, creator refunds and disputed runner releases require independent SuperAdmin approval with fresh authenticator verification. Execution uses the existing Paystack refund or normal payout workflow; it does not enable direct balance edits or bypass the manual payout gate. Exact journal reversals are handled separately in the Double-entry journal tab.
               </div>
               {financialApprovalError && <div className="alert alert-warning" role="alert">{financialApprovalError}</div>}
               <form onSubmit={event => void createFinancialApproval(event)} style={{ display: 'grid', gap: '.75rem', maxWidth: '44rem', marginBottom: '1.5rem' }}>
