@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { adminApi } from '../../api'
 
 export default function AdminInvitationAccept() {
   const location = useLocation()
+  const { isAuthenticated } = useAuth()
+  const returnState = { from: { pathname: location.pathname, search: location.search, hash: location.hash } }
   const token = new URLSearchParams(location.hash.replace(/^#/, '')).get('token') || ''
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -40,11 +43,17 @@ export default function AdminInvitationAccept() {
         </ul>
         {error && <div className="alert alert-error" role="alert">{error}</div>}
         {message && <div className="alert alert-success" role="status">{message}</div>}
-        {!message && <button type="button" className="btn btn-primary" onClick={() => void accept()} disabled={busy || !token}>
-          {busy ? 'Activating...' : 'Accept Admin invitation'}
-        </button>}
+        {!message && (isAuthenticated()
+          ? <button type="button" className="btn btn-primary" onClick={() => void accept()} disabled={busy || !token}>
+              {busy ? 'Activating...' : 'Accept Admin invitation'}
+            </button>
+          : <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+              <Link className="btn btn-primary" to="/register" state={returnState}>Create account</Link>
+              <Link className="btn btn-secondary" to="/login" state={returnState}>Sign in</Link>
+            </div>
+        )}
         <p className="text-muted text-sm" style={{ marginTop: '1rem', marginBottom: 0 }}>
-          <Link to="/login">Sign in</Link> if you have not already. If the invitation has expired, contact the inviting SuperAdmin.
+          The invitation is single-use and expires after 48 hours. If it has expired, contact the inviting SuperAdmin.
         </p>
       </div>
     </div>
