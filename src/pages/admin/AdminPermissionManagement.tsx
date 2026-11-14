@@ -84,10 +84,6 @@ export default function AdminPermissionManagement() {
       setError('Select an eligible administrator and permission, and provide a reason of at least 10 characters.')
       return
     }
-    if (permissionKey === 'kyc.override') {
-      setError('KYC override is not assignable until its separately controlled override workflow is delivered.')
-      return
-    }
     setBusy(true)
     setError('')
     setNotice('')
@@ -143,9 +139,11 @@ export default function AdminPermissionManagement() {
         their platform-level access with fresh authenticator verification.
       </p>
       <div className="alert alert-info" role="note">
-        KYC reviewers and identity-document viewers are separate permissions. KYC override remains unavailable
-        until its separate override workflow is delivered. Exceptional escrow releases and refunds remain blocked
-        until independent two-person financial execution is implemented.
+        KYC reviewers, identity-document viewers and KYC override operators are separate permissions. KYC
+        overrides only reopen eligible rejected cases for ordinary review; they do not approve runners or restore
+        purged evidence. Exceptional escrow releases and eligible refunds use the independent two-person
+        SuperAdmin approval workflow. All financial execution remains subject to provider reconciliation and the
+        existing manual payout gate.
       </div>
       {error && <div className="alert alert-error" role="alert">{error}</div>}
       {notice && <div className="alert alert-success" role="status">{notice}</div>}
@@ -163,7 +161,7 @@ export default function AdminPermissionManagement() {
           <span className="text-sm">Permission</span>
           <select className="form-input" required value={permissionKey} onChange={event => setPermissionKey(event.target.value)}>
             {permissions.map(permission => (
-              <option key={permission.key} value={permission.key} disabled={permission.key === 'kyc.override'}>
+              <option key={permission.key} value={permission.key}>
                 {permission.description} ({permission.key})
               </option>
             ))}
