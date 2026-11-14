@@ -18,6 +18,15 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+export function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isSuperAdmin, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return <div className="loading-screen"><div className="spinner" /></div>
+  if (!isAuthenticated()) return <Navigate to="/login" state={{ from: location }} replace />
+  if (!isSuperAdmin()) return <Navigate to="/admin/dashboard" replace />
+  return <>{children}</>
+}
+
 export function RequireProfileComplete({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isProfileIncomplete, loading } = useAuth()
   const location = useLocation()

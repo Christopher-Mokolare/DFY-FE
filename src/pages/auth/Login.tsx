@@ -14,7 +14,7 @@ export default function Login() {
   // that may have redirected to /login before logout navigation completed.
   const loggedOut = sessionStorage.getItem('dfy:loggedOut') === '1'
   const authState = location.state as any
-  const from = loggedOut ? null : (authState?.from?.pathname || null)
+  const from = loggedOut ? null : (authState?.from ? `${authState.from.pathname || ''}${authState.from.search || ''}${authState.from.hash || ''}` || null : null)
   const returnToTaskId = loggedOut ? null : (authState?.returnToTaskId || searchParams.get('returnToTaskId'))
 
   const [email, setEmail] = useState('')

@@ -103,9 +103,12 @@ export default function Register() {
           privacyVersion: PRIVACY_VERSION,
           marketingConsent,
         })
-        const dest = returnToTaskId
+        const returnPath = authState?.from
+          ? `${authState.from.pathname || ''}${authState.from.search || ''}${authState.from.hash || ''}`
+          : null
+        const dest = returnPath || (returnToTaskId
           ? `/tasks/browse?taskId=${encodeURIComponent(returnToTaskId)}`
-          : '/dashboard'
+          : '/dashboard')
         navigate(dest, { replace: true })
         return
       }
@@ -120,7 +123,7 @@ export default function Register() {
       })
       if (res.data.success) {
         const query = returnToTaskId ? `?returnToTaskId=${encodeURIComponent(returnToTaskId)}` : ''
-        navigate(`/login${query}`, { state: { registered: true, returnToTaskId } })
+        navigate(`/login${query}`, { state: { registered: true, returnToTaskId, from: authState?.from } })
       } else setError(res.data.message || 'Registration failed')
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed. Please try again.')

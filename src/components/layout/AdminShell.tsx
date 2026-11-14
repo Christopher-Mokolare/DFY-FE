@@ -2,25 +2,28 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
-const navigation = [
+const navigation: Array<{ label: string; to: string; icon: string; section: string; superAdminOnly?: boolean }> = [
   { label: 'Overview', to: '/admin/dashboard', icon: 'fa-chart-pie', section: 'WORKSPACE' },
   { label: 'Tasks', to: '/admin/tasks', icon: 'fa-list-check', section: 'OPERATIONS' },
+  { label: 'Categories', to: '/admin/categories', icon: 'fa-layer-group', section: 'OPERATIONS' },
   { label: 'Users', to: '/admin/users', icon: 'fa-users', section: 'OPERATIONS' },
   { label: 'Identity review', to: '/admin/identity-verifications', icon: 'fa-id-card', section: 'OPERATIONS' },
   { label: 'Disputes', to: '/admin/disputes', icon: 'fa-gavel', section: 'OPERATIONS' },
   { label: 'Payments', to: '/admin/payments', icon: 'fa-credit-card', section: 'FINANCE' },
   { label: 'Testimonials', to: '/admin/testimonials', icon: 'fa-quote-left', section: 'CONTENT' },
   { label: 'Audit Log', to: '/admin/audit-log', icon: 'fa-shield-halved', section: 'SYSTEM' },
+  { label: 'Admin management', to: '/admin/admin-management', icon: 'fa-user-shield', section: 'SYSTEM', superAdminOnly: true },
 ]
 
 const sections = ['WORKSPACE', 'OPERATIONS', 'FINANCE', 'CONTENT', 'SYSTEM'] as const
 
 export default function AdminShell() {
-  const { user, logout } = useAuth()
+  const { user, logout, isSuperAdmin } = useAuth()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const closeMobile = () => setMobileOpen(false)
-  const currentPage = navigation.find(item => item.to === location.pathname)?.label || 'Operations'
+  const visibleNavigation = navigation.filter(item => !item.superAdminOnly || isSuperAdmin())
+  const currentPage = visibleNavigation.find(item => item.to === location.pathname)?.label || 'Operations'
 
   return (
     <div className="admin-shell">
@@ -37,7 +40,7 @@ export default function AdminShell() {
           {sections.map(section => (
             <div className="admin-nav-section" key={section}>
               <div className="admin-sidebar-section-label">{section}</div>
-              {navigation.filter(item => item.section === section).map(item => (
+              {visibleNavigation.filter(item => item.section === section).map(item => (
                 <NavLink
                   key={item.to}
                   to={item.to}
@@ -56,6 +59,10 @@ export default function AdminShell() {
         <div className="admin-sidebar-spacer" />
 
         <div className="admin-sidebar-footer">
+          <NavLink to="/user/profile" className="admin-profile-mini admin-profile-link" title="Profile and security settings">
+            <div className="admin-avatar"><i className="fas fa-user-cog" /></div>
+            <div><strong>Profile & security</strong><span>Authenticator MFA settings</span></div>
+          </NavLink>
           <div className="admin-profile-mini admin-profile-link">
             <div className="admin-avatar">
               {(user?.firstName || user?.name || 'A').charAt(0).toUpperCase()}

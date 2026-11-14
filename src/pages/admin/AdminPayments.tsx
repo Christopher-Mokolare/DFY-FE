@@ -7,7 +7,7 @@ export default function AdminPayments() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const [verifyingId, setVerifyingId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations'>('payments')
+  const [financeView, setFinanceView] = useState<'payments' | 'reconciliation' | 'operations' | 'approvals' | 'ledger'>('payments')
   const [operations, setOperations] = useState<any>(null)
   const [settlementReport, setSettlementReport] = useState<any>(null)
   const [ledgerReport, setLedgerReport] = useState<any>(null)
@@ -17,6 +17,21 @@ export default function AdminPayments() {
   const [operationsError, setOperationsError] = useState('')
   const [settlementError, setSettlementError] = useState('')
   const [ledgerError, setLedgerError] = useState('')
+  const [financialApprovals, setFinancialApprovals] = useState<any[]>([])
+  const [financialApprovalLoading, setFinancialApprovalLoading] = useState(false)
+  const [financialApprovalError, setFinancialApprovalError] = useState('')
+  const [financialRequestReason, setFinancialRequestReason] = useState('')
+  const [financialDecisionReason, setFinancialDecisionReason] = useState('')
+  const [financialTaskId, setFinancialTaskId] = useState('')
+  const [financialApprovalBusy, setFinancialApprovalBusy] = useState(false)
+  const [financialLedger, setFinancialLedger] = useState<any>(null)
+  const [financialLedgerPage, setFinancialLedgerPage] = useState(1)
+  const [financialLedgerLoading, setFinancialLedgerLoading] = useState(false)
+  const [financialLedgerError, setFinancialLedgerError] = useState('')
+  const [financialReversals, setFinancialReversals] = useState<any[]>([])
+  const [financialReversalLoading, setFinancialReversalLoading] = useState(false)
+  const [financialReversalBusy, setFinancialReversalBusy] = useState(false)
+  const [financialReversalError, setFinancialReversalError] = useState('')
 
   const loadAll = () => Promise.all([
     adminApi.getPayments(),
@@ -36,6 +51,181 @@ export default function AdminPayments() {
       setOperationsError(error?.response?.data?.message || 'Unable to load the payment operations queue.')
     } finally {
       setOperationsLoading(false)
+    }
+  }
+
+  const loadFinancialApprovals = async () => {
+    setFinancialApprovalLoading(true)
+    setFinancialApprovalError('')
+    try {
+      const response = await adminApi.getFinancialApprovals()
+      const payload = response.data?.data || response.data
+      setFinancialApprovals(Array.isArray(payload) ? payload : [])
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Unable to load financial approval requests. A SuperAdmin with fresh authenticator verification is required.')
+    } finally {
+      setFinancialApprovalLoading(false)
+    }
+  }
+
+  const loadFinancialLedger = async (page = financialLedgerPage) => {
+    setFinancialLedgerLoading(true)
+    setFinancialLedgerError('')
+    try {
+      const response = await adminApi.getFinancialLedger({ page, pageSize: 50 })
+      setFinancialLedger(response.data?.data || response.data)
+      setFinancialLedgerPage(page)
+    } catch (error: any) {
+      setFinancialLedgerError(error?.response?.data?.message || 'Unable to load the double-entry financial journal.')
+    } finally {
+      setFinancialLedgerLoading(false)
+    }
+  }
+
+  const loadFinancialReversals = async () => {
+    setFinancialReversalLoading(true)
+    setFinancialReversalError('')
+    try {
+      const response = await adminApi.getFinancialReversalRequests()
+      const payload = response.data?.data || response.data
+      setFinancialReversals(Array.isArray(payload) ? payload : [])
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'Unable to load immutable journal reversal requests.')
+    } finally {
+      setFinancialReversalLoading(false)
+    }
+  }
+
+  const requestJournalReversal = async (journal: any) => {
+    const reason = window.prompt('Explain why this exact original journal must be reversed (10–500 characters). No balance will be edited directly.')?.trim() || ''
+    if (reason.length < 10 || reason.length > 500) {
+      setFinancialReversalError('A reversal reason between 10 and 500 characters is required. No request was submitted.')
+      return
+    }
+    setFinancialReversalBusy(true)
+    setFinancialReversalError('')
+    try {
+      await adminApi.requestFinancialReversal(Number(journal.id), reason)
+      await Promise.all([loadFinancialReversals(), loadFinancialLedger(financialLedgerPage)])
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'Unable to request the exact journal reversal.')
+    } finally {
+      setFinancialReversalBusy(false)
+    }
+  }
+
+  const decideJournalReversal = async (id: number, decision: 'approve' | 'reject') => {
+    const reason = window.prompt('Record the independent review decision (10–500 characters). The requester cannot approve their own request.')?.trim() || ''
+    if (reason.length < 10 || reason.length > 500) {
+      setFinancialReversalError('A decision reason between 10 and 500 characters is required. No decision was submitted.')
+      return
+    }
+    setFinancialReversalBusy(true)
+    setFinancialReversalError('')
+    try {
+      await adminApi.decideFinancialReversal(id, decision, reason)
+      await loadFinancialReversals()
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'Unable to record the independent reversal decision.')
+    } finally {
+      setFinancialReversalBusy(false)
+    }
+  }
+
+  const executeJournalReversal = async (item: any) => {
+    if (!window.confirm('Execute the approved exact reversal? This posts the inverse of every original journal line; it does not edit or delete the original journal.')) return
+    setFinancialReversalBusy(true)
+    setFinancialReversalError('')
+    try {
+      await adminApi.executeFinancialReversal(item.id)
+      await Promise.all([loadFinancialReversals(), loadFinancialLedger(financialLedgerPage)])
+    } catch (error: any) {
+      setFinancialReversalError(error?.response?.data?.message || 'The reversal could not be posted. Reconcile the request and original journal before retrying.')
+      await loadFinancialReversals()
+    } finally {
+      setFinancialReversalBusy(false)
+    }
+  }
+
+  const createFinancialApproval = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!financialTaskId.trim() || financialRequestReason.trim().length < 10) return
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      await adminApi.requestFinancialApproval(financialTaskId.trim(), financialRequestReason.trim())
+      setFinancialTaskId('')
+      setFinancialRequestReason('')
+      await loadFinancialApprovals()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Unable to create the financial approval request.')
+    } finally {
+      setFinancialApprovalBusy(false)
+    }
+  }
+
+  const decideFinancialApproval = async (id: number, decision: 'approve' | 'reject') => {
+    if (financialDecisionReason.trim().length < 10) {
+      setFinancialApprovalError('Enter a decision reason of at least 10 characters before approving or rejecting.')
+      return
+    }
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      if (decision === 'approve') await adminApi.approveFinancialRequest(id, financialDecisionReason.trim())
+      else await adminApi.rejectFinancialRequest(id, financialDecisionReason.trim())
+      setFinancialDecisionReason('')
+      await loadFinancialApprovals()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Unable to record the independent decision.')
+    } finally {
+      setFinancialApprovalBusy(false)
+    }
+  }
+
+  const executeFinancialApproval = async (item: any) => {
+    let executionReason = ''
+    if (item.action === 'refund_creator' || item.action === 'release_to_runner') {
+      executionReason = window.prompt(
+        'Record the execution reason and the final dispute-resolution decision (10–500 characters).',
+      )?.trim() || ''
+      if (executionReason.length < 10 || executionReason.length > 500) {
+        setFinancialApprovalError('A separate execution reason between 10 and 500 characters is required. No action was submitted.')
+        return
+      }
+    }
+
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      if (item.action === 'refund_creator' || item.action === 'release_to_runner') {
+        if (!item.disputeId) throw new Error('This approval is not bound to a dispute. No financial action was submitted.')
+        await adminApi.resolveDispute(item.disputeId, executionReason, item.action, executionReason)
+      } else {
+        await adminApi.executeFinancialApproval(item.id)
+      }
+      await loadFinancialApprovals()
+      await loadOperations()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || error?.message || 'Execution failed or requires manual reconciliation.')
+      await loadFinancialApprovals()
+    } finally {
+      setFinancialApprovalBusy(false)
+    }
+  }
+
+  const reconcileFinancialApproval = async (id: number) => {
+    setFinancialApprovalBusy(true)
+    setFinancialApprovalError('')
+    try {
+      await adminApi.reconcileFinancialApproval(id)
+      await loadFinancialApprovals()
+      await loadOperations()
+    } catch (error: any) {
+      setFinancialApprovalError(error?.response?.data?.message || 'Provider state could not be reconciled. Do not resubmit the financial action.')
+      await loadFinancialApprovals()
+    } finally {
+      setFinancialApprovalBusy(false)
     }
   }
 
@@ -75,6 +265,12 @@ export default function AdminPayments() {
 
   useEffect(() => { loadAll() }, [])
   useEffect(() => { void loadOperations() }, [])
+  useEffect(() => {
+    if (financeView === 'ledger') {
+      void loadFinancialLedger(1)
+      void loadFinancialReversals()
+    }
+  }, [financeView])
 
   const handleVerifyBank = async (id: number) => {
     setVerifyingId(id)
@@ -117,11 +313,14 @@ export default function AdminPayments() {
       <div className="page-header">
         <div className="container">
           <h1><i className="fas fa-credit-card" /> Payments Overview</h1>
-          <p>Paystack collections, direct runner payouts and bank verification</p>
+          <p>Operational task/payment statuses. Accounting balances are shown in the double-entry journal.</p>
         </div>
       </div>
 
       <div className="container">
+        <div className="alert alert-warning" role="note">
+          The summary below is calculated from task and payment-status records. It is not a general ledger and does not replace the double-entry journal or provider reconciliation.
+        </div>
         {data && (
           <div className="stats-grid" style={{ marginBottom: '2rem' }}>
             <div className="stat-card">
@@ -159,6 +358,8 @@ export default function AdminPayments() {
             <button className={financeView === 'payments' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('payments')}>Payments overview</button>
             <button className={financeView === 'reconciliation' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('reconciliation')}>Reconciliation</button>
             <button className={financeView === 'operations' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('operations')}>Operations queue</button>
+            <button className={financeView === 'approvals' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => { setFinanceView('approvals'); void loadFinancialApprovals() }}>Two-person approvals</button>
+            <button className={financeView === 'ledger' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'} onClick={() => setFinanceView('ledger')}>Double-entry journal</button>
           </div>
           {financeView === 'reconciliation' && (
             <div>
@@ -167,7 +368,7 @@ export default function AdminPayments() {
                   {settlementLoading ? <><span className="spinner spinner-sm" /> Retrieving Paystack data…</> : <><i className="fas fa-arrows-rotate" /> Run Paystack settlement reconciliation</>}
                 </button>
                 <button className="btn btn-secondary btn-sm" onClick={() => void runLedgerReconciliation()} disabled={ledgerLoading}>
-                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Checking ledger…</> : 'Run DFY ledger check'}
+                  {ledgerLoading ? <><span className="spinner spinner-sm" /> Comparing records…</> : 'Compare task/payment records'}
                 </button>
               </div>
               {settlementError && <div className="alert alert-warning" role="alert">{settlementError}</div>}
@@ -244,7 +445,7 @@ export default function AdminPayments() {
               {ledgerError && <div className="alert alert-warning" role="alert" style={{ marginTop: '1rem' }}>{ledgerError}</div>}
               {ledgerReport && (
                 <div style={{ marginTop: '1rem' }}>
-                  <h3>DFY ledger consistency</h3>
+                  <h3>Task/payment record comparison (not an accounting ledger)</h3>
                   <div className="stats-grid">
                     <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.returnedTaskCount ?? 0}</h3><p>Tasks checked</p></div></div>
                     <div className="stat-card"><div className="stat-content"><h3>{ledgerReport.tasksWithFindings ?? 0}</h3><p>Tasks with findings</p></div></div>
@@ -252,6 +453,197 @@ export default function AdminPayments() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+          {financeView === 'ledger' && (
+            <div>
+              <div className="alert alert-warning" role="note">
+                This is the new double-entry accounting journal. It does not read or convert retired wallet balances, task totals or audit-log text. Coverage starts with the first journal entry; historical backfill has not been performed.
+              </div>
+              {financialLedgerError && <div className="alert alert-warning" role="alert">{financialLedgerError}</div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
+                <p className="text-muted text-sm" style={{ margin: 0 }}>
+                  {financialLedger?.firstJournalAtUtc
+                    ? `Journal coverage begins ${new Date(financialLedger.firstJournalAtUtc).toLocaleString('en-ZA')}.`
+                    : 'No journal entries have been posted yet.'}
+                </p>
+                <button className="btn btn-secondary btn-sm" onClick={() => void loadFinancialLedger()} disabled={financialLedgerLoading}>Refresh journal</button>
+              </div>
+              {financialLedgerLoading ? <div className="loading-state"><div className="spinner" /></div> : financialLedger && (
+                <>
+                  <div className="stats-grid" style={{ marginBottom: '1rem' }}>
+                    <div className="stat-card"><div className="stat-content"><h3>R{Number(financialLedger.totalDebits || 0).toFixed(2)}</h3><p>Total debits</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>R{Number(financialLedger.totalCredits || 0).toFixed(2)}</h3><p>Total credits</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{financialLedger.totalCount ?? 0}</h3><p>Journal entries</p></div></div>
+                    <div className="stat-card"><div className="stat-content"><h3>{financialLedger.isBalanced ? 'Balanced' : 'Review required'}</h3><p>Journal integrity</p></div></div>
+                  </div>
+                  <h3>Chart of accounts</h3>
+                  <div className="admin-table-wrap" style={{ marginBottom: '1.25rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                      <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Code', 'Account', 'Type', 'Currency', 'Debits', 'Credits', 'Raw debit less credit'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                      <tbody>{(financialLedger.accounts || []).map((account: any) => (
+                        <tr key={account.code} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{account.code}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>{account.name}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>{account.accountType}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>{account.currency}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>R{Number(account.debitTotal || 0).toFixed(2)}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>R{Number(account.creditTotal || 0).toFixed(2)}</td>
+                          <td style={{ padding: '.65rem .5rem' }}>R{Number(account.rawDebitMinusCreditBalance || 0).toFixed(2)}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                  <h3>Journal history</h3>
+                  {(financialLedger.journals || []).length === 0 ? <p className="text-muted">No accounting events have been posted yet. Legacy records have not been fabricated into journal entries.</p> : (
+                    <>
+                    <div className="admin-table-wrap">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                        <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Recorded', 'Journal', 'Event', 'Source', 'Description', 'Debit', 'Credit', 'Provider ref', 'Lines', 'Reversal'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                        <tbody>{(financialLedger.journals || []).map((journal: any) => (
+                          <tr key={journal.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>{new Date(journal.recordedAt).toLocaleString('en-ZA')}</td>
+                            <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{journal.journalNumber}</td>
+                            <td style={{ padding: '.65rem .5rem' }}>{journal.eventType}</td>
+                            <td style={{ padding: '.65rem .5rem' }}>{journal.sourceType}: {journal.sourceId}</td>
+                            <td style={{ padding: '.65rem .5rem', minWidth: '12rem' }}>{journal.description}</td>
+                            <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(journal.debitTotal || 0).toFixed(2)}</td>
+                            <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(journal.creditTotal || 0).toFixed(2)}</td>
+                            <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{journal.providerReference || '—'}</td>
+                            <td style={{ padding: '.65rem .5rem', minWidth: '14rem' }}>
+                              <details>
+                                <summary style={{ cursor: 'pointer' }}>View {journal.lineCount ?? journal.lines?.length ?? 0} lines</summary>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '.5rem' }}>
+                                  <thead><tr><th style={{ textAlign: 'left', padding: '.3rem' }}>Account</th><th style={{ textAlign: 'right', padding: '.3rem' }}>Debit</th><th style={{ textAlign: 'right', padding: '.3rem' }}>Credit</th></tr></thead>
+                                  <tbody>{(journal.lines || []).map((line: any, index: number) => (
+                                    <tr key={line.lineNumber ?? index}>
+                                      <td style={{ padding: '.3rem' }}>{line.accountCode} — {line.accountName}{line.memo ? <div className="text-muted">{line.memo}</div> : null}</td>
+                                      <td style={{ padding: '.3rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{line.debit > 0 ? 'R' + Number(line.debit).toFixed(2) : '—'}</td>
+                                      <td style={{ padding: '.3rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{line.credit > 0 ? 'R' + Number(line.credit).toFixed(2) : '—'}</td>
+                                    </tr>
+                                  ))}</tbody>
+                                </table>
+                              </details>
+                            </td>
+                            <td style={{ padding: '.65rem .5rem', minWidth: '10rem' }}>
+                              {journal.reversalOfJournalId ? <span className="text-muted">Reversal of #{journal.reversalOfJournalId}</span>
+                                : journal.isReversed ? <span className="text-muted">Already reversed</span>
+                                  : financialReversals.find(item => Number(item.originalJournalId) === Number(journal.id) && ['Pending', 'Approved', 'Executing'].includes(item.status))
+                                    ? <span className="text-muted">Reversal {financialReversals.find(item => Number(item.originalJournalId) === Number(journal.id) && ['Pending', 'Approved', 'Executing'].includes(item.status))?.status}</span>
+                                    : <button className="btn btn-secondary btn-sm" disabled={financialReversalBusy} onClick={() => void requestJournalReversal(journal)}>Request reversal</button>}
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                    <div className="admin-toolbar" style={{ justifyContent: 'space-between', marginTop: '.75rem' }}>
+                      <span className="text-muted text-sm">
+                        Showing {financialLedger.journals?.length || 0} of {financialLedger.totalCount || 0} journal entries · Page {financialLedger.page || financialLedgerPage} of {Math.max(1, Math.ceil((financialLedger.totalCount || 0) / (financialLedger.pageSize || 50)))}
+                      </span>
+                      <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
+                        <button className="btn btn-secondary btn-sm" disabled={financialLedgerLoading || financialLedgerPage <= 1} onClick={() => void loadFinancialLedger(financialLedgerPage - 1)}>Previous</button>
+                        <button className="btn btn-secondary btn-sm" disabled={financialLedgerLoading || financialLedgerPage >= Math.max(1, Math.ceil((financialLedger.totalCount || 0) / (financialLedger.pageSize || 50)))} onClick={() => void loadFinancialLedger(financialLedgerPage + 1)}>Next</button>
+                      </div>
+                    </div>
+                    </>
+                  )}
+                  <section style={{ marginTop: '1.5rem' }} aria-labelledby="financial-reversal-requests-heading">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '.75rem', alignItems: 'center' }}>
+                      <h3 id="financial-reversal-requests-heading">Two-person journal reversals</h3>
+                      <button className="btn btn-secondary btn-sm" onClick={() => void loadFinancialReversals()} disabled={financialReversalLoading}>Refresh requests</button>
+                    </div>
+                    <p className="text-muted text-sm">Only exact reversals of existing journal lines are permitted. The original entry remains immutable. Requester, approver and executor separation is enforced by the backend.</p>
+                    {financialReversalError && <div className="alert alert-warning" role="alert">{financialReversalError}</div>}
+                    {financialReversalLoading ? <div className="loading-state"><div className="spinner" /></div> : financialReversals.length === 0 ? (
+                      <p className="text-muted">No journal reversal requests have been recorded.</p>
+                    ) : (
+                      <div className="admin-table-wrap">
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.8125rem' }}>
+                          <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Original journal', 'Event/source', 'Amount', 'Status', 'Requester', 'Approver', 'Reason', 'Actions'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                          <tbody>{financialReversals.map(item => (
+                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace' }}>{item.originalJournalNumber || ('#' + item.originalJournalId)}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.originalEventType}<div className="text-muted">{item.originalSourceType}: {item.originalSourceId}</div></td>
+                              <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>{item.currency || 'ZAR'} {Number(item.originalAmount || 0).toFixed(2)}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
+                              <td style={{ padding: '.65rem .5rem' }}>{item.decidedByUserId || '—'}</td>
+                              <td style={{ padding: '.65rem .5rem', minWidth: '13rem' }}>{item.reason}{item.decisionReason && <div className="text-muted">Decision: {item.decisionReason}</div>}{item.failureReason && <div className="alert alert-warning">{item.failureReason}</div>}</td>
+                              <td style={{ padding: '.65rem .5rem', minWidth: '12rem' }}>
+                                {item.status === 'Pending' && <>
+                                  <button className="btn btn-primary btn-sm" style={{ marginRight: '.35rem' }} disabled={financialReversalBusy} onClick={() => void decideJournalReversal(item.id, 'approve')}>Approve</button>
+                                  <button className="btn btn-secondary btn-sm" disabled={financialReversalBusy} onClick={() => void decideJournalReversal(item.id, 'reject')}>Reject</button>
+                                </>}
+                                {item.status === 'Approved' && <button className="btn btn-primary btn-sm" disabled={financialReversalBusy} onClick={() => void executeJournalReversal(item)}>Execute exact reversal</button>}
+                                {item.executedAt && <div className="text-muted">Executed: {new Date(item.executedAt).toLocaleString('en-ZA')}</div>}
+                              </td>
+                            </tr>
+                          ))}</tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+                </>
+              )}
+            </div>
+          )}
+          {financeView === 'approvals' && (
+            <div>
+              <div className="alert alert-warning" role="note">
+                Exceptional escrow release, creator refunds and disputed runner releases require independent SuperAdmin approval with fresh authenticator verification. Execution uses the existing Paystack refund or normal payout workflow; it does not enable direct balance edits or bypass the manual payout gate. Exact journal reversals are handled separately in the Double-entry journal tab.
+              </div>
+              {financialApprovalError && <div className="alert alert-warning" role="alert">{financialApprovalError}</div>}
+              <form onSubmit={event => void createFinancialApproval(event)} style={{ display: 'grid', gap: '.75rem', maxWidth: '44rem', marginBottom: '1.5rem' }}>
+                <h3>Request exceptional escrow release</h3>
+                <label>Task reference
+                  <input className="form-input" value={financialTaskId} onChange={event => setFinancialTaskId(event.target.value)} placeholder="DFY task reference" required />
+                </label>
+                <label>Request reason
+                  <textarea className="form-input" rows={3} minLength={10} maxLength={500} value={financialRequestReason} onChange={event => setFinancialRequestReason(event.target.value)} placeholder="Explain the exceptional circumstances and supporting review." required />
+                </label>
+                <div><button className="btn btn-primary btn-sm" type="submit" disabled={financialApprovalBusy || financialRequestReason.trim().length < 10 || !financialTaskId.trim()}>
+                  {financialApprovalBusy ? 'Saving…' : 'Submit for independent approval'}
+                </button></div>
+              </form>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '.75rem', alignItems: 'center', marginBottom: '.75rem' }}>
+                <h3 style={{ margin: 0 }}>Approval history</h3>
+                <button className="btn btn-secondary btn-sm" onClick={() => void loadFinancialApprovals()} disabled={financialApprovalLoading}>Refresh</button>
+              </div>
+              {financialApprovalLoading ? <div className="loading-state"><div className="spinner" /></div> : financialApprovals.length === 0 ? (
+                <p className="text-muted">No financial approval requests have been recorded.</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                    <thead><tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>{['Task', 'Dispute', 'Amount', 'Approved charge', 'Action', 'Status', 'Requester', 'Approver', 'Reason', 'Expiry / execution'].map(label => <th key={label} style={{ padding: '.65rem .5rem' }}>{label}</th>)}</tr></thead>
+                    <tbody>{financialApprovals.map(item => (
+                      <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.taskReference || item.taskId}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.disputeId || '—'}</td>
+                        <td style={{ padding: '.65rem .5rem', whiteSpace: 'nowrap' }}>R{Number(item.amount || 0).toFixed(2)}</td>
+                        <td style={{ padding: '.65rem .5rem', fontFamily: 'monospace', maxWidth: '12rem', overflowWrap: 'anywhere' }}>{item.paymentTransactionId || '—'}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.action === 'refund_creator' ? 'Creator refund' : item.action === 'release_to_runner' ? 'Dispute runner release' : 'Exceptional escrow release'}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.status}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.requestedByUserId}</td>
+                        <td style={{ padding: '.65rem .5rem' }}>{item.decidedByUserId || '—'}</td>
+                        <td style={{ padding: '.65rem .5rem', minWidth: '14rem' }}>{item.reason}{item.decisionReason && <div className="text-muted">Decision: {item.decisionReason}</div>}{item.lastExecutionError && <div className="alert alert-warning">{item.lastExecutionError}</div>}</td>
+                        <td style={{ padding: '.65rem .5rem', minWidth: '13rem' }}>
+                          <div>{item.expiresAt ? new Date(item.expiresAt).toLocaleString('en-ZA') : '—'}</div>
+                          {item.executedAt && <div>Executed: {new Date(item.executedAt).toLocaleString('en-ZA')}</div>}
+                          {item.status === 'Pending' && <>
+                            <button className="btn btn-primary btn-sm" style={{ margin: '.35rem .35rem .35rem 0' }} disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'approve')}>Approve</button>
+                            <button className="btn btn-secondary btn-sm" disabled={financialApprovalBusy || financialDecisionReason.trim().length < 10} onClick={() => void decideFinancialApproval(item.id, 'reject')}>Reject</button>
+                          </>}
+                          {item.status === 'Approved' && <button className="btn btn-primary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>{item.action === 'refund_creator' ? 'Execute approved refund' : item.action === 'release_to_runner' ? 'Execute approved dispute release' : 'Execute approved release'}</button>}
+                          {item.status === 'Executing' && (item.action === 'refund_creator' || item.action === 'release_to_runner' ? <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void reconcileFinancialApproval(item.id)}>Reconcile provider state</button> : <button className="btn btn-secondary btn-sm" style={{ marginTop: '.35rem' }} disabled={financialApprovalBusy} onClick={() => void executeFinancialApproval(item)}>Reconcile execution</button>)}
+                        </td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+              <label style={{ display: 'block', maxWidth: '44rem', marginTop: '1rem' }}>Independent decision reason
+                <textarea className="form-input" rows={2} minLength={10} maxLength={500} value={financialDecisionReason} onChange={event => setFinancialDecisionReason(event.target.value)} placeholder="Required for approve/reject; explain the independent review." />
+              </label>
             </div>
           )}
           {financeView === 'operations' && (

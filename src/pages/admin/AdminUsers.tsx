@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { adminApi, ratingsApi } from '../../api'
 import { exportAllCSV, exportAllPDF } from '../../utils/export'
+import AdminDuplicateAccountCases from './AdminDuplicateAccountCases'
 
 export default function AdminUsers() {
+  const { isSuperAdmin } = useAuth()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [roleModal, setRoleModal] = useState<any | null>(null)
+  const [profileModal, setProfileModal] = useState<any | null>(null)
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', email: '', phoneNumber: '', address: '' })
+  const [profileReason, setProfileReason] = useState('')
   const [roleValue, setRoleValue] = useState('')
   const [roleReason, setRoleReason] = useState('')
   const [historyModal, setHistoryModal] = useState<any | null>(null)
@@ -67,6 +73,49 @@ export default function AdminUsers() {
 
   const openRoleModal = (u: any) => { setRoleValue(u.role || 'User'); setRoleReason(''); setRoleModal(u); setActionError('') }
 
+  const openProfileCorrection = async (u: any) => {
+    setActionLoading(true); setActionError('')
+    try {
+      const response = await adminApi.getUserProfileForCorrection(u.id)
+      const profile = response.data?.data || response.data
+      setProfileForm({
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        email: profile.email || '',
+        phoneNumber: profile.phoneNumber || '',
+        address: profile.address || ''
+      })
+      setProfileReason('')
+      setProfileModal(u)
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Could not load the user profile for correction.')
+    } finally { setActionLoading(false) }
+  }
+
+  const saveProfileCorrection = async () => {
+    if (!profileModal) return
+    if (profileReason.trim().length < 10) {
+      setActionError('A reason of at least 10 characters is required.')
+      return
+    }
+    if (!window.confirm('Apply this profile correction? Email changes require the new address to be verified and phone changes clear its verified status.')) return
+    setActionLoading(true); setActionError('')
+    try {
+      const response = await adminApi.correctUserProfile(profileModal.id, { ...profileForm, reason: profileReason.trim() })
+      if (response.data?.success === false) {
+        setActionError(response.data?.message || 'Profile correction failed.')
+        return
+      }
+      setProfileModal(null)
+      setActionError('')
+      load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Profile correction failed.')
+    } finally { setActionLoading(false) }
+  }
+
+
+
   const saveRole = async () => {
     if (!roleModal) return
     const reason = roleReason.trim()
@@ -92,11 +141,28 @@ export default function AdminUsers() {
     } catch { /* ignore */ } finally { setHistoryLoading(false) }
   }
 
-  const archiveUser = async (u: any) => {
-    if (!window.confirm(`Archive ${u.name} (${u.email})? They will no longer be able to sign in, and their audit/task history will be retained.`)) return
+  const suspendUser = async (u: any) => {
+    const next = !u.isSuspended
+    const reason = window.prompt(`Reason to ${next ? 'suspend' : 'reinstate'} ${u.name} (${u.email}) (minimum 10 characters):`)?.trim() || ''
+    if (reason.length < 10) { setActionError('A reason of at least 10 characters is required'); return }
+    if (!window.confirm(`${next ? 'Suspend' : 'Reinstate'} ${u.email}? Active sessions will be revoked.`)) return
     setActionLoading(true); setActionError('')
     try {
-      const r = await adminApi.deleteUser(u.id)
+      const r = await adminApi.updateUserSuspension(u.id, next, reason)
+      if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to update account access'); return }
+      load()
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to update account access')
+    } finally { setActionLoading(false) }
+  }
+
+  const archiveUser = async (u: any) => {
+    const reason = window.prompt(`Reason to archive ${u.name} (${u.email}) (minimum 5 characters):`)?.trim() || ''
+    if (reason.length < 5) { setActionError('A reason of at least 5 characters is required'); return }
+    if (!window.confirm(`Archive ${u.email}? Their audit/task history will be retained.`)) return
+    setActionLoading(true); setActionError('')
+    try {
+      const r = await adminApi.deleteUser(u.id, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to archive user'); return }
       load()
     } catch (err: any) {
@@ -105,10 +171,12 @@ export default function AdminUsers() {
   }
 
   const restoreUser = async (u: any) => {
-    if (!window.confirm(`Restore ${u.name} (${u.email}) and allow them to sign in again?`)) return
+    const reason = window.prompt(`Reason to restore ${u.name} (${u.email}) (minimum 5 characters):`)?.trim() || ''
+    if (reason.length < 5) { setActionError('A reason of at least 5 characters is required'); return }
+    if (!window.confirm(`Restore ${u.email}? A suspended account remains suspended until separately reinstated.`)) return
     setActionLoading(true); setActionError('')
     try {
-      const r = await adminApi.restoreUser(u.id)
+      const r = await adminApi.restoreUser(u.id, reason)
       if (r.data?.success === false) { setActionError(r.data?.message || 'Failed to restore user'); return }
       load()
     } catch (err: any) {
@@ -120,7 +188,7 @@ export default function AdminUsers() {
     const r = await adminApi.getUsers({ page: 1, pageSize: 10000, includeArchived })
     return r.data?.data?.users || []
   }
-  const mapUserRow = (u: any) => [u.name, u.email, getMarketplaceRole(u), getSystemAccess(u), u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
+  const mapUserRow = (u: any) => [u.name, u.email, getMarketplaceRole(u), getSystemAccess(u), u.tasksPosted ?? 0, u.tasksCompleted ?? 0, u.rating?.toFixed(1) || '0.0', u.emailVerified ? 'Verified' : 'Pending', u.isVerified ? 'Verified' : 'Pending', u.isArchived ? 'Archived' : u.isSuspended ? 'Suspended' : 'Active', new Date(u.createdAt).toLocaleDateString('en-ZA')]
 
   const exportUsersCSV = () => exportAllCSV('users', ['Name', 'Email', 'Marketplace role', 'System access', 'Tasks Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
   const exportUsersPDF = () => exportAllPDF('Users Report', ['Name', 'Email', 'Marketplace role', 'System access', 'Posted', 'Completed', 'Rating', 'Email verified', 'Admin verified', 'Account Status', 'Joined'], fetchAllUsers, mapUserRow)
@@ -129,6 +197,7 @@ export default function AdminUsers() {
     <div style={{ paddingBottom: '3rem' }}>
       <div className="page-header"><div className="container"><h1><i className="fas fa-users" /> Manage Users</h1></div></div>
       <div className="container">
+        <AdminDuplicateAccountCases />
         <div className="section-card">
           <div className="admin-toolbar">
             <input className="form-input" placeholder="Filter by name or email..." value={search}
@@ -165,7 +234,7 @@ export default function AdminUsers() {
                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500 }}>
                           {isAdmin(u) && <i className="fas fa-shield-alt" style={{ color: '#EF4444', marginRight: '0.375rem', fontSize: '0.75rem' }} />}
                           {u.name}
-                          {u.isArchived && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Archived</span>}
+                          {u.isArchived && <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Archived</span>}{!u.isArchived && u.isSuspended && <span className="badge badge-danger" style={{ marginLeft: '0.5rem' }}>Suspended</span>}
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
                         <td style={{ padding: '0.75rem 0.5rem' }}><span className="badge badge-info">{getMarketplaceRole(u)}</span></td>
@@ -181,9 +250,11 @@ export default function AdminUsers() {
                               <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                                 {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                               </button>
-                              <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
-                              <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
-                              <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>
+                              {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
+                              {!isAdmin(u) && !u.isSuspended && !u.isArchived && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
+                        <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
+                              {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
+                         {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading} title="Archive user">Archive</button>}
                             </>}
                             {u.isArchived && <>
                               <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View retained history"><i className="fas fa-history" /></button>
@@ -228,17 +299,19 @@ export default function AdminUsers() {
                       <span className={`badge ${u.emailVerified ? 'badge-verified' : 'badge-warning'}`}>
                         <i className={`fas fa-${u.emailVerified ? 'check-circle' : 'clock'}`} /> Email {u.emailVerified ? 'verified' : 'pending'}
                       </span>
-                      <span className={`badge ${u.isArchived ? 'badge-warning' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
-                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
+                      <span className={`badge ${u.isArchived ? 'badge-warning' : u.isSuspended ? 'badge-danger' : u.isVerified ? 'badge-verified' : 'badge-warning'}`}>
+                        <i className={`fas fa-${u.isArchived ? 'box-archive' : u.isSuspended ? 'ban' : u.isVerified ? 'check-circle' : 'clock'}`} /> {u.isArchived ? 'Archived' : u.isSuspended ? 'Suspended' : `Admin ${u.isVerified ? 'verified' : 'pending'}`}
                       </span>
                       <div style={{ marginLeft: 'auto' }} className="admin-table-actions">
                         <button className="btn btn-sm btn-outline" onClick={() => openHistory(u)} title="View history"><i className="fas fa-history" /></button>
                         {!u.isArchived && <>
-                          <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change role"><i className="fas fa-user-tag" /></button>
+                          {isSuperAdmin() && !getSystemRoles(u).includes('SuperAdmin') && <button className="btn btn-sm btn-outline" onClick={() => openRoleModal(u)} title="Change system access"><i className="fas fa-user-tag" /></button>}
+                          {!isAdmin(u) && !u.isSuspended && !u.isArchived && <button className="btn btn-sm btn-outline" onClick={() => void openProfileCorrection(u)} title="Correct profile"><i className="fas fa-user-edit" /></button>}
                           <button className={`btn btn-sm ${u.isVerified ? 'btn-secondary' : 'btn-primary'}`} onClick={() => toggleVerify(u.id, u.isVerified)}>
                             {u.isVerified ? 'Unverify admin' : 'Verify admin'}
                           </button>
-                          <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>
+                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => suspendUser(u)} disabled={actionLoading}>{u.isSuspended ? 'Reinstate' : 'Suspend'}</button>}
+                          {!isAdmin(u) && <button className="btn btn-sm btn-outline" onClick={() => archiveUser(u)} disabled={actionLoading}>Archive</button>}
                         </>}
                         {u.isArchived && <button className="btn btn-sm btn-primary" onClick={() => restoreUser(u)} disabled={actionLoading}>Restore</button>}
                       </div>
@@ -263,6 +336,52 @@ export default function AdminUsers() {
           )}
         </div>
       </div>
+
+      {/* Audited Profile Correction Modal */}
+      {profileModal && (
+        <div className="modal-overlay" onClick={() => setProfileModal(null)}>
+          <div className="modal-box" onClick={event => event.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-user-edit" /> Correct profile — {profileModal.name}</h3>
+              <button className="btn-close" onClick={() => setProfileModal(null)}><i className="fas fa-times" /></button>
+            </div>
+            <div className="modal-body">
+              <p className="text-muted text-sm">Every correction is recorded in restricted before/after audit history. Changing email revokes sessions and requires verification of the new address. Changing phone clears its verified status; this correction does not send an SMS code. Administrator accounts use a separate workflow.</p>
+              <div className="form-group">
+                <label className="form-label">First name</label>
+                <input className="form-input" maxLength={80} value={profileForm.firstName} onChange={event => setProfileForm({ ...profileForm, firstName: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Last name</label>
+                <input className="form-input" maxLength={80} value={profileForm.lastName} onChange={event => setProfileForm({ ...profileForm, lastName: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email address</label>
+                <input className="form-input" type="email" maxLength={254} value={profileForm.email} onChange={event => setProfileForm({ ...profileForm, email: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">South African mobile number</label>
+                <input className="form-input" value={profileForm.phoneNumber} onChange={event => setProfileForm({ ...profileForm, phoneNumber: event.target.value })} placeholder="082 123 4567" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Address</label>
+                <textarea className="form-input" rows={2} maxLength={300} value={profileForm.address} onChange={event => setProfileForm({ ...profileForm, address: event.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Correction reason (required)</label>
+                <textarea className="form-input" rows={3} maxLength={500} value={profileReason} onChange={event => setProfileReason(event.target.value)} placeholder="Reference the verified support request or evidence." />
+              </div>
+              {actionError && <div className="alert alert-error">{actionError}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setProfileModal(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => void saveProfileCorrection()} disabled={actionLoading || profileReason.trim().length < 10}>
+                {actionLoading ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save audited correction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Role Change Modal */}
       {roleModal && (
@@ -327,6 +446,26 @@ export default function AdminUsers() {
                             <span style={{ color: 'var(--primary)', fontWeight: 600, marginLeft: '1rem' }}>R{t.budget}</span>
                             <span className={`badge badge-${t.taskStatus?.toLowerCase()}`} style={{ marginLeft: '0.5rem' }}>{t.taskStatus}</span>
                           </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {historyData.profileChanges?.length > 0 && (
+                    <>
+                      <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Profile correction audit ({historyData.profileChanges.length})</p>
+                      <div style={{ maxHeight: 260, overflowY: 'auto', marginBottom: '1rem' }}>
+                        {historyData.profileChanges.map((change: any, index: number) => (
+                          <details key={`${change.createdAt}-${index}`} style={{ padding: '.65rem 0', borderBottom: '1px solid var(--border)' }}>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+                              {new Date(change.createdAt).toLocaleString('en-ZA')} · Admin #{change.userId}
+                            </summary>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginTop: '.5rem' }}>
+                              <div><span className="text-muted text-sm">Before</span><pre style={{ whiteSpace: 'pre-wrap', fontSize: '.75rem' }}>{change.oldValues}</pre></div>
+                              <div><span className="text-muted text-sm">After / reason</span><pre style={{ whiteSpace: 'pre-wrap', fontSize: '.75rem' }}>{change.newValues}</pre></div>
+                            </div>
+                            <div className="text-muted text-sm">Source IP: {change.ipAddress || 'Not recorded'}</div>
+                          </details>
                         ))}
                       </div>
                     </>

@@ -18,7 +18,7 @@ export default function Layout() {
   const isUserWorkspaceRoute = USER_WORKSPACE_ROUTES.includes(pathname) || /^\/tasks\/[^/]+\/chat$/.test(pathname)
 
   if (isAdminRoute) return <div className="page-wrapper admin-page-wrapper"><AdminShell /></div>
-  if (!loading && isAuthenticated() && user && isAdmin()) return <Navigate to="/admin/dashboard" replace />
+  if (!loading && isAuthenticated() && user && isAdmin() && pathname !== '/user/profile' && pathname !== '/profile') return <Navigate to="/admin/dashboard" replace />
 
   // Keep /login and /register mounted while authentication is in flight.
   // AuthProvider.loginTransitioning used to replace the Outlet with a spinner,
